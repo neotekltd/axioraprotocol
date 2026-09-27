@@ -1,13 +1,24 @@
 import Link from 'next/link';
 import { DEMO_DEPLOYMENTS, DEMO_TRADES, DEMO_TRANSACTIONS } from '@/lib/mock';
 import { DemoBadge, Card } from '@/components/ui';
+import { createClient } from '@/lib/supabase/server';
 
 export const metadata = { title: 'Dashboard' };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  // Server-side session: the authenticated Supabase user, never browser input.
+  let sessionEmail: string | null = null;
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    sessionEmail = data.user?.email ?? null;
+  } catch {
+    sessionEmail = null; // Unconfigured env or unreachable project — demo content still renders.
+  }
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-24 pb-16">
       <div className="flex items-center gap-3"><h1 className="text-2xl font-bold">Good morning — Portfolio Overview</h1><DemoBadge /></div>
+      <p className="mt-1 text-xs text-fog">{sessionEmail ? `Signed in as ${sessionEmail}` : 'Browsing demo state — sign in to load your live balance.'}</p>
       <Card className="mt-6 p-6">
         <div className="text-[11px] tracking-widest text-fog">TOTAL BALANCE</div>
         <div className="mt-1 text-4xl font-bold">$12,481.42</div>

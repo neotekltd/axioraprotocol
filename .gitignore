@@ -6,8 +6,10 @@ dist/
 .drizzle/
 .env
 .env.local
+.dev.vars
 .cloudflare/
 .wrangler/
+.open-next/
 next-env.d.ts
 test-results/
 playwright-report/

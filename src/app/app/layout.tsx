@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SignOutButton } from '@/components/SignOutButton';
 
 const NAV = [
   ['Dashboard', '/app/dashboard'],
@@ -28,6 +29,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {label}
               </Link>
             ))}
+            <div className="pt-2">
+              <SignOutButton className="w-full" />
+            </div>
           </nav>
         </aside>
         <div className="min-w-0 flex-1">{children}</div>

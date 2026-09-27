@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { CalculatorQuerySchema } from '@/lib/validation';
 import { calculateDeployment } from '@/lib/finance';
 
-export const runtime = 'edge';
-
+// NOTE: no `export const runtime = 'edge'` — see api/health/route.ts.
 // Server-authoritative quote. Frontend estimate must never be trusted for confirmation.
 export async function GET(req: Request) {
   const url = new URL(req.url);
