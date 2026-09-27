@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+dist/
+*.log
+.drizzle/
+.env
+.env.local
+.cloudflare/
+.wrangler/
+next-env.d.ts
+test-results/
+playwright-report/
+tests/e2e/__screenshots__/
+tsconfig.tsbuildinfo

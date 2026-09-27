@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   AXIORA DESIGN TOKENS — derived from reference inspection.
+   Reference uses: Space Grotesk (display) + Geist Sans (body) +
+   Geist Mono (figures); page #050505/#0A0A0A; primary emerald
+   #00D294/#10B981/#34D399; cyan #22D3EE; danger #FB2C36.
+   ============================================================ */
+:root {
+  color-scheme: dark;
+
+  --page-max-width: 1280px;
+  --page-padding-desktop: 2rem;
+  --page-padding-tablet: 1.5rem;
+  --page-padding-mobile: 1.25rem;
+
+  --section-padding-large: 8rem;
+  --section-padding-medium: 5rem;
+  --section-padding-small: 3rem;
+
+  --grid-gap: 1rem;
+  --card-radius: 1.25rem;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --hero-min-height: 92vh;
+
+  --background: #0a0a0a;
+  --surface: #0a0a0a;
+  --surface-elevated: rgba(255, 255, 255, 0.03);
+  --surface-muted: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.05);
+  --font-body: "Geist Sans", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+
+  --text-primary: #fafafa;
+  --text-secondary: #9aa7b4;
+  --text-muted: #6b7684;
+
+  --accent: #00d294;
+  --accent-bright: #34d399;
+  --accent-deep: #00bb7f;
+  --accent-cyan: #22d3ee;
+  --accent-glow: rgba(0, 210, 148, 0.16);
+  --danger: #fb2c36;
+  --warning: #f99c00;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  background-color: #0a0a0a;
+  color: #fafafa;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: #00bb7f4d;
+}
+
+/* ---------- type scale (display: Space Grotesk; body: Geist Sans) ---------- */
+.t-display { font-family: "Space Grotesk", "Outfit", "Geist Sans", sans-serif; font-weight: 700; letter-spacing: -0.03em; line-height: 0.98; }
+.t-h1 { font-family: "Space Grotesk", "Outfit", "Geist Sans", sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 1.02; }
+.t-h2 { font-family: "Space Grotesk", "Outfit", "Geist Sans", sans-serif; font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
+.t-h3 { font-family: "Space Grotesk", "Outfit", "Geist Sans", sans-serif; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; }
+.t-body { line-height: 1.65; }
+.t-body-small { font-size: 0.875rem; line-height: 1.6; }
+.t-caption { font-size: 0.75rem; line-height: 1.5; }
+.t-eyebrow { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.28em; }
+.t-metric { font-family: var(--font-mono); font-weight: 500; letter-spacing: -0.01em; }
+
+/* ---------- surfaces ---------- */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--card-border);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 30%, black 40%, transparent 100%);
+}
+
+.text-glow {
+  text-shadow: 0 0 28px rgba(0, 210, 148, 0.4);
+}
+
+.thin-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: #1c1c1c; border-radius: 8px; }
+
+/* ---------- motion: reveal system ----------
+   End-state uses the reference's own declarations verbatim. */
+.reveal {
+  opacity: 0;
+  translate: 0 20px;
+  scale: 0.995;
+  transition: opacity 0.65s ease, translate 0.65s ease, scale 0.65s ease;
+}
+.reveal.is-visible {
+  translate: none;
+  rotate: none;
+  scale: none;
+  transform: translate(0px, 0px);
+  opacity: 1;
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+.flow-line {
+  stroke-dasharray: 6 6;
+  animation: dash-flow 1.2s linear infinite;
+}
+
+@keyframes pulse-node {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.72; transform: scale(0.97); }
+}
+.pulse-node { animation: pulse-node 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; translate: none; scale: none; transition: none; }
+  .pulse-node, .flow-line { animation: none; }
+  html { scroll-behavior: auto; }
+}
