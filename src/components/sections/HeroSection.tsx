@@ -18,30 +18,29 @@ const STATS: [string, string][] = [
 export function HeroSection() {
   return (
     <section className="relative flex min-h-[92vh] items-center overflow-hidden pb-20 pt-32 md:pt-36">
-      <div className="absolute inset-0 grid-bg" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_72%_32%,rgba(0,210,148,0.12),transparent)]" />
       <div className="relative mx-auto grid w-full max-w-page items-center gap-14 px-5 md:px-8 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
         <div>
           <Reveal>
             <SectionEyebrow>AI-POWERED CONVERGENCE PROTOCOL</SectionEyebrow>
-            <h1 className="t-display mt-5 text-5xl sm:text-6xl xl:text-[5.25rem]">
+            <h1 className="t-display mt-5 text-[2.75rem] sm:text-6xl xl:text-[4.5rem]">
               Autonomous Intelligence.
               <br />
               Executed by <span className="text-pulse text-glow">Consensus.</span>
             </h1>
           </Reveal>
           <Reveal delay={120}>
-            <p className="t-body mt-7 max-w-xl text-[1.0625rem] text-mist/80">
+            <p className="t-body mt-6 max-w-lg text-base text-mist/80">
               Axiora Protocol combines autonomous trading agents, real-time market intelligence and
               risk-controlled execution into a single consensus-driven trading system.
             </p>
           </Reveal>
           <Reveal delay={200}>
-            <div className="mt-9 flex flex-wrap items-center gap-4">
-              <Link href="/protocol" className="rounded-xl border border-line px-7 py-4 text-[0.9375rem] text-mist hover:border-pulse/50 hover:text-white">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href="/protocol" className="rounded-xl border border-line px-6 py-3 text-sm text-mist hover:border-pulse/50 hover:text-white">
                 Explore Protocol
               </Link>
-              <Link href="/statistics" className="rounded-xl bg-pulse px-7 py-4 text-[0.9375rem] font-semibold text-black shadow-glow hover:brightness-110">
+              <Link href="/statistics" className="rounded-xl bg-pulse px-6 py-3 text-sm font-semibold text-black shadow-glow hover:brightness-110">
                 View Statistics
               </Link>
             </div>

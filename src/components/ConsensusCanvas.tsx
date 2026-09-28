@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -79,12 +79,30 @@ function Particles({ count = 220 }: { count?: number }) {
 }
 
 export function ConsensusCanvas() {
+  const holder = useRef<HTMLDivElement>(null);
+  const [lost, setLost] = useState(false);
+  // If the GPU context is lost (background tab, device limits), drop the
+  // canvas gracefully instead of spamming console errors — the static
+  // gradient behind it remains as the visual.
+  useEffect(() => {
+    const canvas = holder.current?.querySelector('canvas');
+    if (!canvas) return;
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      setLost(true);
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    return () => canvas.removeEventListener('webglcontextlost', onLost);
+  }, []);
+  if (lost) return <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(0,210,148,0.14),transparent_65%)]" />;
   return (
-    <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}>
+    <div ref={holder} className="absolute inset-0">
+    <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <ambientLight intensity={0.6} />
       <pointLight position={[4, 4, 4]} color="#00D294" intensity={2.5} distance={14} />
       <Nodes />
       <Particles />
     </Canvas>
+    </div>
   );
 }

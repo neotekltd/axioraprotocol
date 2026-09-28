@@ -5,7 +5,7 @@ import { Reveal } from '@/components/Reveal';
 
 export function BusinessModelSection() {
   return (
-    <section className="py-24 md:py-36">
+    <section className="py-20 md:py-28">
       <div className="mx-auto grid max-w-page items-center gap-14 px-5 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-20">
         <div>
           <Reveal>

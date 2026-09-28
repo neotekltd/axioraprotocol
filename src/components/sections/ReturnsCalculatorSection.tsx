@@ -4,7 +4,7 @@ import { Reveal } from '@/components/Reveal';
 
 export function ReturnsCalculatorSection() {
   return (
-    <section className="py-24 md:py-36">
+    <section className="py-20 md:py-28">
       <div className="mx-auto max-w-page px-5 md:px-8">
         <Reveal className="flex flex-col items-center text-center">
           <SectionEyebrow>INTERACTIVE</SectionEyebrow>

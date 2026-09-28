@@ -10,7 +10,7 @@ const AGENTS = [
 
 export function ConvergenceSection() {
   return (
-    <section id="how" className="py-20 md:py-32">
+    <section id="how" className="py-20 md:py-28">
       <div className="mx-auto max-w-page px-5 md:px-8">
         <Reveal className="flex flex-col items-center text-center">
           <SectionEyebrow>HOW CONVERGENCE WORKS</SectionEyebrow>
@@ -20,7 +20,7 @@ export function ConvergenceSection() {
           </p>
         </Reveal>
         <Reveal delay={120}>
-          <div className="mx-auto mt-14 hidden max-w-4xl justify-center md:flex">
+          <div className="mx-auto mt-12 hidden max-w-3xl justify-center md:flex">
             <DiagramHorizontal />
           </div>
           <div className="mx-auto mt-12 max-w-sm md:hidden">
@@ -47,7 +47,7 @@ export function ConvergenceSection() {
   );
 }
 
-const box = 'rounded-xl border border-line bg-surface px-5 py-3 text-[0.6875rem] font-bold tracking-[0.22em] text-mist';
+const box = 'rounded-xl border border-line bg-surface px-4 py-2.5 text-[0.6875rem] font-bold tracking-[0.22em] text-mist';
 
 function DiagramHorizontal() {
   return (
@@ -57,8 +57,8 @@ function DiagramHorizontal() {
         <div className={box}>RISK</div>
       </div>
       <span className="text-xl text-pulse">→</span>
-      <div className="rounded-2xl border border-pulse/50 bg-pulse/10 px-8 py-6 shadow-glow">
-        <div className="text-sm font-bold tracking-[0.22em] text-pulse">CONSENSUS</div>
+      <div className="rounded-2xl border border-pulse/50 bg-pulse/10 px-6 py-4 shadow-glow">
+        <div className="text-[13px] font-bold tracking-[0.22em] text-pulse">CONSENSUS</div>
       </div>
       <span className="text-xl text-pulse">→</span>
       <div className="space-y-3">

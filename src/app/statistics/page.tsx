@@ -1,37 +1,39 @@
-import { SectionEyebrow, SectionTitle, Stat, DemoBadge, Card } from '@/components/ui';
-import { DEMO_TICKER } from '@/lib/mock';
+import { SectionEyebrow, SectionTitle, Stat, Card } from '@/components/ui';
+import { getProtocolStats } from '@/lib/queries';
+import { formatUSD } from '@/lib/finance';
 
 export const metadata = { title: 'Statistics' };
 
-export default function StatisticsPage() {
+export default async function StatisticsPage() {
+  const stats = await getProtocolStats();
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-28 pb-20">
-      <div className="flex items-center gap-3"><SectionEyebrow>PROTOCOL TERMINAL</SectionEyebrow><DemoBadge /></div>
+      <SectionEyebrow>PROTOCOL TERMINAL</SectionEyebrow>
       <SectionTitle>Statistics</SectionTitle>
-      <p className="mt-3 text-sm text-fog">Production source: <code>GET /api/public/stats</code>. Numbers animate on viewport entry; live P&amp;L streams over WebSocket.</p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Stat label="PROTOCOL CAPITAL" value="$24,816,402" />
-        <Stat label="VERIFIED TRADES" value="48,213" />
-        <Stat label="TOTAL P&L" value="$3,912,558" />
-        <Stat label="WIN RATE" value="63.42%" />
-        <Stat label="ACTIVE POSITIONS" value="37" />
-        <Stat label="CURRENT VALUE" value="$28,728,960" />
-      </div>
-      <Card className="mt-8 overflow-hidden">
-        <div className="p-4 text-[11px] tracking-widest text-fog border-b border-line">LIVE TICKER · DEMO</div>
-        <table className="w-full text-sm">
-          <thead><tr className="text-left text-fog text-[11px] tracking-widest"><th className="p-4">ASSET</th><th className="p-4">SIDE</th><th className="p-4 text-right">ENTRY</th><th className="p-4 text-right">PRICE</th><th className="p-4 text-right">P&L</th><th className="p-4 text-right">STATUS</th></tr></thead>
-          <tbody>
-            {DEMO_TICKER.map((t) => (
-              <tr key={t.pair} className="border-t border-line font-mono">
-                <td className="p-4">{t.pair}</td><td className={`p-4 ${t.side === 'LONG' ? 'text-pulse' : 'text-danger'}`}>{t.side}</td>
-                <td className="p-4 text-right">{t.entry}</td><td className="p-4 text-right">{t.price}</td>
-                <td className="p-4 text-right text-pulse">+{t.pnlPct.toFixed(2)}%</td><td className="p-4 text-right">{t.status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      {!stats ? (
+        <>
+          <p className="mt-3 max-w-2xl text-sm text-fog">
+            Audited protocol statistics will be published here once the operator releases the first
+            verified snapshot. No estimates or placeholder figures are shown in the meantime.
+          </p>
+          <Card className="mt-8 p-8 text-center sm:p-12">
+            <div className="font-bold">Statistics pending first audit</div>
+            <p className="mx-auto mt-1 max-w-md text-sm text-fog">Protocol capital, verified trades, total P&amp;L, win rate and active positions appear here when published.</p>
+          </Card>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 max-w-2xl text-sm text-fog">Operator-published snapshot · updated {stats.updatedAt.slice(0, 10)}. Past results do not predict future performance.</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Stat label="PROTOCOL CAPITAL" value={formatUSD(stats.capital, { decimals: 0 })} />
+            <Stat label="VERIFIED TRADES" value={stats.verifiedTrades.toLocaleString('en-US')} />
+            <Stat label="TOTAL P&L" value={formatUSD(stats.totalPnl, { sign: true, decimals: 0 })} />
+            <Stat label="WIN RATE" value={`${stats.winRate.toFixed(2)}%`} />
+            <Stat label="ACTIVE POSITIONS" value={String(stats.activePositions)} />
+            <Stat label="CURRENT VALUE" value={formatUSD(stats.currentValue, { decimals: 0 })} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

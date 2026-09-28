@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Menu, X, Zap } from 'lucide-react';
 
@@ -13,6 +14,7 @@ const NAV = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -21,6 +23,8 @@ export function Header() {
     window.addEventListener('scroll', f, { passive: true });
     return () => window.removeEventListener('scroll', f);
   }, []);
+  // The authenticated /app area owns its own shell (sidebar + mobile drawer).
+  if (pathname.startsWith('/app')) return null;
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
@@ -28,14 +32,11 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex h-[72px] max-w-page items-center justify-between px-5 md:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-pulse/15 border border-pulse/30">
-            <Zap className="h-4.5 w-4.5 text-pulse" size={18} />
+        <Link href="/" className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-pulse/15 border border-pulse/30">
+            <Zap className="text-pulse" size={14} />
           </span>
-          <span className="leading-none">
-            <span className="block text-[15px] font-700 font-bold tracking-tight">AXIORA PROTOCOL</span>
-            <span className="block text-[10px] tracking-[0.22em] text-fog">AUTONOMOUS INTELLIGENCE</span>
-          </span>
+          <span className="text-sm font-bold tracking-tight">AXIORA PROTOCOL</span>
         </Link>
         <nav className="hidden items-center gap-7 lg:flex">
           {NAV.map((n) => (
@@ -48,7 +49,7 @@ export function Header() {
           <Link href="/login" className="rounded-lg px-4 py-2 text-sm text-mist hover:text-white border border-line hover:border-edge">
             Log in
           </Link>
-          <Link href="/register" className="rounded-lg bg-pulse px-4 py-2 text-sm font-semibold text-black hover:brightness-110 shadow-glow">
+          <Link href="/register" className="rounded-lg bg-pulse px-5 py-2.5 text-[13px] font-semibold text-black hover:brightness-110 shadow-glow">
             Deploy Capital
           </Link>
         </div>

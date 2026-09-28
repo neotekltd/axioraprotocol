@@ -7,12 +7,13 @@ import Image from 'next/image';
 // the original Axiora CSS dashboard concept otherwise.
 const ASSET = '/phone-protocol-stats.png';
 
-export function PhoneVisual() {
+export function PhoneVisual({ hasAsset = true }: { hasAsset?: boolean }) {
   const [missing, setMissing] = useState(false);
+  const showFallback = !hasAsset || missing;
   return (
     <div className="relative mx-auto w-full max-w-[360px]">
       <div className="absolute -inset-8 rounded-[3rem] bg-[radial-gradient(ellipse_at_center,rgba(0,210,148,0.16),transparent_70%)]" />
-      {missing ? (
+      {showFallback ? (
         <CssPhone />
       ) : (
         <Image

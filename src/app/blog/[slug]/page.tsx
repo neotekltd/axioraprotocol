@@ -6,6 +6,12 @@ export function generateStaticParams() {
   return BLOG_POSTS.map((p) => ({ slug: p.slug }));
 }
 
+export function generateMetadata({ params }: { params: { slug: string } }) {
+  const post = BLOG_POSTS.find((p) => p.slug === params.slug);
+  if (!post) return { title: 'Article not found' };
+  return { title: post.title, description: post.excerpt };
+}
+
 export default function ArticlePage({ params }: { params: { slug: string } }) {
   const post = BLOG_POSTS.find((p) => p.slug === params.slug);
   if (!post) notFound();

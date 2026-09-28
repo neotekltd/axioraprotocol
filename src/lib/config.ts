@@ -2,6 +2,11 @@
 // All fees, limits and referral levels MUST be read from backend/admin in prod.
 // These defaults are for demo UI only and clearly labeled as such.
 
+// Canonical public URL (sharing, referral links, metadata). Overridable via
+// NEXT_PUBLIC_APP_URL; static access so Next inlines it into client bundles.
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? 'https://axioraprotocol.jaidanem6.workers.dev';
+
 export const PROTOCOL_CONFIG = {
   brand: 'Axiora',
   minDeployment: 10,

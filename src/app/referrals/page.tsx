@@ -19,7 +19,7 @@ export default function ReferralsPage() {
           <tbody>{PROTOCOL_CONFIG.referralLevels.map((r) => (<tr key={r.level} className="border-t border-line"><td className="p-4">L{r.level}</td><td className="p-4 text-right">{r.instantPct}%</td><td className="p-4 text-right">{r.dailySharePct}%</td></tr>))}</tbody>
         </table>
       </Card>
-      <Link href="/register?ref=DEMO" className="mt-6 inline-block rounded-xl bg-pulse px-6 py-3 text-sm font-bold text-black">Get Referral Link</Link>
+      <Link href="/register" className="mt-6 inline-block rounded-xl bg-pulse px-6 py-3 text-sm font-bold text-black">Get Referral Link</Link>
     </div>
   );
 }

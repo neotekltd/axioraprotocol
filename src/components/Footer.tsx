@@ -1,6 +1,11 @@
+'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Footer() {
+  const pathname = usePathname();
+  // Authenticated /app area uses its own shell without the marketing footer.
+  if (pathname.startsWith('/app')) return null;
   return (
     <footer className="border-t border-line bg-panel/60 mt-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-4">

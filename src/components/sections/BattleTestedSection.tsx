@@ -10,14 +10,13 @@ const METRICS: [string, string][] = [
 
 export function BattleTestedSection() {
   return (
-    <section className="relative overflow-hidden border-y border-white/5 bg-surface py-24 md:py-36">
+    <section className="relative overflow-hidden border-y border-white/5 bg-surface py-20 md:py-28">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_65%_at_78%_45%,rgba(0,210,148,0.1),transparent)]" />
-      <div className="absolute inset-0 grid-bg opacity-60" />
       <div className="relative mx-auto grid max-w-page items-center gap-14 px-5 md:px-8 lg:grid-cols-2 lg:gap-20">
         <div>
           <Reveal>
             <SectionEyebrow>BATTLE-TESTED PROTOCOL</SectionEyebrow>
-            <h2 className="t-h2 mt-4 text-4xl sm:text-5xl lg:text-6xl">Designed for changing markets.</h2>
+            <h2 className="t-h2 mt-4 text-4xl sm:text-5xl">Designed for changing markets.</h2>
             <p className="t-body mt-6 max-w-lg text-[1.0625rem] text-mist/75">
               Axiora continuously evaluates market conditions, risk and execution before capital is deployed.
               Production stats stream from the backend — demo values below are simulated.

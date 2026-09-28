@@ -9,7 +9,6 @@ export function ReferralSection() {
         <Reveal>
           <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-surface px-6 py-16 text-center md:py-24">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_65%_at_50%_38%,rgba(0,210,148,0.12),transparent)]" />
-            <div className="absolute inset-0 grid-bg opacity-50" />
             <div className="relative">
               <h2 className="t-h2 text-3xl sm:text-4xl md:text-5xl">Build Your Axiora Network</h2>
               <p className="t-body mx-auto mt-5 max-w-xl text-fog">

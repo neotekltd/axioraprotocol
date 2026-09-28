@@ -1,28 +1,22 @@
-import { DemoBadge, Card } from '@/components/ui';
+import Link from 'next/link';
+import { PageHeader, SectionCard } from '@/components/data';
+import { WalletsManager } from '@/components/WalletsManager';
+import { getWallets } from '@/lib/queries';
 
-export const metadata = { title: 'Wallets' };
+export const metadata = { title: 'Saved Wallets' };
 
-export default function WalletsPage() {
+export default async function WalletsPage() {
+  const wallets = await getWallets();
   return (
     <div>
-      <div className="flex items-center gap-3"><h1 className="text-2xl font-bold">Saved Wallets</h1><DemoBadge /></div>
-      <Card className="mt-6 p-6">
-        <div className="font-mono text-sm">USDT / TRC20 · TQ…91X</div>
-        <div className="mt-1 text-xs text-fog">Added Sep 21 · Verified ✓</div>
-        <button className="mt-4 rounded-xl border border-line px-4 py-2 text-xs">Remove</button>
-      </Card>
-      <Card className="mt-4 p-6">
-        <div className="text-sm font-bold">Add wallet</div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <input placeholder="Asset (USDT)" className="rounded-xl border border-line bg-void px-4 py-2.5 text-sm outline-none focus:border-pulse" />
-          <input placeholder="Network (TRC20)" className="rounded-xl border border-line bg-void px-4 py-2.5 text-sm outline-none focus:border-pulse" />
-          <input placeholder="Address" className="rounded-xl border border-line bg-void px-4 py-2.5 font-mono text-sm outline-none focus:border-pulse sm:col-span-2" />
-          <input placeholder="Label" className="rounded-xl border border-line bg-void px-4 py-2.5 text-sm outline-none focus:border-pulse" />
-          <input placeholder="2FA code" className="rounded-xl border border-line bg-void px-4 py-2.5 text-sm outline-none focus:border-pulse" />
-        </div>
-        <p className="mt-3 text-xs text-fog">New addresses require verification before withdrawals can target them.</p>
-        <button className="mt-4 rounded-xl bg-pulse px-6 py-2.5 text-sm font-bold text-black">Save wallet</button>
-      </Card>
+      <PageHeader
+        title="Saved Wallets"
+        sub="Destination addresses for withdrawals. New addresses require verification before use."
+        actions={<Link href="/app/wallet" className="rounded-xl border border-line px-5 py-2.5 text-sm hover:border-pulse/50">Back to wallet</Link>}
+      />
+      <SectionCard title={`${wallets.length} saved address${wallets.length === 1 ? '' : 'es'}`}>
+        <WalletsManager initial={wallets} />
+      </SectionCard>
     </div>
   );
 }

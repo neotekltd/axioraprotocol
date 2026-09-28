@@ -1,45 +1,7 @@
-// Demo data layer. In production every number here MUST come from the backend
-// and be auditable. The UI labels demo data explicitly via DemoBadge.
-
-export const DEMO_PROTOCOL_STATS = {
-  capital: 24_816_402,
-  verifiedTrades: 48_213,
-  totalPnl: 3_912_558,
-  winRate: 63.42,
-  activePositions: 37,
-  currentValue: 28_728_960,
-  updatedAt: new Date().toISOString(),
-  isDemo: true,
-};
-
-export const DEMO_TICKER = [
-  { pair: 'BTC/USDT', side: 'LONG' as const, entry: 67210.4, price: 68164.9, pnlPct: 1.42, status: 'OPEN' },
-  { pair: 'ETH/USDT', side: 'SHORT' as const, entry: 3521.8, price: 3491.1, pnlPct: 0.87, status: 'OPEN' },
-  { pair: 'BNB/USDT', side: 'LONG' as const, entry: 598.2, price: 610.8, pnlPct: 2.11, status: 'OPEN' },
-  { pair: 'SOL/USDT', side: 'SHORT' as const, entry: 171.4, price: 169.9, pnlPct: 0.88, status: 'CLOSED' },
-  { pair: 'ARB/USDT', side: 'LONG' as const, entry: 1.421, price: 1.449, pnlPct: 1.97, status: 'OPEN' },
-];
-
-export const DEMO_DEPLOYMENTS = [
-  { id: '#AX-1042', amount: 5000, term: 60, started: '2026-08-18', maturity: '2026-10-17', profit: 421.18, status: 'Active' },
-  { id: '#AX-1038', amount: 2500, term: 30, started: '2026-08-29', maturity: '2026-09-28', profit: 188.4, status: 'Active' },
-  { id: '#AX-1019', amount: 1700, term: 20, started: '2026-07-12', maturity: '2026-08-01', profit: 96.12, status: 'Matured' },
-];
-
-export const DEMO_TRADES = [
-  { asset: 'BTC/USDT', side: 'LONG', entry: 67210.4, exit: 68164.9, size: 0.42, pnl: 400.78, status: 'Closed', time: '2026-09-26 14:02 UTC' },
-  { asset: 'ETH/USDT', side: 'SHORT', entry: 3521.8, exit: 3491.1, size: 4.1, pnl: 125.87, status: 'Closed', time: '2026-09-26 11:47 UTC' },
-  { asset: 'BNB/USDT', side: 'LONG', entry: 598.2, exit: 610.8, size: 12.0, pnl: 151.2, status: 'Open', time: '2026-09-27 02:15 UTC' },
-  { asset: 'SOL/USDT', side: 'SHORT', entry: 171.4, exit: 169.9, size: 88.0, pnl: 132.0, status: 'Closed', time: '2026-09-25 19:33 UTC' },
-];
-
-export const DEMO_TRANSACTIONS = [
-  { id: 'TX-88121', type: 'Deployment', amount: 5000, asset: 'USDT', status: 'Completed', time: '2026-08-18' },
-  { id: 'TX-88002', type: 'Deposit', amount: 3200, asset: 'USDT', status: 'Completed', time: '2026-08-16' },
-  { id: 'TX-87954', type: 'Profit', amount: 184.21, asset: 'USDT', status: 'Completed', time: '2026-09-27' },
-  { id: 'TX-87901', type: 'Referral Reward', amount: 38.42, asset: 'USDT', status: 'Completed', time: '2026-09-26' },
-  { id: 'TX-87833', type: 'Withdrawal', amount: 1200, asset: 'USDT', status: 'Processing', time: '2026-09-27' },
-];
+// Content layer: blog articles and FAQs are real product content.
+// Financial fixtures were removed: production pages read the Supabase ledger
+// and render empty states when there is no data. Nothing here may be
+// presented as a real balance, trade, or protocol statistic.
 
 export const BLOG_POSTS = [
   {

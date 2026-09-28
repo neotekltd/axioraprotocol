@@ -1,10 +1,23 @@
 import Link from 'next/link';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { Reveal } from '@/components/Reveal';
 import { PhoneVisual } from '@/components/sections/PhoneVisual';
 
+// Resolved once at build/prerender: no wasted /phone-protocol-stats.png
+// request (and no console 404) when the supplied asset hasn't been placed
+// in public/ yet. Dropping the file in re-enables it on next build.
+function hasPhoneAsset() {
+  try {
+    return existsSync(join(process.cwd(), 'public', 'phone-protocol-stats.png'));
+  } catch {
+    return false;
+  }
+}
+
 export function BeyondScriptsSection() {
   return (
-    <section className="py-24 md:py-36">
+    <section className="py-20 md:py-28">
       <div className="mx-auto grid max-w-page items-center gap-14 px-5 md:px-8 lg:grid-cols-2 lg:gap-24">
         <div>
           <Reveal>
@@ -42,7 +55,7 @@ export function BeyondScriptsSection() {
           </Reveal>
         </div>
         <Reveal delay={150}>
-          <PhoneVisual />
+          <PhoneVisual hasAsset={hasPhoneAsset()} />
         </Reveal>
       </div>
     </section>

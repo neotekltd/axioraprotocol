@@ -1,16 +1,22 @@
-import { DemoBadge, Card } from '@/components/ui';
+import { PageHeader } from '@/components/data';
+import { ProfileForm } from '@/components/ProfileForm';
+import { getSessionUser, getProfile } from '@/lib/queries';
 
 export const metadata = { title: 'Profile' };
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const [user, profile] = await Promise.all([getSessionUser(), getProfile()]);
+  const memberSince = profile?.createdAt ? profile.createdAt.slice(0, 10) : user?.createdAt ? user.createdAt.slice(0, 10) : '—';
   return (
     <div>
-      <div className="flex items-center gap-3"><h1 className="text-2xl font-bold">Profile</h1><DemoBadge /></div>
-      <Card className="mt-6 p-6 space-y-4">
-        <div><label className="text-xs text-fog">Email</label><div className="mt-1 rounded-xl border border-line bg-void px-4 py-3 text-sm">you@domain.com · verified ✓</div></div>
-        <div><label className="text-xs text-fog">Display name</label><input defaultValue="Axiora Trader" className="mt-1 w-full rounded-xl border border-line bg-void px-4 py-3 text-sm outline-none focus:border-pulse" /></div>
-        <button className="rounded-xl bg-pulse px-6 py-2.5 text-sm font-bold text-black">Save changes</button>
-      </Card>
+      <PageHeader title="Profile" sub="Account information and preferences." />
+      <ProfileForm
+        email={user?.email ?? profile?.email ?? '—'}
+        verified={user?.emailConfirmed ?? false}
+        displayName={profile?.displayName ?? null}
+        memberSince={memberSince}
+        referralCode={profile?.referralCode ?? null}
+      />
     </div>
   );
 }
