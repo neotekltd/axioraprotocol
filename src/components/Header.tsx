@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { createClient } from '@/lib/supabase/client';
 
@@ -16,10 +16,24 @@ const NAV = [
   { href: '/faq', label: 'FAQ' },
 ];
 
+// Drawer destinations preserve the reference numbering/presentation with
+// Axiora's real routes (anchors work from any page via /#...).
+const DRAWER_NAV = [
+  { n: '01', href: '/#modules', label: 'Plans' },
+  { n: '02', href: '/how-it-works', label: 'How it works' },
+  { n: '03', href: '/technology', label: 'Features' },
+  { n: '04', href: '/statistics', label: 'Live stats' },
+  { n: '05', href: '/referrals', label: 'Referrals' },
+  { n: '06', href: '/faq', label: 'FAQ' },
+];
+
 export function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [renderDrawer, setRenderDrawer] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
   // Same Supabase session as the app: when authenticated, the public CTA
   // leads to the dashboard instead of the auth pages. Read-only session
   // check — never signs out, never writes storage.
@@ -46,69 +60,200 @@ export function Header() {
     window.addEventListener('scroll', f, { passive: true });
     return () => window.removeEventListener('scroll', f);
   }, []);
+
+  // Drawer lifecycle: mount for exit animation, lock body scroll, Escape,
+  // focus close on open and restore focus to the opener on close.
+  useEffect(() => {
+    if (!open) return;
+    setRenderDrawer(true);
+    const opener = openerRef.current;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const t = setTimeout(() => closeRef.current?.focus(), 60);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener('keydown', onKey);
+      clearTimeout(t);
+      opener?.focus();
+    };
+  }, [open ]);
+  useEffect(() => {
+    if (!open && renderDrawer) {
+      const t = setTimeout(() => setRenderDrawer(false), 320);
+      return () => clearTimeout(t);
+    }
+  }, [open, renderDrawer]);
+
+  const close = () => setOpen(false);
+
   // The authenticated /app area owns its own shell (sidebar + mobile drawer).
+  // Auth routes use the standalone AuthShell with its own header/footer.
   if (pathname.startsWith('/app')) return null;
+  if (['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'].includes(pathname)) return null;
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-void/85 backdrop-blur-xl border-b border-line' : 'bg-transparent border-b border-transparent'
-      }`}
-    >
-      <div className="border-b border-line/50 px-5 py-1 font-mono text-[11px] md:px-8" aria-hidden="true">
-        <div className="mx-auto flex max-w-page items-center justify-between text-fog">
-          <span className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-pulse">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pulse" /> SYSTEM ONLINE
+    <>
+      <header
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+          scrolled ? 'bg-void/85 backdrop-blur-xl border-b border-line' : 'bg-transparent border-b border-transparent'
+        }`}
+      >
+        {/* Row 1 — system bar (all widths) */}
+        <div className="border-b border-line/50 px-4 font-mono text-[11px] md:px-8" aria-hidden="true">
+          <div className="mx-auto flex h-[52px] max-w-page items-center justify-between text-fog">
+            <span className="flex items-center gap-1.5 tracking-[0.18em] text-[#35D98B]">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#35D98B]" /> SYSTEM ONLINE
             </span>
-            <span className="hidden sm:inline">PAYOUTS EVERY 6 HOURS</span>
-          </span>
-          <span className="hidden md:inline">3 PLANS · 4 PAYOUTS A DAY</span>
+            <Link href="/app/support" className="tracking-[0.18em] transition hover:text-white">
+              SUPPORT CHAT
+            </Link>
+            <span className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 tracking-[0.12em]">
+              <span className="text-[13px]">EN</span> <span className="text-[9px]">▾</span>
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="mx-auto flex h-16 max-w-page items-center justify-between px-5 md:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <AxioraMark size={30} />
-          <span className="leading-none">
-            <span className="block text-sm font-bold tracking-tight">AXIORA PROTOCOL</span>
-            <span className="mt-0.5 block font-mono text-[9px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</span>
-          </span>
-        </Link>
-        <nav className="hidden items-center gap-7 lg:flex">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="text-[13px] text-mist/80 hover:text-pulse transition-colors">
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="hidden items-center gap-2.5 lg:flex">
-          {authed ? (
-            <Link href="/app/dashboard" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link href="/login" className="rounded-md px-3.5 py-2 text-[13px] text-mist hover:text-pulse border border-line hover:border-pulse/40 transition-colors">
-                Sign In
+        {/* Row 2 — main nav */}
+        <div className="mx-auto flex h-[84px] max-w-page items-center justify-between gap-3 px-4 md:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="Axiora Protocol home">
+            <AxioraMark size={34} />
+            <span className="leading-none">
+              <span className="block text-[15px] font-extrabold tracking-tight">AXIORA<span className="text-pulse">.</span></span>
+              <span className="mt-0.5 hidden font-mono text-[8px] tracking-[0.25em] text-fog min-[380px]:block">AUTONOMOUS CAPITAL</span>
+            </span>
+          </Link>
+          <nav className="hidden items-center gap-7 lg:flex">
+            {NAV.map((n) => (
+              <Link key={n.href} href={n.href} className="text-[13px] text-mist/80 hover:text-pulse transition-colors">
+                {n.label}
               </Link>
-              <Link href="/register" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
-                Get Started
+            ))}
+          </nav>
+          <div className="hidden items-center gap-2.5 lg:flex">
+            {authed ? (
+              <Link href="/app/dashboard" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
+                Dashboard
               </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link href="/login" className="rounded-md px-3.5 py-2 text-[13px] text-mist hover:text-pulse border border-line hover:border-pulse/40 transition-colors">
+                  Sign In
+                </Link>
+                <Link href="/register" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+          {/* Mobile: compact CTA + square hamburger */}
+          <div className="flex items-center gap-2.5 lg:hidden">
+            <Link
+              href={authed ? '/app/dashboard' : '/register'}
+              className="flex h-[46px] shrink-0 items-center whitespace-nowrap rounded-[12px] bg-pulse px-3.5 text-[13px] font-bold text-black shadow-glow transition hover:brightness-110 min-[400px]:px-4"
+            >
+              {authed ? 'Dashboard' : 'Activate account'}
+            </Link>
+            <button
+              ref={openerRef}
+              onClick={() => setOpen(true)}
+              aria-label="Open navigation"
+              aria-expanded={open}
+              className="grid h-14 w-14 shrink-0 place-items-center rounded-[14px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
+            >
+              <span className="flex flex-col items-end gap-[5px]" aria-hidden="true">
+                <span className="block h-[2px] w-5 bg-current" />
+                <span className="block h-[2px] w-5 bg-current" />
+                <span className="block h-[2px] w-3.5 bg-current" />
+              </span>
+            </button>
+          </div>
         </div>
-        <button className="lg:hidden p-2 text-mist" onClick={() => setOpen(!open)} aria-label="Menu">
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </div>
-      {open && (
-        <div className="lg:hidden border-t border-line bg-void/95 backdrop-blur-xl px-4 py-4 space-y-1">
-          {[...NAV, ...(authed ? [{ href: '/app/dashboard', label: 'Dashboard' }] : [{ href: '/login', label: 'Sign In' }, { href: '/register', label: 'Get Started' }])].map((n) => (
-            <Link key={n.href + n.label} href={n.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-[15px] text-mist hover:bg-surface hover:text-white">
-              {n.label}
-            </Link>
-          ))}
+      </header>
+
+      {renderDrawer && (
+        <div className="fixed inset-0 z-[60] lg:hidden" role="presentation">
+          <div
+            className={`absolute inset-0 bg-black/75 backdrop-blur-[2px] transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+            onClick={close}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
+            className={`absolute bottom-0 right-0 top-0 flex w-[87vw] max-w-[420px] flex-col border-l border-[rgba(100,150,180,0.15)] bg-[#090D14] transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="tech-dots pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
+            <div className="relative flex items-center justify-between px-[36px] pb-2 pt-6">
+              <span className="flex items-center gap-2.5 font-mono text-[12px] tracking-[0.25em] text-fog">
+                <span className="h-2 w-2 rounded-full bg-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]" aria-hidden="true" />
+                NAVIGATION
+              </span>
+              <button
+                ref={closeRef}
+                onClick={close}
+                aria-label="Close navigation"
+                className="grid h-14 w-14 place-items-center rounded-[14px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
+              >
+                <X size={26} />
+              </button>
+            </div>
+            <nav aria-label="Mobile" className="relative flex-1 overflow-y-auto px-[36px] pb-6 pt-[44px]">
+              <ul>
+                {DRAWER_NAV.map((n, i) => (
+                  <li
+                    key={n.n}
+                    className={`border-b border-[rgba(120,140,165,0.12)] transition-all duration-300 ${open ? 'translate-x-0 opacity-100' : 'translate-x-6 opacity-0'}`}
+                    style={{ transitionDelay: open ? `${80 + i * 32}ms` : '0ms' }}
+                  >
+                    <Link
+                      href={n.href}
+                      onClick={close}
+                      className="group flex w-full items-center gap-5 py-6 text-left"
+                    >
+                      <span className="w-12 shrink-0 font-mono text-[16px] text-pulse" aria-hidden="true">{n.n}</span>
+                      <span className="relative text-[25px] font-bold tracking-tight text-white transition group-active:text-white">
+                        {n.label}
+                        <span className="absolute -left-5 top-1/2 hidden h-4 w-[2px] -translate-y-1/2 bg-pulse opacity-0 transition group-active:opacity-100" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="ax-safe-bottom relative space-y-4 px-[36px] pb-8 pt-2">
+              {authed ? (
+                <Link
+                  href="/app/dashboard"
+                  onClick={close}
+                  className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={close}
+                    className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] border border-line bg-[#111722] text-[16px] font-bold text-white transition hover:border-pulse/50"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={close}
+                    className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110"
+                  >
+                    Activate account
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

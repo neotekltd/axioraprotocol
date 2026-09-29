@@ -20,7 +20,7 @@ const STATUS_ROWS: [string, string][] = [
 
 export function HeroAutopilot() {
   return (
-    <section className="relative overflow-hidden pb-14 pt-24 md:pb-16 md:pt-32" aria-label="Introduction">
+    <section className="relative overflow-hidden pb-14 pt-40 md:pb-16 md:pt-44" aria-label="Introduction">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_72%_32%,rgba(34,211,238,0.1),transparent)]" aria-hidden="true" />
       <svg className="absolute inset-0 h-full w-full opacity-60" aria-hidden="true" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1200 640">
         <g stroke="#22D3EE" strokeOpacity="0.14" strokeWidth="1">

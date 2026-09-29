@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function CalculatorPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-40 pb-20">
       <SectionEyebrow>INVESTMENT CALCULATOR</SectionEyebrow>
       <SectionTitle>Model deployment outcomes</SectionTitle>
       <p className="mt-3 text-sm text-fog max-w-2xl">Term 20–90 days · capital $10–$100,000 · instant frontend estimate. Authoritative figures come from <code>GET /api/deployments/quote</code> at confirmation.</p>

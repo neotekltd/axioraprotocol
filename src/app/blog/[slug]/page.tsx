@@ -16,7 +16,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const post = BLOG_POSTS.find((p) => p.slug === params.slug);
   if (!post) notFound();
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-40 pb-20">
       <div className="text-[11px] tracking-widest text-pulse">{post.category.toUpperCase()}</div>
       <h1 className="mt-3 text-4xl font-bold tracking-tight">{post.title}</h1>
       <div className="mt-3 text-xs text-fog">{post.date} · Axiora Protocol Research · ~4 min read</div>

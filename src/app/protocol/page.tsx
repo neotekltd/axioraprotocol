@@ -18,7 +18,7 @@ const FLOW = [
 
 export default function ProtocolPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-40 pb-20">
       <SectionEyebrow>AXIORA PROTOCOL</SectionEyebrow>
       <SectionTitle>Convergence architecture</SectionTitle>
       <p className="mt-4 max-w-2xl text-mist/75">Original design: four independent agents plus a consensus gate, risk validation, execution engine, exchange, reconciler and ledger. Frontend requests can never execute orders directly.</p>

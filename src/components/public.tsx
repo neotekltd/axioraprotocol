@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 
 export function PageHero({ eyebrow, title, lede }: { eyebrow: string; title: string; lede?: string }) {
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-28 sm:px-6 md:pt-32">
+    <div className="mx-auto max-w-7xl px-4 pt-40 sm:px-6 md:pt-44">
       <div className="max-w-3xl">
         <div className="text-[11px] font-semibold tracking-[0.28em] text-pulse">{eyebrow}</div>
         <h1 className="t-h1 mt-3 text-4xl sm:text-5xl">{title}</h1>

@@ -11,7 +11,7 @@ export const metadata = {
 export default async function StatisticsPage() {
   const stats = await getProtocolStats();
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-40 pb-20">
       <SectionEyebrow>PROTOCOL TERMINAL</SectionEyebrow>
       <SectionTitle>Statistics</SectionTitle>
       {!stats ? (

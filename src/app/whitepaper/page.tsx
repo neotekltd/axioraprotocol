@@ -1,7 +1,7 @@
 export const metadata = { title: 'Whitepaper' };
 export default function WhitepaperPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-40 pb-20">
       <h1 className="text-4xl font-bold tracking-tight">Axiora Protocol Whitepaper (demo outline)</h1>
       <div className="mt-6 space-y-4 text-sm text-mist/80 leading-relaxed">
         <p>1. Consensus architecture — Signal, Risk, Execution, Sentiment agents and the consensus gate.</p>

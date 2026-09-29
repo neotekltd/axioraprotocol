@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function ReferralsPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-40 pb-20">
       <SectionEyebrow>REFERRAL PROGRAM</SectionEyebrow>
       <SectionTitle>Two reward mechanisms</SectionTitle>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
