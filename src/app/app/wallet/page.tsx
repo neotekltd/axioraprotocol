@@ -28,7 +28,7 @@ export default async function WalletPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="TOTAL BALANCE" value={formatUSD(summary.totalValue)} />
         <StatCard label="AVAILABLE" value={formatUSD(summary.available)} />
-        <StatCard label="RESERVED" value={formatUSD(summary.deployedActive)} sub="Locked in deployments" />
+        <StatCard label="RESERVED" value={formatUSD(summary.deployedActive + summary.reservedWithdrawals)} sub="Deployments + withdrawal holds" />
         <StatCard label="WITHDRAWN" value={formatUSD(summary.withdrawn)} sub="Lifetime" />
       </div>
 

@@ -25,7 +25,7 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
 
   return (
     <div>
-      <PageHeader title="Withdraw" sub="Withdrawals draw from available balance only and are processed in the daily window." />
+      <PageHeader title="Withdraw" sub="Withdrawals draw from available balance only. Requests are recorded with a balance hold; on-chain broadcast activates with the execution layer." />
       <div className="glass mt-6 max-w-2xl rounded-2xl p-6 sm:p-8">
         <div className="text-sm text-fog">Available Balance <span className="font-mono font-bold text-white">{formatUSD(available)}</span></div>
         <label htmlFor="wd-amount" className="mt-4 block text-xs text-fog">Amount (USDT)</label>

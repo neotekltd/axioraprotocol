@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { logAuthError } from '@/lib/auth-errors';
 import { OtpInput } from '@/components/auth/OtpInput';
 
 const COOLDOWN = 60;
@@ -13,15 +14,28 @@ function friendlyError(message: string): 'invalid' | 'expired' {
   return 'invalid';
 }
 
+// Privacy-safe display: j***@example.com (never the full address in UI text).
+function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at <= 0) return 'your email';
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const shown = local.length <= 1 ? '*' : `${local[0]}***`;
+  return `${shown}@${domain}`;
+}
+
 export function VerifyEmailForm() {
   const params = useSearchParams();
   const router = useRouter();
   // Email is bound to the signup attempt — never editable here.
   const email = params.get('email')?.trim() ?? '';
+  // Set when the user arrives via the existing-unverified recovery path.
+  const resentNotice = params.get('resent') === '1';
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [state, setState] = useState<'idle' | 'invalid' | 'expired'>('idle');
   const [cooldown, setCooldown] = useState(0);
+  const [resendError, setResendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -68,17 +82,43 @@ export function VerifyEmailForm() {
   const resend = async () => {
     if (cooldown > 0) return;
     setState('idle');
-    const supabase = createClient();
-    await supabase.auth.resend({ type: 'signup', email });
-    setCooldown(COOLDOWN);
+    setResendError(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        logAuthError('verify:resend', error);
+        const m = error.message.toLowerCase();
+        const status = (error as { status?: number }).status;
+        setResendError(
+          status === 429 || m.includes('rate limit') || m.includes('too many')
+            ? 'Too many resend attempts. Wait a minute and try again.'
+            : 'Could not resend the code right now. Wait a moment and try again.'
+        );
+        return;
+      }
+      setCooldown(COOLDOWN);
+    } catch (err) {
+      logAuthError('verify:resend:exception', err);
+      setResendError('Could not resend the code. Check your connection and try again.');
+    }
   };
 
   return (
     <div className="mt-6">
+      {resentNotice && (
+        <p role="status" className="mb-4 rounded-xl border border-pulse/40 bg-pulse/10 px-4 py-3 text-center text-xs text-pulse">
+          We sent a new verification code to your email.
+        </p>
+      )}
       <p className="text-center text-sm text-fog">
         We sent a 6-digit verification code to
         <br />
-        <span className="font-mono text-white">{email}</span>
+        <span className="font-mono text-white">{maskEmail(email)}</span>
       </p>
       <div className="mt-6">
         <OtpInput
@@ -111,6 +151,9 @@ export function VerifyEmailForm() {
           {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
         </button>
       </div>
+      {resendError && (
+        <p role="alert" className="mt-3 text-center text-xs text-danger">{resendError}</p>
+      )}
       <div className="mt-2 text-center text-xs">
         <Link href="/register" className="text-fog hover:text-white">Change email</Link>
       </div>

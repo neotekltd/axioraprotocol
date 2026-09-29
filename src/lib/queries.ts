@@ -172,6 +172,7 @@ export async function getTransactions(limit = 100): Promise<WalletTxn[]> {
 export interface PortfolioSummary {
   deposited: number;
   withdrawn: number;
+  reservedWithdrawals: number;
   deployedActive: number;
   profitCredited: number;
   referralCredited: number;
@@ -182,7 +183,7 @@ export interface PortfolioSummary {
 
 export async function getPortfolioSummary(): Promise<PortfolioSummary> {
   const zero: PortfolioSummary = {
-    deposited: 0, withdrawn: 0, deployedActive: 0, profitCredited: 0,
+    deposited: 0, withdrawn: 0, reservedWithdrawals: 0, deployedActive: 0, profitCredited: 0,
     referralCredited: 0, available: 0, totalValue: 0, totalProfit: 0,
   };
   try {
@@ -195,6 +196,12 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
     const completed = txns.filter((t) => t.status === 'completed');
     const deposited = sum(completed.filter((t) => t.type === 'deposit'));
     const withdrawn = sum(completed.filter((t) => t.type === 'withdrawal'));
+    // Reservation: pending/processing withdrawals lock funds immediately so
+    // the same balance cannot be withdrawn or deployed twice while a request
+    // awaits backend execution. Released only by terminal states.
+    const reservedWithdrawals = sum(
+      txns.filter((t) => t.type === 'withdrawal' && (t.status === 'pending' || t.status === 'processing'))
+    );
     const profitCredited = sum(completed.filter((t) => t.type === 'profit'));
     const deployedActive = deployments
       .filter((d) => d.status === 'pending' || d.status === 'active')
@@ -206,9 +213,9 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
       .filter((d) => d.status === 'matured')
       .reduce((a, d) => a + d.profit, 0);
     const totalProfit = profitCredited + settledProfit;
-    const available = Math.max(0, deposited - withdrawn - deployedActive + profitCredited + referralCredited);
+    const available = Math.max(0, deposited - withdrawn - reservedWithdrawals - deployedActive + profitCredited + referralCredited);
     const totalValue = available + deployedActive;
-    return { deposited, withdrawn, deployedActive, profitCredited, referralCredited, available, totalValue, totalProfit };
+    return { deposited, withdrawn, reservedWithdrawals, deployedActive, profitCredited, referralCredited, available, totalValue, totalProfit };
   } catch {
     return zero;
   }

@@ -21,7 +21,7 @@ export default function TermsPage() {
       <div className="py-12">
         <Prose>
           <H>1. What this is</H>
-          <p>Axiora Protocol in this repository is an original demonstration interface for a multi-agent consensus trading concept. It is not affiliated with any other Axiora-branded product, makes no earnings guarantees, and in its current build moves no real funds.</p>
+          <p>Axiora Protocol in this repository is an original implementation of a multi-agent consensus trading concept. It is not affiliated with any other Axiora-branded product and makes no earnings guarantees. On-chain deposit processing and automated withdrawal broadcasting are not yet activated: deposits show as unavailable until backend issuance is connected, and withdrawals are recorded as requests with full state tracking until the execution layer is activated.</p>
           <H>2. Eligibility</H>
           <p>Account creation requires a valid email address and successful email verification. Availability by jurisdiction (including KYC/AML and restricted regions) must be determined with legal counsel before any production launch; this demo blocks no one.</p>
           <H>3. Accounts and security</H>

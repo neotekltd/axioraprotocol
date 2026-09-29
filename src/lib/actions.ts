@@ -132,7 +132,7 @@ export async function requestWithdrawal(form: { amount: number; address: string 
     });
     await notify(supabase, uid, 'withdrawal', 'Withdrawal requested', `${fullParsed.data.amount.toFixed(2)} USDT to ${fullParsed.data.address.slice(0, 10)}…`);
     revalidatePath('/app');
-    return { ok: true, message: 'Withdrawal request recorded. It will be processed in the daily window.' };
+    return { ok: true, message: 'Withdrawal recorded as a pending request. On-chain broadcast activates with the execution layer; your balance hold is visible in the wallet.' };
   } catch {
     return { ok: false, message: 'Could not record the withdrawal. Please try again.' };
   }

@@ -50,5 +50,5 @@ export const FAQS = [
   { q: 'What happens during losing periods?', a: 'Risk guards reduce size or halt deployment; losses reduce position value and are shown transparently. No yield is guaranteed.' },
   { q: 'What security controls exist?', a: 'This scaffold demonstrates the UI for AES-256-at-rest, TLS 1.3, 2FA withdrawal protection, rate limiting, secure cookies, and audit logs. Only claim controls you have actually implemented and audited.' },
   { q: 'Is identity verification required?', a: 'KYC/AML policy is jurisdiction-dependent and configurable. This demo requires email verification only.' },
-  { q: 'Which jurisdictions are supported?', a: 'Restricted jurisdictions must be configured with legal counsel before launch. This demo blocks no one and handles no real funds.' },
+  { q: 'Which jurisdictions are supported?', a: 'Restricted jurisdictions must be configured with legal counsel before launch. KYC/AML checks and automated chain execution are not yet activated in this build.' },
 ];

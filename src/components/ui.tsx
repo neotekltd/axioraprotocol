@@ -11,11 +11,16 @@ export function DemoBadge({ label = 'DEMO DATA' }: { label?: string }) {
 }
 
 export function SectionEyebrow({ children }: { children: React.ReactNode }) {
-  return <div className="text-[11px] font-semibold tracking-[0.28em] text-pulse">{children}</div>;
+  return (
+    <div className="flex items-center gap-2.5 font-mono text-[11px] font-semibold tracking-[0.24em] text-pulse">
+      <span className="inline-block h-px w-6 bg-pulse/60" aria-hidden="true" />
+      {children}
+    </div>
+  );
 }
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]">{children}</h2>;
+  return <h2 className="mt-3 max-w-2xl text-3xl sm:text-[2.75rem] font-bold tracking-tight leading-[1.05]">{children}</h2>;
 }
 
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {

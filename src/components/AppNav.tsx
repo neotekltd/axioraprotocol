@@ -26,8 +26,10 @@ function isActive(pathname: string, href: string) {
 }
 
 function linkClass(active: boolean) {
-  return `block rounded-lg px-3 py-2 text-sm transition-colors ${
-    active ? 'bg-pulse/10 font-semibold text-pulse' : 'text-mist/80 hover:bg-surface hover:text-white'
+  return `relative block rounded-md px-3 py-2 font-mono text-[12px] tracking-[0.08em] uppercase transition-colors ${
+    active
+      ? 'bg-pulse/10 font-bold text-pulse before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[2px] before:-translate-y-1/2 before:bg-pulse'
+      : 'text-mist/75 hover:bg-surface hover:text-white'
   }`;
 }
 

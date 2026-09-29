@@ -16,7 +16,7 @@ export function Footer() {
           <div className="mt-1 font-mono text-[10px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</div>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-fog">
             Multi-agent consensus trading interface. Original implementation; not affiliated
-            with any other protocol. No real funds move in this build.
+            with any other protocol. On-chain deposit processing is not yet activated — see the Deposit page for current status.
           </p>
         </div>
         <nav aria-label="Protocol">

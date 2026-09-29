@@ -35,7 +35,7 @@ function Nodes() {
   return (
     <group ref={group}>
       <lineSegments geometry={spokes}>
-        <lineBasicMaterial color="#22D3EE" transparent opacity={0.35} />
+        <lineBasicMaterial color="#22D3EE" transparent opacity={0.5} />
       </lineSegments>
       {positions.map((p, i) => (
         <mesh key={i} position={[p[0], p[1], p[2]]}>
@@ -99,7 +99,7 @@ export function ConsensusCanvas() {
     <div ref={holder} className="absolute inset-0">
     <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <ambientLight intensity={0.6} />
-      <pointLight position={[4, 4, 4]} color="#22D3EE" intensity={2.5} distance={14} />
+      <pointLight position={[4, 4, 4]} color="#22D3EE" intensity={3.4} distance={14} />
       <Nodes />
       <Particles />
     </Canvas>

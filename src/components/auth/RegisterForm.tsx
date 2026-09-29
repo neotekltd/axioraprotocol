@@ -10,11 +10,42 @@ function friendlyError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('already registered') || m.includes('already exists') || m.includes('duplicate'))
     return 'An account with this email already exists. Try signing in instead.';
+  if (m.includes('already') && m.includes('confirm'))
+    return 'This email is already verified. Try signing in instead.';
   if (m.includes('password')) return 'Password does not meet requirements (minimum 8 characters).';
   if (m.includes('email')) return 'Please enter a valid email address.';
   if (m.includes('rate limit') || m.includes('too many')) return 'Too many attempts. Wait a moment and try again.';
   if (m.includes('network') || m.includes('fetch')) return 'Network error reaching authentication. Check your connection.';
   return 'Registration failed. Please try again.';
+}
+
+// Recovery for addresses that already have an account (verified or not).
+// Never reveals which one: unverified addresses get a fresh code and land on
+// /verify-email; verified addresses get a privacy-safe sign-in nudge.
+async function recoverExistingAccount(
+  supabase: ReturnType<typeof createClient>,
+  cleanEmail: string,
+  router: ReturnType<typeof useRouter>,
+  setError: (m: string | null) => void
+) {
+  const { error: resendError } = await supabase.auth.resend({
+    type: 'signup',
+    email: cleanEmail,
+    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+  });
+  if (!resendError) {
+    router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}&resent=1`);
+    return;
+  }
+  logAuthError('signup:resend', resendError);
+  const m = resendError.message.toLowerCase();
+  const status = (resendError as { status?: number }).status;
+  if (status === 429 || m.includes('rate limit') || m.includes('too many')) {
+    setError('Too many attempts. Wait a moment and try again — or use Resend on the verification page.');
+  } else {
+    // Verified account (or anything else): do not disclose details.
+    setError('An account with this email already exists. Try signing in instead.');
+  }
 }
 
 export function RegisterForm() {
@@ -41,8 +72,9 @@ export function RegisterForm() {
         setError(null);
         try {
           const supabase = createClient();
+          const cleanEmail = email.trim();
           const { data, error } = await supabase.auth.signUp({
-            email: email.trim(),
+            email: cleanEmail,
             password,
             options: {
               emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -51,7 +83,16 @@ export function RegisterForm() {
           });
           if (error) {
             const kind = logAuthError('signup', error);
-            setError(kind === 'CONFIG' ? CONFIG_ERROR : friendlyError(error.message));
+            if (kind === 'CONFIG') {
+              setError(CONFIG_ERROR);
+              return;
+            }
+            const m = error.message.toLowerCase();
+            if (m.includes('already registered') || m.includes('already exists') || m.includes('duplicate')) {
+              await recoverExistingAccount(supabase, cleanEmail, router, setError);
+              return;
+            }
+            setError(friendlyError(error.message));
             return;
           }
           // Confirm-email ON (expected): no session yet → enter the 6-digit code.
@@ -61,7 +102,16 @@ export function RegisterForm() {
             router.refresh();
             return;
           }
-          router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+          // Supabase obfuscates existing accounts: empty identities + no
+          // session means this address already has an account (verified or
+          // not). Route through recovery so unverified users get a fresh OTP
+          // instead of waiting on an email that may never come.
+          const identities = (data.user as { identities?: unknown[] } | null)?.identities;
+          if (data.user && Array.isArray(identities) && identities.length === 0) {
+            await recoverExistingAccount(supabase, cleanEmail, router, setError);
+            return;
+          }
+          router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}`);
         } catch (err) {
           const kind = logAuthError('signup:exception', err);
           setError(kind === 'CONFIG' ? CONFIG_ERROR : 'Network error reaching authentication. Check your connection.');
