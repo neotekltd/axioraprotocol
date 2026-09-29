@@ -19,11 +19,16 @@ export const metadata: Metadata = {
     'Axiora is an original AI consensus trading protocol interface: autonomous signal, risk, execution and sentiment agents, transparent statistics, calculator, and capital deployment dashboard.',
   metadataBase: new URL(SITE_URL),
   alternates: { canonical: '/' },
+  icons: {
+    icon: '/axiora-mark.png',
+    apple: '/axiora-mark.png',
+  },
   openGraph: {
     title: 'Axiora Protocol — AI Consensus Trading',
     description: 'Autonomous order execution with multi-agent consensus, live statistics and auditable deployment flow.',
     type: 'website',
     url: '/',
+    images: [{ url: '/axiora-logo.png', width: 1200, height: 744, alt: 'Axiora Protocol' }],
   },
   twitter: { card: 'summary_large_image', title: 'Axiora Protocol', description: 'AI consensus trading protocol interface.' },
 };

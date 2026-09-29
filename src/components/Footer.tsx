@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AxioraLogo } from '@/components/AxioraLogo';
 
 export function Footer() {
   const pathname = usePathname();
@@ -12,8 +13,8 @@ export function Footer() {
     <footer className="border-t border-line bg-[#04070c]">
       <div className="mx-auto grid max-w-[1200px] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr]">
         <div>
-          <div className="text-sm font-bold tracking-tight">AXIORA PROTOCOL</div>
-          <div className="mt-1 font-mono text-[10px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</div>
+          <AxioraLogo width={150} />
+          <div className="mt-2 font-mono text-[10px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</div>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-fog">
             Multi-agent consensus trading interface. Original implementation; not affiliated
             with any other protocol. On-chain deposit processing is not yet activated — see the Deposit page for current status.

@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
+import { AuthShell } from '@/components/auth/AuthShell';
 import { AxButton, AxInput, AxPasswordInput, FieldError, FieldSuccess, PasswordStrength } from '@/components/ax/controls';
-import { AxCard } from '@/components/ax/primitives';
 
 const CONFIG_ERROR = 'Authentication is misconfigured. Please try again later.';
+const USERNAME_RE = /^[a-z0-9_]{6,}$/;
 
 function friendlyError(message: string): string {
   const m = message.toLowerCase();
@@ -50,6 +51,8 @@ async function recoverExistingAccount(
 }
 
 export function RegisterForm() {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -58,6 +61,18 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const match = confirm.length > 0 && password === confirm;
+
+  const continueToPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = username.trim().toLowerCase();
+    if (!USERNAME_RE.test(clean)) {
+      setError('Username must be at least 6 characters: a–z, 0–9, _');
+      return;
+    }
+    setUsername(clean);
+    setError(null);
+    setStep(2);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +90,10 @@ export function RegisterForm() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: referral.trim() ? { referral_code: referral.trim() } : {},
+          data: {
+            username,
+            ...(referral.trim() ? { referral_code: referral.trim() } : {}),
+          },
         },
       });
       if (error) {
@@ -112,51 +130,90 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[480px] px-7 pb-16 pt-10">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-[14px] text-[#AAB5C7] hover:text-white" aria-label="Back to home">
-        <ArrowLeft size={16} /> Back
-      </Link>
-      <AxCard className="mt-6 p-7 sm:p-8">
-        <div className="flex gap-1.5" aria-hidden="true">
-          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
-          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
+    <AuthShell>
+      <div className="rounded-[22px] border border-[rgba(100,150,190,0.25)] bg-[#0B0F17]/95 p-7 shadow-[0_0_60px_rgba(47,214,255,0.07)] sm:p-9">
+        <div className="flex gap-2" aria-hidden="true">
+          <span className="h-[5px] w-11 rounded-full bg-[#2FD6FF] shadow-[0_0_12px_rgba(47,214,255,0.7)]" />
+          <span className={`h-[5px] w-11 rounded-full transition ${step === 2 ? 'bg-[#2FD6FF] shadow-[0_0_12px_rgba(47,214,255,0.7)]' : 'bg-[#2A394D]'}`} />
         </div>
-        <h1 className="mt-5 text-[32px] font-bold leading-tight tracking-tight text-white">
+        <h1 className="mt-6 text-[36px] font-bold leading-[1.05] tracking-tight text-white sm:text-[40px]">
           Create your <span className="text-[#2FD6FF]">account.</span>
         </h1>
-        <form onSubmit={submit} className="mt-7 space-y-5" autoComplete="on">
-          <div>
-            <label htmlFor="email" className="mb-2 block text-[15px] text-[#AAB5C7]">Email</label>
-            <AxInput id="email" name="email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} />
-          </div>
-          <div>
-            <AxPasswordInput label="Password" id="password" name="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" placeholder="Create a password" />
-            <PasswordStrength password={password} />
-          </div>
-          <div>
-            <AxPasswordInput label="Repeat password" id="password-confirm" name="password-confirm" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Repeat your password" />
-            {confirm.length > 0 && (
-              match
-                ? <FieldSuccess message="Matches" />
-                : <FieldError message="Passwords do not match yet." />
-            )}
-          </div>
-          <div>
-            <label htmlFor="referral" className="mb-2 flex items-baseline justify-between text-[15px] text-[#AAB5C7]">
-              Invited by <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[#596579]">optional</span>
-            </label>
-            <AxInput id="referral" name="referral" value={referral} onChange={(e) => setReferral(e.target.value)} placeholder="Referral code" autoComplete="off" />
-            <p className="mt-2 text-[13px] leading-relaxed text-[#78859A]">They get the credit, paid from protocol rewards — not out of your deposit.</p>
-          </div>
-          <FieldError message={error} />
-          <AxButton disabled={busy}>
-            {busy ? 'Creating…' : <>Create account <ArrowRight size={17} aria-hidden="true" /></>}
-          </AxButton>
-        </form>
-        <p className="mt-5 text-center text-[14px] text-[#78859A]">
-          Have an account? <Link href="/login" className="font-semibold text-white hover:text-[#2FD6FF]">Sign in</Link>
-        </p>
-      </AxCard>
-    </div>
+
+        {step === 1 ? (
+          <form onSubmit={continueToPassword} className="mt-4" autoComplete="on">
+            <p className="text-[17px] leading-relaxed text-[#AAB5C7]">It&apos;s free and takes about a minute.</p>
+            <div className="mt-6 flex items-baseline justify-between gap-3">
+              <label htmlFor="username" className="text-[15px] font-bold text-white">Username</label>
+              <span className="text-right text-[13px] text-[#78859A]">6+ characters: a–z, 0–9, _</span>
+            </div>
+            <AxInput
+              id="username" name="username" required value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder="Choose a username" autoComplete="username" autoCapitalize="none"
+              spellCheck={false} maxLength={30} pattern="[a-z0-9_]{6,}"
+              className="mt-2 min-h-[58px] text-[16px]"
+            />
+            <div className="mb-2 mt-6 block text-[15px] font-bold text-white">
+              <label htmlFor="email">Email</label>
+            </div>
+            <AxInput
+              id="email" name="email" required type="email" value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com" autoComplete="username" inputMode="email"
+              autoCapitalize="none" spellCheck={false} className="mt-2 min-h-[58px] text-[16px]"
+            />
+            <div className="mb-2 mt-6 flex items-baseline justify-between gap-3">
+              <label htmlFor="referral" className="text-[15px] font-bold text-white">Invited by</label>
+              <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-[#596579]">optional</span>
+            </div>
+            <AxInput
+              id="referral" name="referral" value={referral}
+              onChange={(e) => setReferral(e.target.value)}
+              placeholder="Referral code" autoComplete="off" className="mt-2 min-h-[58px] text-[16px]"
+            />
+            <p className="mt-2.5 text-[13px] leading-relaxed text-[#78859A]">They get the credit, paid from protocol rewards — not out of your deposit.</p>
+            <FieldError message={error} />
+            <div className="mt-6">
+              <AxButton>
+                Continue <ArrowRight size={17} aria-hidden="true" />
+              </AxButton>
+            </div>
+            <div className="mt-[26px] border-t border-[#202A3A]/80 pt-[22px] text-center text-[14px] text-[#78859A]">
+              Already have an account? <Link href="/login" className="font-semibold text-[#2FD6FF] hover:brightness-110">Sign in</Link>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={submit} className="mt-4" autoComplete="on">
+            <p className="text-[17px] leading-relaxed text-[#AAB5C7]">
+              Securing <span className="font-mono text-white">{username || email.trim()}</span> — set a password to finish.
+            </p>
+            <div className="mt-6">
+              <AxPasswordInput label="Password" id="password" name="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" placeholder="Create a password" />
+              <PasswordStrength password={password} />
+            </div>
+            <div className="mt-5">
+              <AxPasswordInput label="Repeat password" id="password-confirm" name="password-confirm" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" placeholder="Repeat your password" />
+              {confirm.length > 0 && (
+                match
+                  ? <FieldSuccess message="Matches" />
+                  : <FieldError message="Passwords do not match yet." />
+              )}
+            </div>
+            <FieldError message={error} />
+            <div className="mt-6">
+              <AxButton disabled={busy}>
+                {busy ? 'Creating…' : <>Create account <ArrowRight size={17} aria-hidden="true" /></>}
+              </AxButton>
+            </div>
+            <div className="mt-[26px] border-t border-[#202A3A]/80 pt-[22px] text-center text-[14px]">
+              <button type="button" onClick={() => { setStep(1); setError(null); }} className="text-[#78859A] hover:text-white">
+                ← Back to account details
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </AuthShell>
   );
 }

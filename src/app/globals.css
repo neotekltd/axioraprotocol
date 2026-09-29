@@ -157,6 +157,12 @@ body {
 }
 .hero-in { opacity: 0; animation: hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
+@keyframes graph-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.8; }
+}
+.auth-graph-drift { animation: graph-breathe 9s ease-in-out infinite; }
+
 @keyframes drift-slow {
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(0, -10px, 0); }
@@ -232,7 +238,7 @@ body {
   .hero-in { animation: none; opacity: 1; }
   .pulse-node, .flow-line { animation: none; }
   .anim-drift, .anim-chip, .anim-chip-2, .anim-chip-3,
-  .signal-x, .signal-y, .ping-soft::before { animation: none; }
+  .signal-x, .signal-y, .ping-soft::before, .auth-graph-drift { animation: none; }
   .card-sweep:hover::after { animation: none; }
   .boot-line.go { animation: none; transform: scaleX(1); }
   html { scroll-behavior: auto; }

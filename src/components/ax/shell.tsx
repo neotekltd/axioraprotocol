@@ -8,7 +8,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bell, Home, LifeBuoy, TrendingUp, Users, Wallet, MessageCircle, Zap } from 'lucide-react';
+import { Bell, Home, LifeBuoy, TrendingUp, Users, Wallet, MessageCircle } from 'lucide-react';
+import { AxioraMark } from '@/components/AxioraLogo';
 import { cn } from '@/lib/utils';
 
 function useSessionElapsed(active: boolean) {
@@ -32,9 +33,7 @@ export function AppHeader({ email, unread = 0 }: { email?: string | null; unread
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-[1180px] items-center justify-between px-5 md:px-7">
         <Link href="/app/dashboard" className="flex items-center gap-2.5" aria-label="Axiora home">
-          <span className="grid h-9 w-9 place-items-center rounded-[12px] border border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.1)]">
-            <Zap size={16} className="text-[#2FD6FF]" />
-          </span>
+          <AxioraMark size={36} />
           <span className="text-[17px] font-extrabold tracking-tight text-white">
             AXIORA<span className="text-[#2FD6FF]">.</span>
           </span>

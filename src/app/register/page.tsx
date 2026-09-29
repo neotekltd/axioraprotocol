@@ -1,5 +1,4 @@
 import { RegisterForm } from '@/components/auth/RegisterForm';
-import { TechGridBackground } from '@/components/ax/primitives';
 
 export const metadata = {
   title: 'Register',
@@ -8,12 +7,5 @@ export const metadata = {
 };
 
 export default function RegisterPage() {
-  return (
-    <div className="relative min-h-screen bg-[#080B12]">
-      <TechGridBackground />
-      <div className="relative">
-        <RegisterForm />
-      </div>
-    </div>
-  );
+  return <RegisterForm />;
 }

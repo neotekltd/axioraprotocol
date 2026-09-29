@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { AxioraMark } from '@/components/AxioraLogo';
 
 const NAV = [
   { href: '/protocol', label: 'Protocol' },
@@ -32,11 +33,20 @@ export function Header() {
         scrolled ? 'bg-void/85 backdrop-blur-xl border-b border-line' : 'bg-transparent border-b border-transparent'
       }`}
     >
+      <div className="border-b border-line/50 px-5 py-1 font-mono text-[11px] md:px-8" aria-hidden="true">
+        <div className="mx-auto flex max-w-page items-center justify-between text-fog">
+          <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-pulse">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pulse" /> SYSTEM ONLINE
+            </span>
+            <span className="hidden sm:inline">PAYOUTS EVERY 6 HOURS</span>
+          </span>
+          <span className="hidden md:inline">3 PLANS · 4 PAYOUTS A DAY</span>
+        </div>
+      </div>
       <div className="mx-auto flex h-16 max-w-page items-center justify-between px-5 md:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-pulse/15 border border-pulse/30">
-            <Zap className="text-pulse" size={14} />
-          </span>
+          <AxioraMark size={30} />
           <span className="leading-none">
             <span className="block text-sm font-bold tracking-tight">AXIORA PROTOCOL</span>
             <span className="mt-0.5 block font-mono text-[9px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</span>

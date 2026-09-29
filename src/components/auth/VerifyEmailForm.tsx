@@ -65,9 +65,13 @@ export function VerifyEmailForm() {
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (user) {
+        const metaUsername =
+          (user.user_metadata as { username?: unknown } | null)?.username;
+        const username =
+          typeof metaUsername === 'string' && /^[a-z0-9_]{6,}$/.test(metaUsername) ? metaUsername : null;
         const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
         if (!profile) {
-          await supabase.from('profiles').insert({ id: user.id, email: user.email ?? email });
+          await supabase.from('profiles').insert({ id: user.id, email: user.email ?? email, username });
         }
       }
       router.replace('/app/dashboard');
