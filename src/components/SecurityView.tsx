@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { PageHeader } from '@/components/data';
 import { createClient } from '@/lib/supabase/client';
-
-const input = 'mt-1 w-full rounded-xl border border-line bg-void px-4 py-3 text-sm outline-none focus:border-pulse sm:max-w-xs';
+import { AxButton, AxInput, FieldError, FieldSuccess } from '@/components/ax/controls';
+import { PageHeader } from '@/components/data';
 
 export function SecurityView({ email, verified }: { email: string; verified: boolean }) {
   const router = useRouter();
@@ -51,35 +50,39 @@ export function SecurityView({ email, verified }: { email: string; verified: boo
   return (
     <div>
       <PageHeader title="Security" sub={`Signed in as ${email}`} />
-      <div className="glass mt-6 max-w-2xl space-y-5 rounded-2xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div className="mt-6 max-w-2xl space-y-6 rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="font-semibold">Email verification</div>
-            <div className={`mt-0.5 text-xs ${verified ? 'text-pulse' : 'text-amberx'}`}>
+            <div className="text-[15px] font-semibold text-white">Email verification</div>
+            <div className={`mt-0.5 text-[13px] ${verified ? 'text-[#35D98B]' : 'text-[#F2BF4A]'}`}>
               {verified ? 'Verified' : 'Not verified — check your inbox for the confirmation email'}
             </div>
           </div>
-          {!verified && <Link href="/verify-email" className="rounded-lg border border-line px-4 py-1.5 text-xs hover:border-pulse/50">Verify now</Link>}
+          {!verified && <Link href="/verify-email" className="rounded-[12px] border border-[#2A394D] px-4 py-2 text-[13px] text-white hover:border-[rgba(47,214,255,0.5)]">Verify now</Link>}
         </div>
-        <div className="border-t border-line pt-5">
-          <div className="text-sm font-semibold">Change password</div>
-          <label htmlFor="new-password" className="mt-3 block text-xs text-fog">New password (min. 8 characters)</label>
-          <input id="new-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} />
-          <label htmlFor="confirm-password" className="mt-3 block text-xs text-fog">Confirm new password</label>
-          <input id="confirm-password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className={input} />
-          {message && <p role={message.ok ? 'status' : 'alert'} className={`mt-3 text-xs ${message.ok ? 'text-pulse' : 'text-danger'}`}>{message.text}</p>}
-          <button onClick={changePassword} disabled={busy} className="mt-4 rounded-xl border border-line px-6 py-2.5 text-sm hover:border-pulse/50 disabled:opacity-60">
-            {busy ? 'Updating…' : 'Update password'}
-          </button>
+        <div className="border-t border-[#202A3A] pt-5">
+          <div className="text-[15px] font-semibold text-white">Change password</div>
+          <label htmlFor="new-password" className="mb-2 mt-3 block text-[14px] text-[#AAB5C7]">New password (min. 8 characters)</label>
+          <AxInput id="new-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="sm:max-w-xs" />
+          <label htmlFor="confirm-password" className="mb-2 mt-3 block text-[14px] text-[#AAB5C7]">Confirm new password</label>
+          <AxInput id="confirm-password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="sm:max-w-xs" />
+          {message && (message.ok
+            ? <FieldSuccess message={message.text} />
+            : <div className="mt-2"><FieldError message={message.text} /></div>)}
+          <div className="mt-4 max-w-xs">
+            <AxButton onClick={changePassword} disabled={busy}>
+              {busy ? 'Updating…' : 'Update password'}
+            </AxButton>
+          </div>
         </div>
-        <div className="border-t border-line pt-5 text-sm">
-          <div className="font-semibold">Two-factor authentication</div>
-          <p className="mt-1 text-xs text-fog">TOTP two-factor is not available in this release. Withdrawals are gated by email-verified sessions and saved-address verification instead. No authenticator is configured — nothing here claims otherwise.</p>
+        <div className="border-t border-[#202A3A] pt-5">
+          <div className="text-[15px] font-semibold text-white">Two-factor authentication</div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#78859A]">TOTP two-factor is not available in this release. Withdrawals are gated by email-verified sessions and saved-address verification instead. No authenticator is configured — nothing here claims otherwise.</p>
         </div>
-        <div className="border-t border-line pt-5">
-          <div className="text-sm font-semibold">Session</div>
-          <p className="mt-1 text-xs text-fog">This device holds the current session via secure HTTP-only cookies.</p>
-          <button onClick={signOut} disabled={signingOut} className="mt-3 rounded-xl border border-danger/40 px-6 py-2.5 text-sm text-danger hover:bg-danger/10 disabled:opacity-60">
+        <div className="border-t border-[#202A3A] pt-5">
+          <div className="text-[15px] font-semibold text-white">Session</div>
+          <p className="mt-1 text-[13px] text-[#78859A]">This device holds the current session via secure HTTP-only cookies.</p>
+          <button onClick={signOut} disabled={signingOut} className="mt-3 rounded-[14px] border border-[rgba(240,107,120,0.4)] px-6 py-3 text-[14px] font-semibold text-[#F06B78] hover:bg-[rgba(240,107,120,0.1)] disabled:opacity-60">
             {signingOut ? 'Signing out…' : 'Sign out everywhere on this device'}
           </button>
         </div>

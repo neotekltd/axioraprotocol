@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PageHeader, SectionCard, StatusBadge } from '@/components/data';
 import { formatUSD } from '@/lib/finance';
-import { getDeploymentByRef } from '@/lib/queries';
+import { getDeploymentByRef, deploymentLabel } from '@/lib/queries';
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   return { title: `Deployment ${params.id}` };
@@ -31,7 +31,7 @@ export default async function DeploymentDetail({ params }: { params: { id: strin
     <div>
       <PageHeader
         title={`Deployment ${d.ref}`}
-        sub={`Created ${fmt(d.createdAt)} · ${d.termDays}-day term`}
+        sub={`Created ${fmt(d.createdAt)} · ${deploymentLabel(d) === '—' ? 'deployment' : `${deploymentLabel(d)} plan`}`}
         actions={<Link href="/app/deployments" className="rounded-xl border border-line px-5 py-2.5 text-sm hover:border-pulse/50">Back to list</Link>}
       />
       <SectionCard title="Overview">

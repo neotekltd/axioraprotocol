@@ -35,12 +35,17 @@ export function FaqAccordion({ items, numbered = false }: { items: FaqItem[]; nu
                 <path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            {isOpen && (
-              <p id={`faq-panel-${i}`} role="region" aria-labelledby={`faq-button-${i}`} className="px-5 pb-4 pl-5 text-sm leading-relaxed text-fog">
-                {numbered && <span className="mr-2 inline-block h-3 w-px bg-pulse/70 align-middle" aria-hidden="true" />}
-                {f.a}
-              </p>
-            )}
+            <div
+              id={`faq-panel-${i}`} role="region" aria-labelledby={`faq-button-${i}`}
+              className={`grid transition-all duration-300 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+            >
+              <div className="overflow-hidden">
+                <p className="px-5 pb-4 pl-5 text-sm leading-relaxed text-fog">
+                  {numbered && <span className="mr-2 inline-block h-3 w-px bg-pulse/70 align-middle" aria-hidden="true" />}
+                  {f.a}
+                </p>
+              </div>
+            </div>
           </div>
         );
       })}

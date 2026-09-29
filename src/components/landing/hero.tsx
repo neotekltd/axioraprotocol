@@ -12,9 +12,9 @@ import { PROTOCOL_CONFIG } from '@/lib/config';
 const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
 
 const STATUS_ROWS: [string, string][] = [
-  ['MINIMUM', `$${PROTOCOL_CONFIG.minDeployment}`],
-  ['TERMS', `${PROTOCOL_CONFIG.minTermDays}–${PROTOCOL_CONFIG.maxTermDays} days`],
-  ['PAYOUTS', 'At maturity'],
+  ['RATE', '1.00–2.00% per 6h'],
+  ['CYCLE', 'Every 6 hours'],
+  ['ENTRY', 'From $10'],
   ['PRINCIPAL', 'Returned at maturity'],
 ];
 
@@ -57,16 +57,17 @@ export function HeroAutopilot() {
               How it works
             </Link>
           </div>
-          <div className="hero-in mt-6 max-w-sm rounded-lg border border-line bg-void/70" style={{ animationDelay: '900ms' }}>
-            <div className="border-b border-line px-3.5 py-1.5 font-mono text-[10px] tracking-[0.25em] text-fog">SYSTEM STATUS</div>
-            <dl>
-              {STATUS_ROWS.map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between border-b border-line/50 px-3.5 py-[7px] font-mono text-[11px] last:border-0">
-                  <dt className="tracking-[0.18em] text-fog">{k}</dt>
-                  <dd className="text-mist">{v}</dd>
-                </div>
-              ))}
-            </dl>
+          <div className="hero-in mt-6 grid max-w-sm grid-cols-3 gap-2 rounded-lg border border-line bg-void/70 p-3.5" style={{ animationDelay: '900ms' }}>
+            {[
+              ['RATE', '1.00–2.00% / 6h'],
+              ['CYCLE', 'Every 6 hours'],
+              ['ENTRY', 'From $10'],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="font-mono text-[10px] tracking-[0.18em] text-fog">{k}</dt>
+                <dd className="mt-0.5 font-mono text-[12px] font-bold text-mist">{v}</dd>
+              </div>
+            ))}
           </div>
         </div>
         <div className="hero-in relative" style={{ animationDelay: '950ms' }}>

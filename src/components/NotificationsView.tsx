@@ -6,8 +6,8 @@ import { markNotificationRead, markAllNotificationsRead } from '@/lib/actions';
 import type { Notification } from '@/lib/queries';
 
 const TYPE_DOT: Record<string, string> = {
-  deposit: 'bg-pulse', withdrawal: 'bg-amberx', deployment: 'bg-pulse',
-  profit: 'bg-pulse', referral: 'bg-cyanx', security: 'bg-danger', system: 'bg-fog',
+  deposit: 'bg-[#2FD6FF]', withdrawal: 'bg-[#F2BF4A]', deployment: 'bg-[#2FD6FF]',
+  profit: 'bg-[#35D98B]', referral: 'bg-[#2FD6FF]', security: 'bg-[#F06B78]', system: 'bg-[#78859A]',
 };
 
 export function NotificationsView({ initial, unread }: { initial: Notification[]; unread: number }) {
@@ -32,9 +32,9 @@ export function NotificationsView({ initial, unread }: { initial: Notification[]
 
   if (items.length === 0) {
     return (
-      <div className="glass mt-6 rounded-2xl p-8 text-center sm:p-12">
-        <div className="font-bold">You are all caught up</div>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-fog">Deposit, withdrawal, deployment, profit, referral and security events will appear here.</p>
+      <div className="mt-6 rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-8 text-center sm:p-10">
+        <div className="font-bold text-white">You are all caught up</div>
+        <p className="mx-auto mt-1 max-w-sm text-[14px] text-[#AAB5C7]">Deposit, withdrawal, deployment, profit, referral and security events will appear here.</p>
       </div>
     );
   }
@@ -42,9 +42,9 @@ export function NotificationsView({ initial, unread }: { initial: Notification[]
   return (
     <div>
       <div className="mt-6 flex items-center justify-between">
-        <span className="rounded-full bg-pulse/15 px-2.5 py-1 text-[11px] text-pulse" aria-live="polite">{count} unread</span>
+        <span className="rounded-full bg-[rgba(47,214,255,0.12)] px-2.5 py-1 font-mono text-[11px] text-[#2FD6FF]" aria-live="polite">{count} unread</span>
         {count > 0 && (
-          <button onClick={readAll} className="rounded-lg border border-line px-4 py-1.5 text-xs hover:border-pulse/50">Mark all read</button>
+          <button onClick={readAll} className="rounded-[12px] border border-[#2A394D] px-4 py-2 text-[13px] text-white hover:border-[rgba(47,214,255,0.5)]">Mark all read</button>
         )}
       </div>
       <ul className="mt-4 space-y-3">
@@ -52,16 +52,16 @@ export function NotificationsView({ initial, unread }: { initial: Notification[]
           <li key={n.id}>
             <button
               onClick={() => readOne(n.id)}
-              className={`glass flex w-full items-center justify-between gap-3 rounded-2xl p-5 text-left hover:border-pulse/30 ${n.read ? 'opacity-70' : ''}`}
+              className={`flex w-full items-center justify-between gap-3 rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-5 text-left transition hover:border-[rgba(47,214,255,0.4)] ${n.read ? 'opacity-70' : ''}`}
             >
               <span className="flex min-w-0 items-start gap-3">
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TYPE_DOT[n.type] ?? 'bg-fog'}`} aria-hidden="true" />
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TYPE_DOT[n.type] ?? 'bg-[#78859A]'}`} aria-hidden="true" />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">{n.title}</span>
-                  {n.body && <span className="block truncate text-xs text-fog">{n.body}</span>}
+                  <span className="block truncate text-[14px] font-semibold text-white">{n.title}</span>
+                  {n.body && <span className="block truncate text-[13px] text-[#78859A]">{n.body}</span>}
                 </span>
               </span>
-              <span className="shrink-0 text-xs text-fog">{n.createdAt.slice(0, 10)}</span>
+              <span className="shrink-0 font-mono text-[12px] text-[#78859A]">{n.createdAt.slice(0, 10)}</span>
             </button>
           </li>
         ))}

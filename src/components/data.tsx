@@ -1,6 +1,6 @@
 // Server-side shared UI primitives for the authenticated app.
-// Visual system: near-black panels, subtle borders, neon-green accent,
-// compact data presentation. No emojis, no decoration.
+// Axiora app visual language: deep navy surfaces, thin cyan/blue borders,
+// mono technical numbers. (Legacy `glass` styles replaced.)
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -17,8 +17,8 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        {sub && <p className="mt-1 text-sm text-fog">{sub}</p>}
+        <h1 className="text-[24px] font-bold tracking-tight text-[#F1F5FA] sm:text-[26px]">{title}</h1>
+        {sub && <p className="mt-1 text-[14px] text-[#AAB5C7]">{sub}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -36,35 +36,35 @@ export function StatCard({
   sub?: string;
   accent?: 'up' | 'down' | 'neutral';
 }) {
-  const color = accent === 'up' ? 'text-pulse' : accent === 'down' ? 'text-danger' : 'text-white';
+  const color = accent === 'up' ? 'text-[#35D98B]' : accent === 'down' ? 'text-[#F06B78]' : 'text-white';
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="text-[11px] font-semibold tracking-[0.2em] text-fog">{label}</div>
+    <div className="rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-5">
+      <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">{label}</div>
       <div className={`mt-2 font-mono text-2xl font-bold tracking-tight ${color}`}>{value}</div>
-      {sub && <div className="mt-1 text-xs text-fog">{sub}</div>}
+      {sub && <div className="mt-1 text-xs text-[#78859A]">{sub}</div>}
     </div>
   );
 }
 
 const BADGE_STYLES: Record<string, string> = {
-  active: 'border-pulse/40 bg-pulse/10 text-pulse',
-  completed: 'border-pulse/40 bg-pulse/10 text-pulse',
-  credited: 'border-pulse/40 bg-pulse/10 text-pulse',
-  available: 'border-pulse/40 bg-pulse/10 text-pulse',
-  verified: 'border-pulse/40 bg-pulse/10 text-pulse',
-  closed: 'border-line bg-surface text-mist',
-  matured: 'border-line bg-surface text-mist',
-  paid: 'border-line bg-surface text-mist',
-  pending: 'border-amberx/40 bg-amberx/10 text-amberx',
-  processing: 'border-amberx/40 bg-amberx/10 text-amberx',
-  open: 'border-amberx/40 bg-amberx/10 text-amberx',
-  failed: 'border-danger/40 bg-danger/10 text-danger',
-  cancelled: 'border-danger/40 bg-danger/10 text-danger',
+  active: 'border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] text-[#2FD6FF]',
+  completed: 'border-[rgba(53,217,139,0.4)] bg-[rgba(53,217,139,0.08)] text-[#35D98B]',
+  credited: 'border-[rgba(53,217,139,0.4)] bg-[rgba(53,217,139,0.08)] text-[#35D98B]',
+  available: 'border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] text-[#2FD6FF]',
+  verified: 'border-[rgba(53,217,139,0.4)] bg-[rgba(53,217,139,0.08)] text-[#35D98B]',
+  closed: 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]',
+  matured: 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]',
+  paid: 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]',
+  pending: 'border-[rgba(242,191,74,0.4)] bg-[rgba(242,191,74,0.08)] text-[#F2BF4A]',
+  processing: 'border-[rgba(242,191,74,0.4)] bg-[rgba(242,191,74,0.08)] text-[#F2BF4A]',
+  open: 'border-[rgba(242,191,74,0.4)] bg-[rgba(242,191,74,0.08)] text-[#F2BF4A]',
+  failed: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
+  cancelled: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
 };
 
 export function StatusBadge({ status }: { status: string }) {
   const key = status.toLowerCase();
-  const style = BADGE_STYLES[key] ?? 'border-line bg-surface text-mist';
+  const style = BADGE_STYLES[key] ?? 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]';
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${style}`}>
       {status}
@@ -84,14 +84,14 @@ export function EmptyState({
   actionHref?: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-8 text-center sm:p-12">
-      <div className="mx-auto h-10 w-10 rounded-xl border border-line bg-surface" aria-hidden="true" />
-      <div className="mt-4 font-bold">{title}</div>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-fog">{body}</p>
+    <div className="rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-8 text-center sm:p-10">
+      <div className="mx-auto h-10 w-10 rounded-[12px] border border-[#2A394D] bg-[#151B27]" aria-hidden="true" />
+      <div className="mt-4 font-bold text-white">{title}</div>
+      <p className="mx-auto mt-1 max-w-sm text-[14px] text-[#AAB5C7]">{body}</p>
       {actionLabel && actionHref && (
         <Link
           href={actionHref}
-          className="mt-5 inline-block rounded-xl bg-pulse px-6 py-2.5 text-sm font-bold text-black hover:brightness-110"
+          className="mt-5 inline-flex min-h-[48px] items-center rounded-[14px] bg-[#2FD6FF] px-6 text-[14px] font-bold text-[#06121A] hover:brightness-110"
         >
           {actionLabel}
         </Link>
@@ -102,9 +102,9 @@ export function EmptyState({
 
 export function SectionCard({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
-    <section className="glass mt-6 overflow-hidden rounded-2xl">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-        <h2 className="text-sm font-bold tracking-wide">{title}</h2>
+    <section className="mt-6 overflow-hidden rounded-[20px] border border-[#202A3A] bg-[#0D111A]">
+      <div className="flex items-center justify-between border-b border-[#202A3A] px-5 py-3.5">
+        <h2 className="text-[15px] font-bold tracking-wide text-white">{title}</h2>
         {action}
       </div>
       <div>{children}</div>
@@ -119,9 +119,9 @@ export function TableWrap({ children }: { children: ReactNode }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div role="alert" className="glass rounded-2xl border-danger/30 p-6 text-center">
-      <div className="font-bold text-danger">Something went wrong</div>
-      <p className="mt-1 text-sm text-fog">{message}</p>
+    <div role="alert" className="rounded-[20px] border border-[rgba(240,107,120,0.4)] bg-[#0D111A] p-6 text-center">
+      <div className="font-bold text-[#F06B78]">Something went wrong</div>
+      <p className="mt-1 text-[14px] text-[#AAB5C7]">{message}</p>
     </div>
   );
 }

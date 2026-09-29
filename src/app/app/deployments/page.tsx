@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { PageHeader, SectionCard, TableWrap, StatusBadge, EmptyState } from '@/components/data';
 import { formatUSD } from '@/lib/finance';
-import { getDeployments } from '@/lib/queries';
+import { getDeployments, deploymentLabel } from '@/lib/queries';
 
 export const metadata = { title: 'Deployments' };
 
@@ -51,7 +51,7 @@ export default async function DeploymentsPage({ searchParams }: { searchParams: 
                   <tr key={d.id} className="border-t border-line">
                     <td className="p-4 font-mono">{d.ref}</td>
                     <td className="p-4 text-right font-mono">{formatUSD(d.amount)}</td>
-                    <td className="p-4 text-right">{d.termDays}d</td>
+                    <td className="p-4 text-right">{deploymentLabel(d)}</td>
                     <td className="p-4 text-right font-mono text-pulse">{formatUSD(d.profit, { sign: true })}</td>
                     <td className="p-4 text-right"><StatusBadge status={d.status} /></td>
                     <td className="p-4 text-right"><Link href={`/app/deployments/${d.ref}`} className="text-pulse hover:brightness-110">View</Link></td>

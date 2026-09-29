@@ -13,6 +13,7 @@ export function TransactionsView({ initial }: { initial: WalletTxn[] }) {
   const [type, setType] = useState<(typeof TYPES)[number]>('All');
   const [status, setStatus] = useState<(typeof STATUSES)[number]>('All');
   const [query, setQuery] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,14 +68,32 @@ export function TransactionsView({ initial }: { initial: WalletTxn[] }) {
               </table>
             </TableWrap>
           </SectionCard>
-          {/* Mobile cards */}
+          {/* Mobile cards (tap to expand details) */}
           <div className="mt-4 space-y-3 md:hidden">
-            {rows.map((t) => (
-              <div key={t.id} className="glass rounded-2xl p-4 text-sm">
-                <div className="flex justify-between"><span className="font-semibold capitalize">{t.type}</span><span className="font-mono">{formatUSD(t.amount)} {t.asset}</span></div>
-                <div className="mt-1 flex justify-between text-xs text-fog"><span>{t.createdAt.slice(0, 10)}</span><span>{t.status}</span></div>
-              </div>
-            ))}
+            {rows.map((t) => {
+              const open = expanded === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setExpanded(open ? null : t.id)}
+                  aria-expanded={open}
+                  className={`block w-full rounded-[20px] border bg-[#0D111A] p-4 text-left text-sm transition ${open ? 'border-[rgba(47,214,255,0.5)]' : 'border-[#202A3A]'}`}
+                >
+                  <div className="flex justify-between"><span className="font-semibold capitalize text-white">{t.type}</span><span className="font-mono text-white">{formatUSD(t.amount)} {t.asset}</span></div>
+                  <div className="mt-1 flex justify-between text-xs text-[#78859A]"><span>{t.createdAt.slice(0, 10)}</span><span>{t.status}</span></div>
+                  <div className={`grid transition-all duration-300 ease-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                      <div className="space-y-1 border-t border-[#202A3A]/70 pt-2 font-mono text-[11px] text-[#78859A]">
+                        <div>ID: {t.id.slice(0, 13)}…</div>
+                        {t.txHash && <div>HASH: {t.txHash}</div>}
+                        {t.address && <div>ADDR: {t.address.slice(0, 20)}…</div>}
+                        {t.network && <div>NET: {t.network}</div>}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </>
       )}

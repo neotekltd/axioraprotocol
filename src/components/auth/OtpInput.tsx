@@ -66,9 +66,9 @@ export function OtpInput({
             }
           }}
           className={cn(
-            'h-12 w-11 rounded-xl border bg-void text-center font-mono text-xl text-white outline-none transition-colors sm:h-13 sm:w-12',
-            active === i && !disabled ? 'border-pulse' : 'border-line',
-            invalid ? 'border-danger' : '',
+            'h-[52px] w-11 rounded-[14px] border bg-[#151D2C] text-center font-mono text-xl text-white outline-none transition-colors sm:h-14 sm:w-[52px]',
+            active === i && !disabled ? 'border-[#2FD6FF] shadow-[0_0_0_2px_rgba(47,214,255,0.12)]' : 'border-[#4B5C73]',
+            invalid ? 'border-[#F06B78]' : '',
             disabled ? 'opacity-50' : ''
           )}
         />

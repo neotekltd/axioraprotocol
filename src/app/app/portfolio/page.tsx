@@ -1,7 +1,7 @@
 import { PageHeader, StatCard, SectionCard, TableWrap, EmptyState } from '@/components/data';
 import { PortfolioChart } from '@/components/PortfolioChart';
 import { formatUSD } from '@/lib/finance';
-import { getDeployments, getPortfolioSummary, getTrades } from '@/lib/queries';
+import { getDeployments, getPortfolioSummary, getTrades, deploymentLabel } from '@/lib/queries';
 import Link from 'next/link';
 
 export const metadata = { title: 'Portfolio' };
@@ -76,7 +76,7 @@ export default async function PortfolioPage() {
                   <tr key={d.id} className="border-t border-line">
                     <td className="p-4 font-mono"><Link href={`/app/deployments/${d.ref}`} className="text-pulse">{d.ref}</Link></td>
                     <td className="p-4 text-right font-mono">{formatUSD(d.amount)}</td>
-                    <td className="p-4 text-right">{d.termDays}d</td>
+                    <td className="p-4 text-right">{deploymentLabel(d)}</td>
                     <td className="p-4 text-right text-fog">{d.status}</td>
                   </tr>
                 ))}

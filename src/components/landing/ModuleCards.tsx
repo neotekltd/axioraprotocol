@@ -1,66 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+// Module cards on the authoritative plan engine (lib/plans.ts — the only
+// finance source). Card selection drives the simulator through shared state.
+// Pointer-tracked radial highlight + staged telemetry draw on viewport entry.
+
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Reveal } from '@/components/Reveal';
-import { PROTOCOL_CONFIG } from '@/lib/config';
-import { calculateDeployment, formatUSD, formatPct } from '@/lib/finance';
+import { PLANS, quotePlan, examplePlanAmount, formatUSD, formatPct, type PlanQuote } from '@/lib/plans';
 import { useInViewOnce } from '@/components/landing/motion';
+import { usePlanSync } from '@/components/landing/plan-sync';
 
-const MODULE_TERMS = [30, 60, 90];
 const SAMPLE = 1000;
 
-export const MODULE_TAG: Record<number, string | null> = { 30: null, 60: 'BALANCED', 90: null };
-
 export function ModuleCards() {
-  const [selected, setSelected] = useState(1);
+  const { plan: selectedPlan, setPlan } = usePlanSync();
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.2);
-  const maxRate = calculateDeployment({ amount: SAMPLE, termDays: 90 }).dailyRate;
+  const maxRate = PLANS[PLANS.length - 1].ratePerCredit;
+
+  const onPointer = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mouse-x', `${e.clientX - r.left}px`);
+    el.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
+  };
+
   return (
     <div ref={ref} className="mt-10 grid gap-4 lg:grid-cols-3">
-      {MODULE_TERMS.map((term, i) => {
-        const r = calculateDeployment({ amount: SAMPLE, termDays: term });
-        const active = selected === i;
-        const tag = MODULE_TAG[term];
+      {PLANS.map((plan, i) => {
+        // Per-plan valid example amount (never one global sample). Defensive
+        // fallback renders honestly instead of crashing the homepage.
+        let q: PlanQuote | null = null;
+        try {
+          q = quotePlan(plan.key, examplePlanAmount(plan));
+        } catch {
+          q = null;
+        }
+        const active = selectedPlan === plan.key;
         return (
-          <Reveal key={term} delay={i * 100}>
+          <Reveal key={plan.key} delay={i * 100}>
             <button
-              onClick={() => setSelected(i)}
+              onClick={() => setPlan(plan.key)}
+              onPointerMove={onPointer}
               aria-pressed={active}
-              className={`card-sweep block h-full w-full rounded-xl border bg-panel/80 p-5 text-left transition-all duration-200 hover:-translate-y-[2px] ${
+              className={`card-sweep group relative block h-full w-full rounded-xl border bg-panel/80 p-5 text-left transition-all duration-200 hover:-translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse ${
                 active ? 'border-pulse/70 shadow-glow' : 'border-line hover:border-pulse/50'
               }`}
             >
-              <div className="flex items-center justify-between font-mono text-[10px] tracking-[0.22em] text-fog">
-                <span>M{String(i + 1).padStart(2, '0')} / 03 · TERM MODULE</span>
-                {tag ? (
-                  <span className="rounded-full border border-pulse/60 bg-pulse/10 px-2 py-0.5 text-[9px] text-pulse">{tag}</span>
-                ) : (
-                  <span aria-hidden="true" className="text-pulse/70">◈</span>
-                )}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                style={{ background: 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(34,211,238,0.09), transparent 45%)' }}
+              />
+              <div className="relative flex items-center justify-between font-mono text-[10px] tracking-[0.22em] text-fog">
+                <span>{plan.code} · FIXED MODULE</span>
+                <span aria-hidden="true" className="text-pulse/70">◈</span>
               </div>
-              <div className="mt-2.5 text-lg font-bold">{term}-Day Module</div>
-              <div className="mt-1 font-mono text-[2rem] font-bold leading-none tracking-tight text-white">
-                {formatPct(r.dailyRate * 100)}
-                <span className="ml-1 align-middle text-[11px] font-normal text-fog">/day model</span>
+              <div className="relative mt-2.5 text-lg font-bold">{plan.name}</div>
+              <div className="relative mt-1 font-mono text-[2rem] font-bold leading-none tracking-tight text-white">
+                {formatPct(plan.ratePerCredit * 100)}
+                <span className="ml-1 align-middle text-[11px] font-normal text-fog">every 6h</span>
               </div>
               <div className="relative mt-3.5 h-[3px] overflow-hidden rounded-full bg-white/[0.07]" aria-hidden="true">
                 <div
                   className={`boot-line h-full rounded-full bg-gradient-to-r from-pulseDim via-pulse to-pulseBright ${inView ? 'go' : ''}`}
-                  style={{ width: `${Math.round((r.dailyRate / maxRate) * 100)}%` }}
+                  style={{ width: `${Math.round((plan.ratePerCredit / maxRate) * 100)}%` }}
                 />
               </div>
-              <dl className="mt-3.5 space-y-[5px] text-xs">
+              <dl className="relative mt-3.5 space-y-[5px] text-xs">
                 {[
-                  ['Minimum', `$${PROTOCOL_CONFIG.minDeployment.toLocaleString()}`],
-                  ['Maximum', `$${PROTOCOL_CONFIG.maxDeployment.toLocaleString()}`],
-                  ['Rate', `${formatPct(r.dailyRate * 100)} / day model`],
-                  ['Cycle', 'Daily'],
-                  ['Payouts', 'At maturity'],
-                  ['Term', `${term} days`],
-                  ['Payout interval', 'At maturity'],
-                  ['Payouts', '1'],
-                  ['Modeled total', `+${formatUSD(calculateDeployment({ amount: SAMPLE, termDays: term }).netProfit)} / $1k`],
+                  ['Invest', `$${plan.min.toLocaleString()} – $${plan.max.toLocaleString()}`],
+                  ['Rate', `${formatPct(plan.ratePerCredit * 100)} per payout`],
+                  ['Cycle', 'Every 6 hours'],
+                  ['Payouts', '4 per day'],
+                  ['Est. daily', q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : 'Calculation unavailable'],
                   ['Principal', 'Returned at maturity'],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3">
@@ -69,8 +82,8 @@ export function ModuleCards() {
                   </div>
                 ))}
               </dl>
-              <span className={`mt-4 block rounded-md py-2.5 text-center text-[13px] font-bold transition ${active ? 'bg-pulse text-black' : 'bg-white/[0.06] text-white hover:bg-pulse hover:text-black'}`}>
-                {active ? 'Selected' : `Select — ${term}d`}
+              <span className={`relative mt-4 block rounded-md py-2.5 text-center text-[13px] font-bold transition ${active ? 'bg-pulse text-black' : 'bg-white/[0.06] text-white hover:bg-pulse hover:text-black'}`}>
+                {active ? 'Selected' : `Select — ${plan.name}`}
               </span>
             </button>
           </Reveal>
@@ -80,7 +93,6 @@ export function ModuleCards() {
   );
 }
 
-// Whole card is a button that also navigates: wrap CTA separately for a11y.
 export function ModuleCta() {
   return (
     <div className="mt-6 text-center">

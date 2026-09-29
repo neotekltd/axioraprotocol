@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { randomUUID } from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { CreateDeploymentSchema, WithdrawalQuoteSchema } from '@/lib/validation';
-import { calculateDeployment } from '@/lib/finance';
+import { getPlan, quotePlan } from '@/lib/plans';
 import { getPortfolioSummary } from '@/lib/queries';
 import { z } from 'zod';
 
@@ -43,43 +43,48 @@ async function notify(
 }
 
 const DeploymentFormSchema = z.object({
-  amount: z.coerce.number().positive().min(10).max(100000),
-  termDays: z.coerce.number().int().min(20).max(90),
+  amount: z.coerce.number().positive().min(10).max(50000),
+  plan: z.enum(['essential', 'premium', 'exclusive']),
 });
 
-export async function createDeployment(form: { amount: number; termDays: number }): Promise<ActionResult> {
+export async function createDeployment(form: { amount: number; plan: string }): Promise<ActionResult> {
   const parsed = DeploymentFormSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid deployment amount or term.' };
+  if (!parsed.success) return { ok: false, message: 'Invalid deployment amount or module.' };
   const uid = await userId();
   if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
-  // Server-authoritative quote + balance check (never trust the client).
-  const quote = calculateDeployment({ amount: parsed.data.amount, termDays: parsed.data.termDays });
+  // Server-authoritative quote + plan-range + balance check (never trust the client).
+  let quote;
+  try {
+    quote = quotePlan(parsed.data.plan, parsed.data.amount);
+  } catch {
+    return { ok: false, message: 'Amount is outside the selected module range.' };
+  }
   const summary = await getPortfolioSummary();
-  if (parsed.data.amount > summary.available) {
+  if (quote.amount > summary.available) {
     return { ok: false, message: `Insufficient available balance (${summary.available.toFixed(2)} USDT). Deposit funds first.` };
   }
   try {
     const supabase = createClient();
     const idempotencyKey = randomUUID();
     const validated = CreateDeploymentSchema.parse({
-      amount: parsed.data.amount,
-      termDays: parsed.data.termDays,
+      amount: quote.amount,
+      plan: quote.plan,
       asset: 'USDT',
       idempotencyKey,
     });
     const now = new Date();
-    const matures = new Date(now.getTime() + validated.termDays * 86400000);
     const { data, error } = await supabase
       .from('deployments')
       .insert({
         user_id: uid,
         amount: validated.amount.toFixed(2),
-        term_days: validated.termDays,
+        term_days: null,
+        plan: validated.plan,
         asset: validated.asset,
         status: 'active',
-        quoted_daily_rate: quote.dailyRate,
+        quoted_daily_rate: quote.ratePerCredit,
         started_at: now.toISOString(),
-        matures_at: matures.toISOString(),
+        matures_at: null,
         idempotency_key: validated.idempotencyKey,
       })
       .select('ref')
@@ -91,9 +96,9 @@ export async function createDeployment(form: { amount: number; termDays: number 
       asset: 'USDT',
       amount: validated.amount.toFixed(2),
       status: 'completed',
-      meta: { deployment_ref: (data as { ref: string }).ref },
+      meta: { deployment_ref: (data as { ref: string }).ref, plan: validated.plan },
     });
-    await notify(supabase, uid, 'deployment', 'Deployment activated', `${(data as { ref: string }).ref} · ${validated.amount.toFixed(2)} USDT · ${validated.termDays} days`);
+    await notify(supabase, uid, 'deployment', 'Deployment activated', `${(data as { ref: string }).ref} · ${validated.amount.toFixed(2)} USDT · ${getPlan(validated.plan)?.name ?? validated.plan}`);
     revalidatePath('/app');
     return { ok: true, message: 'Deployment activated.', ref: (data as { ref: string }).ref };
   } catch {
@@ -226,9 +231,10 @@ export async function updateDisplayName(form: { displayName: string }): Promise<
 const TicketSchema = z.object({
   subject: z.string().trim().min(4).max(120),
   message: z.string().trim().min(10).max(4000),
+  category: z.enum(['general', 'deposit', 'withdrawal', 'plans', 'referrals', 'security', 'other']).default('general'),
 });
 
-export async function createSupportTicket(form: { subject: string; message: string }): Promise<ActionResult> {
+export async function createSupportTicket(form: { subject: string; message: string; category?: string }): Promise<ActionResult> {
   const parsed = TicketSchema.safeParse(form);
   if (!parsed.success) return { ok: false, message: 'Give a subject (4+ characters) and a message (10+ characters).' };
   const uid = await userId();
@@ -239,6 +245,7 @@ export async function createSupportTicket(form: { subject: string; message: stri
       user_id: uid,
       subject: parsed.data.subject,
       message: parsed.data.message,
+      category: parsed.data.category,
     });
     if (error) throw error;
     await notify(supabase, uid, 'system', 'Support ticket opened', parsed.data.subject);

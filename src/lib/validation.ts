@@ -1,13 +1,16 @@
 import { z } from 'zod';
+import { PLANS } from './plans';
+
+const planKeys = PLANS.map((p) => p.key) as [string, ...string[]];
 
 export const CalculatorQuerySchema = z.object({
-  amount: z.coerce.number().positive().min(10).max(100000),
-  termDays: z.coerce.number().int().min(20).max(90),
+  amount: z.coerce.number().positive().min(10).max(50000),
+  plan: z.enum(planKeys),
 });
 
 export const CreateDeploymentSchema = z.object({
-  amount: z.number().positive().min(10).max(100000),
-  termDays: z.number().int().min(20).max(90),
+  amount: z.number().positive().min(10).max(50000),
+  plan: z.enum(planKeys),
   asset: z.enum(['USDT', 'BTC', 'ETH', 'BNB']).default('USDT'),
   idempotencyKey: z.string().uuid(),
 });

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { Reveal } from '@/components/Reveal';
 import { FaqAccordion } from '@/components/FaqAccordion';
 import { NetworkViz } from '@/components/landing/network-viz';
@@ -123,6 +124,7 @@ export function ActivitySection() {
 }
 
 export function ReferralNetworkSection() {
+  const [level, setLevel] = useState<number | null>(null);
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Referral network">
       <div className="grid items-center gap-10 lg:grid-cols-2">
@@ -133,10 +135,16 @@ export function ReferralNetworkSection() {
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-mist/75">Axiora&apos;s own five-level structure — instant bonuses plus daily shares, snapshotted per reward.</p>
           </Reveal>
           <Reveal delay={100}>
-            <div className="mt-8 space-y-2">
+            <div className="mt-8 space-y-2" onMouseLeave={() => setLevel(null)}>
               {PROTOCOL_CONFIG.referralLevels.slice(0, 3).map((r) => (
-                <div key={r.level} className="flex items-center justify-between rounded-lg border border-line bg-panel/70 px-4 py-3 text-sm transition hover:border-pulse/40">
-                  <span className="font-mono font-bold text-white">L{r.level}</span>
+                <div
+                  key={r.level}
+                  onMouseEnter={() => setLevel(r.level)}
+                  onFocus={() => setLevel(r.level)}
+                  tabIndex={0}
+                  className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition ${level === r.level ? 'border-pulse/70 bg-pulse/[0.06] shadow-glow' : 'border-line bg-panel/70 hover:border-pulse/40'}`}
+                >
+                  <span className={`font-mono font-bold ${level === r.level ? 'text-pulse' : 'text-white'}`}>L{r.level}</span>
                   <span className="font-mono text-xs text-fog">{r.instantPct}% instant · {r.dailySharePct}% daily</span>
                 </div>
               ))}
@@ -153,7 +161,7 @@ export function ReferralNetworkSection() {
         <Reveal delay={120}>
           <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-panel/50 p-5">
             <div className="font-mono text-[10px] tracking-[0.25em] text-fog">NETWORK TOPOLOGY · LIVE MODEL</div>
-            <div className="mt-1"><NetworkViz /></div>
+            <div className="mt-1"><NetworkViz highlight={level} /></div>
           </div>
         </Reveal>
       </div>

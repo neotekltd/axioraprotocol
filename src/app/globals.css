@@ -11,6 +11,28 @@
 :root {
   color-scheme: dark;
 
+  --ax-bg: #080B12;
+  --ax-bg-deep: #06070B;
+  --ax-surface: #0D111A;
+  --ax-surface-2: #111722;
+  --ax-surface-3: #151B27;
+  --ax-border: #202A3A;
+  --ax-border-strong: #2A394D;
+  --ax-cyan: #2FD6FF;
+  --ax-cyan-soft: rgba(47, 214, 255, 0.12);
+  --ax-cyan-glow: rgba(47, 214, 255, 0.28);
+  --ax-text: #F1F5FA;
+  --ax-text-secondary: #AAB5C7;
+  --ax-text-muted: #78859A;
+  --ax-text-faint: #596579;
+  --ax-success: #35D98B;
+  --ax-warning: #F2BF4A;
+  --ax-danger: #F06B78;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+
   --page-max-width: 1280px;
   --page-padding-desktop: 2rem;
   --page-padding-tablet: 1.5rem;
@@ -93,6 +115,10 @@ body {
 
 .thin-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
 .thin-scroll::-webkit-scrollbar-thumb { background: #1c1c1c; border-radius: 8px; }
+
+.ax-no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.ax-no-scrollbar::-webkit-scrollbar { display: none; }
+.ax-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
 /* ---------- motion: reveal system ----------
    End-state uses the reference's own declarations verbatim. */

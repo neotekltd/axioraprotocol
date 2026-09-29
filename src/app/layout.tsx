@@ -5,6 +5,7 @@ import 'geist/font/mono';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { PublicFloatingSupport } from '@/components/ax/shell';
 import { SITE_URL } from '@/lib/config';
 
 const display = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-display' });
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main className="min-h-[70vh]">{children}</main>
         <Footer />
+        <PublicFloatingSupport />
       </body>
     </html>
   );

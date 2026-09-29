@@ -62,11 +62,21 @@ const num = (v: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
+// Display label for a deployment: plan name for plan-based rows, legacy
+// "<n>d" term for pre-plan rows, em-dash when neither exists.
+export function deploymentLabel(d: { plan?: string | null; termDays?: number }): string {
+  const names: Record<string, string> = { essential: 'Essential', premium: 'Premium', exclusive: 'Exclusive' };
+  if (d.plan && names[d.plan]) return names[d.plan];
+  if (d.termDays && d.termDays > 0) return `${d.termDays}d`;
+  return '—';
+}
+
 export interface Deployment {
   id: string;
   ref: string;
   amount: number;
   termDays: number;
+  plan: string | null;
   asset: string;
   status: string;
   profit: number;
@@ -80,7 +90,7 @@ export async function getDeployments(): Promise<Deployment[]> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('deployments')
-      .select('id,ref,amount,term_days,asset,status,profit,started_at,matures_at,created_at')
+      .select('id,ref,amount,term_days,plan,asset,status,profit,started_at,matures_at,created_at')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error || !data) return [];
@@ -89,6 +99,7 @@ export async function getDeployments(): Promise<Deployment[]> {
       ref: String(d.ref ?? ''),
       amount: num(d.amount),
       termDays: Number(d.term_days ?? 0),
+      plan: (d.plan as string | null) ?? null,
       asset: String(d.asset ?? 'USDT'),
       status: String(d.status ?? 'pending'),
       profit: num(d.profit),
@@ -108,7 +119,7 @@ export async function getDeploymentByRef(ref: string): Promise<Deployment | null
     const needle = ref.toUpperCase().startsWith('AX-') ? ref.toUpperCase() : `AX-${ref.toUpperCase()}`;
     const { data, error } = await supabase
       .from('deployments')
-      .select('id,ref,amount,term_days,asset,status,profit,started_at,matures_at,created_at')
+      .select('id,ref,amount,term_days,plan,asset,status,profit,started_at,matures_at,created_at')
       .eq('ref', needle)
       .maybeSingle();
     if (error || !data) return null;
@@ -118,6 +129,7 @@ export async function getDeploymentByRef(ref: string): Promise<Deployment | null
       ref: String(d.ref ?? ''),
       amount: num(d.amount),
       termDays: Number(d.term_days ?? 0),
+      plan: (d.plan as string | null) ?? null,
       asset: String(d.asset ?? 'USDT'),
       status: String(d.status ?? 'pending'),
       profit: num(d.profit),
@@ -355,6 +367,37 @@ export interface SavedWallet {
   label: string | null;
   verified: boolean;
   createdAt: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  subject: string;
+  message: string;
+  category: string;
+  status: string;
+  createdAt: string;
+}
+
+export async function getSupportTickets(): Promise<SupportTicket[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('id,subject,message,category,status,created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map((t) => ({
+      id: String(t.id),
+      subject: String(t.subject ?? ''),
+      message: String(t.message ?? ''),
+      category: String(t.category ?? 'general'),
+      status: String(t.status ?? 'open'),
+      createdAt: String(t.created_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getWallets(): Promise<SavedWallet[]> {

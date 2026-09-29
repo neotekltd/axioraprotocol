@@ -1,20 +1,17 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
 import { OtpInput } from '@/components/auth/OtpInput';
+import { AxButton, FieldError } from '@/components/ax/controls';
+import { AxCard } from '@/components/ax/primitives';
 
 const COOLDOWN = 60;
 
-function friendlyError(message: string): 'invalid' | 'expired' {
-  const m = message.toLowerCase();
-  if (m.includes('expired')) return 'expired';
-  return 'invalid';
-}
-
-// Privacy-safe display: j***@example.com (never the full address in UI text).
 function maskEmail(email: string): string {
   const at = email.indexOf('@');
   if (at <= 0) return 'your email';
@@ -27,9 +24,7 @@ function maskEmail(email: string): string {
 export function VerifyEmailForm() {
   const params = useSearchParams();
   const router = useRouter();
-  // Email is bound to the signup attempt — never editable here.
   const email = params.get('email')?.trim() ?? '';
-  // Set when the user arrives via the existing-unverified recovery path.
   const resentNotice = params.get('resent') === '1';
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,10 +40,14 @@ export function VerifyEmailForm() {
 
   if (!email) {
     return (
-      <p className="mt-6 text-sm text-fog">
-        No signup email found. <Link href="/register" className="text-pulse">Create an account</Link> first, or{' '}
-        <Link href="/login" className="text-pulse">sign in</Link>.
-      </p>
+      <div className="mx-auto w-full max-w-[480px] px-7 pb-16 pt-10">
+        <AxCard className="p-7 text-center">
+          <p className="text-[15px] text-[#AAB5C7]">
+            No signup email found. <Link href="/register" className="font-semibold text-white hover:text-[#2FD6FF]">Create an account</Link> first, or{' '}
+            <Link href="/login" className="font-semibold text-white hover:text-[#2FD6FF]">sign in</Link>.
+          </p>
+        </AxCard>
+      </div>
     );
   }
 
@@ -59,11 +58,10 @@ export function VerifyEmailForm() {
       const supabase = createClient();
       const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
       if (error) {
-        setState(friendlyError(error.message));
+        const m = error.message.toLowerCase();
+        setState(m.includes('expired') ? 'expired' : 'invalid');
         return;
       }
-      // Session established. Ensure the Axiora profile row exists (trigger
-      // normally creates it; this is a safe idempotent backstop under RLS).
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (user) {
@@ -109,54 +107,62 @@ export function VerifyEmailForm() {
   };
 
   return (
-    <div className="mt-6">
-      {resentNotice && (
-        <p role="status" className="mb-4 rounded-xl border border-pulse/40 bg-pulse/10 px-4 py-3 text-center text-xs text-pulse">
-          We sent a new verification code to your email.
+    <div className="mx-auto w-full max-w-[480px] px-7 pb-16 pt-10">
+      <Link href="/register" className="inline-flex items-center gap-1.5 text-[14px] text-[#AAB5C7] hover:text-white" aria-label="Back to registration">
+        <ArrowLeft size={16} /> Back
+      </Link>
+      <AxCard className="mt-6 p-7 sm:p-8">
+        <div className="flex gap-1.5" aria-hidden="true">
+          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
+          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
+        </div>
+        <h1 className="mt-5 text-[32px] font-bold leading-tight tracking-tight text-white">
+          Check your <span className="text-[#2FD6FF]">email.</span>
+        </h1>
+        {resentNotice && (
+          <p role="status" className="mt-4 rounded-[14px] border border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] px-4 py-3 text-center text-[13px] text-[#2FD6FF]">
+            We sent a new verification code to your email.
+          </p>
+        )}
+        <p className="mt-4 text-center text-[14px] text-[#AAB5C7]">
+          Enter the 6-digit code sent to
+          <br />
+          <span className="font-mono text-white">{maskEmail(email)}</span>
         </p>
-      )}
-      <p className="text-center text-sm text-fog">
-        We sent a 6-digit verification code to
-        <br />
-        <span className="font-mono text-white">{maskEmail(email)}</span>
-      </p>
-      <div className="mt-6">
-        <OtpInput
-          value={code}
-          onChange={(c) => {
-            setCode(c);
-            setState('idle');
-            if (c.length === 6 && !busy) void verify(c);
-          }}
-          disabled={busy}
-          invalid={state !== 'idle'}
-        />
-      </div>
-      {state === 'invalid' && (
-        <p role="alert" className="mt-4 text-center text-xs text-danger">That verification code is invalid.</p>
-      )}
-      {state === 'expired' && (
-        <p role="alert" className="mt-4 text-center text-xs text-danger">That code has expired. Request a new one below.</p>
-      )}
-      <button
-        disabled={busy || code.length !== 6}
-        onClick={() => void verify(code)}
-        className="mt-6 w-full rounded-xl bg-pulse py-3 text-sm font-bold text-black disabled:opacity-60"
-      >
-        {busy ? 'Verifying…' : 'Verify Email'}
-      </button>
-      <div className="mt-5 text-center text-xs text-fog">
-        Didn&apos;t receive the code?{' '}
-        <button disabled={cooldown > 0} onClick={() => void resend()} className="text-pulse disabled:text-fog">
-          {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
-        </button>
-      </div>
-      {resendError && (
-        <p role="alert" className="mt-3 text-center text-xs text-danger">{resendError}</p>
-      )}
-      <div className="mt-2 text-center text-xs">
-        <Link href="/register" className="text-fog hover:text-white">Change email</Link>
-      </div>
+        <div className="mt-6">
+          <OtpInput
+            value={code}
+            onChange={(c) => {
+              setCode(c);
+              setState('idle');
+              if (c.length === 6 && !busy) void verify(c);
+            }}
+            disabled={busy}
+            invalid={state !== 'idle'}
+          />
+        </div>
+        {state === 'invalid' && (
+          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">That verification code is invalid.</p>
+        )}
+        {state === 'expired' && (
+          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">That code has expired. Request a new one below.</p>
+        )}
+        <div className="mt-6">
+          <AxButton disabled={busy || code.length !== 6} onClick={() => void verify(code)}>
+            {busy ? 'Verifying…' : 'Verify Email'}
+          </AxButton>
+        </div>
+        <div className="mt-5 text-center text-[13px] text-[#78859A]">
+          Didn&apos;t receive the code?{' '}
+          <button disabled={cooldown > 0} onClick={() => void resend()} className="font-semibold text-[#2FD6FF] disabled:text-[#596579]">
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+          </button>
+        </div>
+        <FieldError message={resendError} />
+        <div className="mt-2 text-center text-[13px]">
+          <Link href="/register" className="text-[#78859A] hover:text-white">Change email</Link>
+        </div>
+      </AxCard>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { PageHeader, StatCard, SectionCard, TableWrap, EmptyState } from '@/components/data';
+import { ArrowRight } from 'lucide-react';
+import { PageHeader, StatCard, SectionCard, EmptyState } from '@/components/data';
 import { formatUSD } from '@/lib/finance';
 import { getPortfolioSummary, getTransactions, getWallets } from '@/lib/queries';
 
@@ -20,12 +21,12 @@ export default async function WalletPage() {
         sub="Balances, saved addresses and wallet activity."
         actions={
           <>
-            <Link href="/app/deposit" className="rounded-xl border border-line px-5 py-2.5 text-sm hover:border-pulse/50">Deposit</Link>
-            <Link href="/app/withdraw" className="rounded-xl bg-pulse px-5 py-2.5 text-sm font-bold text-black hover:brightness-110">Withdraw</Link>
+            <Link href="/app/deposit" className="inline-flex min-h-[44px] items-center rounded-[12px] border border-[#2A394D] px-4 text-[14px] font-semibold text-white hover:border-[rgba(47,214,255,0.5)]">Deposit</Link>
+            <Link href="/app/withdraw" className="inline-flex min-h-[44px] items-center rounded-[12px] bg-[#2FD6FF] px-4 text-[14px] font-bold text-[#06121A] hover:brightness-110">Withdraw</Link>
           </>
         }
       />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <StatCard label="TOTAL BALANCE" value={formatUSD(summary.totalValue)} />
         <StatCard label="AVAILABLE" value={formatUSD(summary.available)} />
         <StatCard label="RESERVED" value={formatUSD(summary.deployedActive + summary.reservedWithdrawals)} sub="Deployments + withdrawal holds" />
@@ -34,20 +35,20 @@ export default async function WalletPage() {
 
       <SectionCard
         title="Saved Addresses"
-        action={<Link href="/app/wallets" className="text-xs text-pulse hover:brightness-110">Manage</Link>}
+        action={<Link href="/app/wallets" className="flex items-center gap-1 text-[13px] text-[#AAB5C7] hover:text-white">Manage <ArrowRight size={14} /></Link>}
       >
         {wallets.length === 0 ? (
-          <p className="p-6 text-sm text-fog">No saved addresses. Add one to speed up withdrawals.</p>
+          <p className="p-6 text-[14px] text-[#78859A]">No saved addresses. Add one to speed up withdrawals.</p>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-[#202A3A]/70">
             {wallets.slice(0, 4).map((w) => (
-              <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 text-sm">
+              <li key={w.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 text-[14px]">
                 <div>
-                  <span className="font-mono">{w.asset} / {w.network}</span>
-                  <span className="ml-2 font-mono text-fog">{short(w.address)}</span>
-                  {w.label && <span className="ml-2 text-fog">· {w.label}</span>}
+                  <span className="font-mono text-white">{w.asset} / {w.network}</span>
+                  <span className="ml-2 font-mono text-[#78859A]">{short(w.address)}</span>
+                  {w.label && <span className="ml-2 text-[#78859A]">· {w.label}</span>}
                 </div>
-                <span className="text-[11px] text-fog">{w.verified ? 'Verified' : 'Unverified'}</span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#78859A]">{w.verified ? 'Verified' : 'Unverified'}</span>
               </li>
             ))}
           </ul>
@@ -56,28 +57,24 @@ export default async function WalletPage() {
 
       <SectionCard
         title="Recent Wallet Activity"
-        action={<Link href="/app/transactions" className="text-xs text-pulse hover:brightness-110">Full history</Link>}
+        action={<Link href="/app/transactions" className="flex items-center gap-1 text-[13px] text-[#AAB5C7] hover:text-white">Full history <ArrowRight size={14} /></Link>}
       >
         {recent.length === 0 ? (
           <div className="p-6">
             <EmptyState title="No wallet activity" body="Deposits and withdrawals will appear here once recorded." actionLabel="How to deposit" actionHref="/app/deposit" />
           </div>
         ) : (
-          <TableWrap>
-            <table className="w-full min-w-[520px] text-sm">
-              <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">TYPE</th><th className="p-4 text-right">AMOUNT</th><th className="p-4 text-right">STATUS</th><th className="p-4 text-right">DATE</th></tr></thead>
-              <tbody>
-                {recent.map((t) => (
-                  <tr key={t.id} className="border-t border-line">
-                    <td className="p-4 capitalize">{t.type} <span className="text-fog">{t.asset}</span></td>
-                    <td className="p-4 text-right font-mono">{formatUSD(t.amount)}</td>
-                    <td className="p-4 text-right text-fog">{t.status}</td>
-                    <td className="p-4 text-right text-fog">{t.createdAt.slice(0, 10)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TableWrap>
+          <ul className="divide-y divide-[#202A3A]/70">
+            {recent.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 px-5 py-4 text-[14px]">
+                <div><span className="font-semibold capitalize text-white">{t.type}</span> <span className="text-[#78859A]">{t.asset}</span></div>
+                <div className="text-right">
+                  <div className="font-mono text-white">{formatUSD(t.amount)}</div>
+                  <div className="font-mono text-[11px] text-[#78859A]">{t.createdAt.slice(0, 10)} · {t.status}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </SectionCard>
     </div>

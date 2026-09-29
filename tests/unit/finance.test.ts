@@ -1,24 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDeployment } from '@/lib/finance';
+import { formatUSD, formatPct } from '@/lib/finance';
 
-describe('calculateDeployment', () => {
-  it('computes net profit below gross by the protocol fee', () => {
-    const r = calculateDeployment({ amount: 1000, termDays: 20 });
-    expect(r.grossProfit).toBeGreaterThan(0);
-    expect(r.protocolFee).toBeGreaterThan(0);
-    expect(r.netProfit).toBeCloseTo(r.grossProfit - r.protocolFee, 2);
-    expect(r.totalValue).toBeCloseTo(1000 + r.netProfit, 2);
+describe('format helpers', () => {
+  it('formats USD with sign handling', () => {
+    expect(formatUSD(12.5)).toBe('$12.50');
+    expect(formatUSD(-3)).toBe('$-3.00');
+    expect(formatUSD(5, { sign: true })).toBe('+$5.00');
   });
 
-  it('clamps amount and term to configured bounds', () => {
-    const r = calculateDeployment({ amount: 99999999, termDays: 5 });
-    expect(r.amount).toBeLessThanOrEqual(100000);
-    expect(r.termDays).toBeGreaterThanOrEqual(20);
-  });
-
-  it('rewards longer terms with a rate at least as high', () => {
-    const short = calculateDeployment({ amount: 1000, termDays: 20 });
-    const long = calculateDeployment({ amount: 1000, termDays: 90 });
-    expect(long.dailyRate).toBeGreaterThanOrEqual(short.dailyRate);
+  it('formats percentages', () => {
+    expect(formatPct(1)).toBe('+1.00%');
+    expect(formatPct(0.015 * 100)).toBe('+1.50%');
   });
 });

@@ -4,42 +4,51 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader } from '@/components/data';
-import { Modal } from '@/components/ui';
-import { PROTOCOL_CONFIG } from '@/lib/config';
-import { formatUSD, formatPct, type CalculatorResult } from '@/lib/finance';
+import { AxButton } from '@/components/ax/controls';
+import { AxCard } from '@/components/ax/primitives';
+import { PLANS, getPlan, formatUSD, formatPct, type PlanKey, type PlanQuote } from '@/lib/plans';
 import { createDeployment } from '@/lib/actions';
 
 export function DeployForm({ available, hasFunds }: { available: number; hasFunds: boolean }) {
   const router = useRouter();
   const [amount, setAmount] = useState(1000);
-  const [term, setTerm] = useState(30);
-  const [quote, setQuote] = useState<CalculatorResult | null>(null);
+  const [planKey, setPlanKey] = useState<PlanKey>('premium');
+  const [quote, setQuote] = useState<PlanQuote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const plan = getPlan(planKey) ?? PLANS[1];
+
+  const selectPlan = (key: PlanKey) => {
+    const next = getPlan(key) ?? PLANS[1];
+    setPlanKey(key);
+    setAmount((a) => Math.min(Math.max(a || next.min, next.min), next.max));
+  };
+
   useEffect(() => {
     let cancelled = false;
     setQuoteError(null);
-    fetch(`/api/deployments/quote?amount=${amount}&termDays=${term}`)
+    setQuote(null);
+    fetch(`/api/deployments/quote?amount=${amount}&plan=${planKey}`)
       .then(async (r) => {
-        if (!r.ok) throw new Error('quote failed');
         const j = await r.json();
-        if (!cancelled) setQuote(j.quote as CalculatorResult);
+        if (!r.ok) throw new Error(j?.message || 'quote failed');
+        if (!cancelled) setQuote(j.quote as PlanQuote);
       })
-      .catch(() => {
-        if (!cancelled) setQuoteError('Could not load the server quote. Check your connection and try again.');
+      .catch((e: unknown) => {
+        if (!cancelled) setQuoteError(e instanceof Error ? e.message : 'Could not load the server quote.');
       });
     return () => {
       cancelled = true;
     };
-  }, [amount, term]);
+  }, [amount, planKey]);
 
   const activate = async () => {
     setBusy(true);
     setError(null);
-    const res = await createDeployment({ amount, termDays: term });
+    const res = await createDeployment({ amount, plan: planKey });
     setBusy(false);
     if (!res.ok) {
       setError(res.message);
@@ -52,80 +61,79 @@ export function DeployForm({ available, hasFunds }: { available: number; hasFund
 
   return (
     <div>
-      <PageHeader title="Deploy Capital" sub="Activate a deployment from your available balance. Quotes are computed server-side." />
+      <PageHeader title="Deploy Capital" sub="Activate a module from your available balance. Quotes are computed server-side." />
       {!hasFunds && (
-        <div className="glass mt-6 rounded-2xl border-amberx/30 p-6 text-center">
-          <div className="font-bold">Available balance is $0.00</div>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-fog">Deployments draw from deposited funds. Deposit first, then return here to activate.</p>
-          <Link href="/app/deposit" className="mt-4 inline-block rounded-xl bg-pulse px-6 py-2.5 text-sm font-bold text-black hover:brightness-110">Deposit funds</Link>
-        </div>
+        <AxCard className="mt-6 border-[rgba(242,191,74,0.4)] p-6 text-center">
+          <div className="font-bold text-white">Available balance is $0.00</div>
+          <p className="mx-auto mt-1 max-w-sm text-[14px] text-[#AAB5C7]">Deployments draw from deposited funds. Deposit first, then return here to activate.</p>
+          <Link href="/app/deposit" className="mt-4 inline-flex min-h-[48px] items-center rounded-[14px] bg-[#2FD6FF] px-6 text-[14px] font-bold text-[#06121A] hover:brightness-110">Deposit funds</Link>
+        </AxCard>
       )}
-      <div className="glass mt-6 rounded-2xl p-6 sm:p-8">
-        <div className="text-sm text-fog">Available Balance <span className="font-mono font-bold text-white">{formatUSD(available)}</span></div>
-        <label htmlFor="deploy-amount" className="mt-4 block text-xs text-fog">Amount (USD)</label>
-        <input
-          id="deploy-amount"
-          type="number"
-          min={PROTOCOL_CONFIG.minDeployment}
-          max={PROTOCOL_CONFIG.maxDeployment}
-          value={amount}
-          onChange={(e) => setAmount(Number(e.target.value))}
-          className="mt-1 w-full rounded-xl border border-line bg-void px-4 py-3 text-sm outline-none focus:border-pulse"
-        />
-        <span className="mt-4 block text-xs text-fog">Term</span>
-        <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Term">
-          {PROTOCOL_CONFIG.termOptions.map((t) => (
-            <button
-              key={t}
-              role="radio"
-              aria-checked={term === t}
-              onClick={() => setTerm(t)}
-              className={`rounded-xl border px-4 py-2 text-sm ${term === t ? 'border-pulse/60 bg-pulse/10 font-bold text-pulse' : 'border-line hover:border-pulse/50'}`}
+      <AxCard className="mt-6 p-6 sm:p-7">
+        <div className="text-[14px] text-[#AAB5C7]">Available Balance <span className="font-mono font-bold text-white">{formatUSD(available)}</span></div>
+        <span className="mt-4 block text-[14px] text-[#AAB5C7]">Module</span>
+        <div className="mt-2 grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Module">
+          {PLANS.map((p) => (
+              <button
+              key={p.key} role="radio" aria-checked={p.key === planKey} onClick={() => selectPlan(p.key)}
+              className={`rounded-[12px] border px-4 py-3 text-left transition ${p.key === planKey ? 'border-[rgba(47,214,255,0.65)] bg-[rgba(47,214,255,0.08)]' : 'border-[#2A394D] hover:border-[rgba(47,214,255,0.4)]'}`}
             >
-              {t} days
+              <div className={`text-[14px] font-bold ${p.key === planKey ? 'text-[#2FD6FF]' : 'text-white'}`}>{p.name}</div>
+              <div className="mt-0.5 font-mono text-[11px] text-[#78859A]">{formatPct(p.ratePerCredit * 100)}/6h · ${p.min}–${p.max.toLocaleString()}</div>
             </button>
           ))}
         </div>
-        <div className="mt-6 rounded-2xl border border-line bg-void/60 p-5 text-sm" aria-live="polite">
+        <label htmlFor="deploy-amount" className="mt-4 block text-[14px] text-[#AAB5C7]">
+          Amount (USD) · {plan.name} range {formatUSD(plan.min, { decimals: 0 })} – {formatUSD(plan.max, { decimals: 0 })}
+        </label>
+        <input
+          id="deploy-amount"
+          type="number"
+          min={plan.min}
+          max={plan.max}
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          className="mt-2 w-full rounded-[16px] border border-[#4B5C73] bg-[#151D2C] px-4 py-3.5 text-[15px] text-white outline-none placeholder:text-[#596579] focus:border-[#2FD6FF] focus:shadow-[0_0_0_2px_rgba(47,214,255,0.12)]"
+        />
+        <div className="mt-6 rounded-[16px] border border-[#202A3A] bg-[#080B12] p-5 text-[14px]" aria-live="polite">
           {quoteError ? (
-            <p role="alert" className="text-xs text-danger">{quoteError}</p>
+            <p role="alert" className="text-[13px] text-[#F06B78]">{quoteError}</p>
           ) : !quote ? (
-            <p className="text-xs text-fog">Loading server quote…</p>
+            <p className="text-[13px] text-[#78859A]">Loading server quote…</p>
           ) : (
             <dl className="space-y-2">
-              <div className="flex justify-between"><dt className="text-fog">Daily rate</dt><dd className="font-mono">{formatPct(quote.dailyRate * 100)}</dd></div>
-              <div className="flex justify-between"><dt className="text-fog">Gross profit ({quote.termDays}d)</dt><dd className="font-mono">{formatUSD(quote.grossProfit)}</dd></div>
-              <div className="flex justify-between"><dt className="text-fog">Protocol fee ({(PROTOCOL_CONFIG.performanceFeeRate * 100).toFixed(0)}%)</dt><dd className="font-mono">−{formatUSD(quote.protocolFee)}</dd></div>
-              <div className="flex justify-between border-t border-line pt-2"><dt className="font-bold">Net profit</dt><dd className="font-mono font-bold text-pulse">+{formatUSD(quote.netProfit)}</dd></div>
+              <div className="flex justify-between"><dt className="text-[#78859A]">Module</dt><dd className="font-mono text-white">{quote.planName} · {formatPct(quote.ratePerCredit * 100)}/6h</dd></div>
+              <div className="flex justify-between"><dt className="text-[#78859A]">Each payout</dt><dd className="font-mono text-white">{formatUSD(quote.creditPerPayout)}</dd></div>
+              <div className="flex justify-between"><dt className="text-[#78859A]">Daily total (4×)</dt><dd className="font-mono text-white">{formatUSD(quote.dailyTotal)}</dd></div>
+              <div className="flex justify-between border-t border-[#202A3A] pt-2"><dt className="font-bold text-white">Lands in total (1 day)</dt><dd className="font-mono font-bold text-[#2FD6FF]">{formatUSD(quote.totalWithPrincipal)}</dd></div>
             </dl>
           )}
         </div>
-        {error && <p role="alert" className="mt-4 text-xs text-danger">{error}</p>}
-        <button
-          onClick={() => setConfirming(true)}
-          disabled={!quote || !hasFunds}
-          className="mt-6 w-full rounded-xl bg-pulse py-3 text-sm font-bold text-black disabled:opacity-50 sm:w-auto sm:px-8 hover:brightness-110"
-        >
-          Review & Activate
-        </button>
-        <p className="mt-3 text-xs text-fog">Estimates only — no yield is guaranteed. Activation records a real deployment in your ledger.</p>
-      </div>
+        {error && <p role="alert" className="mt-4 text-[13px] text-[#F06B78]">{error}</p>}
+        <div className="mt-6">
+          <AxButton onClick={() => setConfirming(true)} disabled={!quote || !hasFunds}>
+            Review & Activate
+          </AxButton>
+        </div>
+        <p className="mt-3 text-[12px] text-[#78859A]">Estimates only — no yield is guaranteed. Activation records a real deployment in your ledger.</p>
+      </AxCard>
       {confirming && quote && (
-        <Modal title="Confirm deployment" onClose={() => setConfirming(false)}>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-fog">Amount</dt><dd className="font-mono font-bold">{formatUSD(quote.amount)}</dd></div>
-            <div className="flex justify-between"><dt className="text-fog">Term</dt><dd className="font-mono">{quote.termDays} days</dd></div>
-            <div className="flex justify-between"><dt className="text-fog">Net profit (est.)</dt><dd className="font-mono text-pulse">+{formatUSD(quote.netProfit)}</dd></div>
+        <AxCard variant="active" className="mt-4 p-6">
+          <h2 className="text-[17px] font-bold text-white">Confirm deployment</h2>
+          <dl className="mt-3 space-y-2 text-[14px]">
+            <div className="flex justify-between"><dt className="text-[#78859A]">Amount</dt><dd className="font-mono font-bold text-white">{formatUSD(quote.amount)}</dd></div>
+            <div className="flex justify-between"><dt className="text-[#78859A]">Module</dt><dd className="font-mono text-white">{quote.planName}</dd></div>
+            <div className="flex justify-between"><dt className="text-[#78859A]">Each payout</dt><dd className="font-mono text-[#2FD6FF]">{formatUSD(quote.creditPerPayout)}</dd></div>
           </dl>
-          <p className="mt-3 text-xs text-fog">Activation is recorded immediately and cannot be edited afterwards.</p>
-          {error && <p role="alert" className="mt-3 text-xs text-danger">{error}</p>}
+          <p className="mt-3 text-[12px] text-[#78859A]">Activation is recorded immediately and cannot be edited afterwards.</p>
+          {error && <p role="alert" className="mt-3 text-[13px] text-[#F06B78]">{error}</p>}
           <div className="mt-5 flex gap-3">
-            <button onClick={() => setConfirming(false)} className="flex-1 rounded-xl border border-line py-2.5 text-sm hover:border-pulse/50">Back</button>
-            <button onClick={activate} disabled={busy} className="flex-1 rounded-xl bg-pulse py-2.5 text-sm font-bold text-black disabled:opacity-60">
+            <button onClick={() => setConfirming(false)} className="flex-1 rounded-[14px] border border-[#2A394D] py-3 text-[14px] font-semibold text-white hover:border-[rgba(47,214,255,0.5)]">Back</button>
+            <button onClick={activate} disabled={busy} className="flex-1 rounded-[14px] bg-[#2FD6FF] py-3 text-[14px] font-bold text-[#06121A] disabled:opacity-60 hover:brightness-110">
               {busy ? 'Activating…' : 'Activate Protocol'}
             </button>
           </div>
-        </Modal>
+        </AxCard>
       )}
     </div>
   );

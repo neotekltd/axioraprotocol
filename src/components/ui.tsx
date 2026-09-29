@@ -24,7 +24,7 @@ export function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`glass rounded-2xl shadow-card ${className}`}>{children}</div>;
+  return <div className={`rounded-[20px] border border-[#202A3A] bg-[#0D111A] ${className}`}>{children}</div>;
 }
 
 export function useCountUp(target: number, active: boolean, duration = 1400) {
@@ -47,10 +47,10 @@ export function useCountUp(target: number, active: boolean, duration = 1400) {
 
 export function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="text-[11px] tracking-[0.2em] text-fog">{label}</div>
-      <div className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight">{value}</div>
-      {sub && <div className="mt-1 text-xs text-fog">{sub}</div>}
+    <div className="rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-5">
+      <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">{label}</div>
+      <div className="mt-2 font-mono text-2xl sm:text-3xl font-bold tracking-tight text-white">{value}</div>
+      {sub && <div className="mt-1 text-xs text-[#78859A]">{sub}</div>}
     </div>
   );
 }
