@@ -9,8 +9,8 @@ import { useEffect, useRef } from 'react';
 export function ProtocolBackground() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="tech-grid absolute inset-0 opacity-90 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black_30%,transparent_100%)]" />
-      <div className="tech-dots absolute inset-0 opacity-50" />
+      <div className="tech-grid absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black_30%,transparent_100%)]" />
+      <div className="tech-dots absolute inset-0 opacity-30" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyanx/40 to-transparent" />
     </div>
   );
@@ -72,12 +72,13 @@ export function CircuitRail({ nodes = 3 }: { nodes?: number }) {
   );
 }
 
-// Numbered technical eyebrow: "02 / MODULES".
+// Numbered technical eyebrow: "01 / MODULES". Empty index renders an
+// unnumbered label (hero).
 export function TechEyebrow({ index, label }: { index: string; label: string }) {
   return (
     <div className="flex items-center gap-3 font-mono text-[11px] font-semibold tracking-[0.24em] text-pulse">
       <span className="inline-block h-px w-6 bg-pulse/60" aria-hidden="true" />
-      {index} / {label}
+      {index ? `${index} / ${label}` : label}
     </div>
   );
 }

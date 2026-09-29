@@ -11,15 +11,11 @@ import { formatUSD } from '@/lib/finance';
 import { FAQS } from '@/lib/mock';
 import type { ProtocolStats } from '@/lib/queries';
 
-function MetricCard({ id, label, value, sub, started, index }: {
-  id: string; label: string; value: number; sub: string; started: boolean; index: number;
+function MetricCard({ id, label, value, sub, started, index, money }: {
+  id: string; label: string; value: number; sub: string; started: boolean; index: number; money?: boolean;
 }) {
   const display = useAnimatedNumber(value, started, 1100);
-  const formatted = id === 'trades' || id === 'positions'
-    ? Math.round(display).toLocaleString('en-US')
-    : id === 'winrate'
-      ? `${display.toFixed(2)}%`
-      : formatUSD(display, { decimals: 0, sign: id === 'pnl' });
+  const formatted = money ? formatUSD(display, { decimals: 0 }) : Math.round(display).toLocaleString('en-US');
   return (
     <Reveal delay={Math.min(index, 2) * 90}>
       <div className="card-sweep rounded-xl border border-line bg-panel/80 p-5 transition hover:border-pulse/50">
@@ -40,32 +36,32 @@ export function TelemetrySection({ stats }: { stats: ProtocolStats | null }) {
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.2);
   const metrics = stats
     ? [
-        { id: 'capital', label: 'PROTOCOL CAPITAL', value: stats.capital, sub: `Snapshot ${stats.updatedAt.slice(0, 10)}` },
-        { id: 'pnl', label: 'TOTAL P&L', value: stats.totalPnl, sub: 'Audited result' },
-        { id: 'trades', label: 'VERIFIED TRADES', value: stats.verifiedTrades, sub: 'Ledger-verified' },
-        { id: 'winrate', label: 'WIN RATE', value: stats.winRate, sub: 'Closed trades' },
-        { id: 'positions', label: 'ACTIVE POSITIONS', value: stats.activePositions, sub: 'Open now' },
+        { id: 'deposited', label: 'DEPOSITED TO DATE', value: stats.deposited, sub: `Ledger total${stats.updatedAt ? ` · ${stats.updatedAt.slice(0, 10)}` : ''}`, money: true },
+        { id: 'withdrawn', label: 'WITHDRAWN BY MEMBERS', value: stats.withdrawn, sub: 'Settled withdrawals', money: true },
+        { id: 'accounts', label: 'ACCOUNTS', value: stats.accounts, sub: 'Verified members' },
+        { id: 'payouts', label: 'PAYOUTS MADE', value: stats.payouts, sub: 'Credited payouts' },
+        { id: 'days', label: 'DAYS IN OPERATION', value: stats.daysOperation, sub: 'Since launch' },
       ]
     : [];
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Live protocol telemetry">
       <Reveal>
-        <TechEyebrow index="06" label="TELEMETRY" />
+        <TechEyebrow index="05" label="TELEMETRY" />
         <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Live readings from the ledger.</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">
           {stats
-            ? 'Operator-published, audited snapshot. Numbers animate in on first view.'
-            : 'No audited snapshot published yet — channels hold an awaiting-ledger state instead of invented figures.'}
+            ? 'Pulled from the books — every figure traces to ledger records.'
+            : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
         </p>
       </Reveal>
       <div ref={ref} className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         {stats
           ? metrics.map((m, i) => <MetricCard key={m.id} {...m} started={inView} index={i} />)
-          : ['CAPITAL', 'TOTAL P&L', 'TRADES', 'WIN RATE', 'POSITIONS'].map((label, i) => (
+          : ['DEPOSITED', 'WITHDRAWN', 'ACCOUNTS', 'PAYOUTS', 'DAYS ONLINE'].map((label, i) => (
               <Reveal key={label} delay={Math.min(i, 2) * 90}>
                 <div className="rounded-xl border border-dashed border-line bg-panel/50 p-4">
                   <div className="font-mono text-[10px] tracking-[0.2em] text-fog">{label}</div>
-                  <div className="mt-2 font-mono text-base font-bold tracking-[0.12em] text-fog">AWAITING LEDGER</div>
+                  <div className="mt-2 font-mono text-base font-bold tracking-[0.12em] text-fog">AWAITING LIVE DATA</div>
                   <div className="relative mt-2 h-[3px] overflow-hidden rounded-full bg-white/[0.06]" aria-hidden="true">
                     <span className="signal-x" style={{ animationDuration: '2.8s' }} />
                   </div>
@@ -113,7 +109,7 @@ export function ActivitySection() {
     <section className="border-y border-white/5 bg-void/60" aria-label="Protocol activity">
       <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28">
         <Reveal>
-          <TechEyebrow index="07" label="ACTIVITY" />
+          <TechEyebrow index="06" label="ACTIVITY" />
           <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Money moving right now.</h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">Individual accounts stay private. Only protocol-level batches are ever published — never simulated.</p>
         </Reveal>
@@ -132,18 +128,19 @@ export function ReferralNetworkSection() {
       <div className="grid items-center gap-10 lg:grid-cols-2">
         <div>
           <Reveal>
-            <TechEyebrow index="08" label="REFERRALS" />
+            <TechEyebrow index="07" label="REFERRALS" />
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Build a network that pays you back.</h2>
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-mist/75">Axiora&apos;s own five-level structure — instant bonuses plus daily shares, snapshotted per reward.</p>
           </Reveal>
           <Reveal delay={100}>
             <div className="mt-8 space-y-2">
-              {PROTOCOL_CONFIG.referralLevels.map((r) => (
+              {PROTOCOL_CONFIG.referralLevels.slice(0, 3).map((r) => (
                 <div key={r.level} className="flex items-center justify-between rounded-lg border border-line bg-panel/70 px-4 py-3 text-sm transition hover:border-pulse/40">
                   <span className="font-mono font-bold text-white">L{r.level}</span>
                   <span className="font-mono text-xs text-fog">{r.instantPct}% instant · {r.dailySharePct}% daily</span>
                 </div>
               ))}
+              <p className="pt-1 text-xs text-fog">+ L4–L5 deeper levels — full table on the <Link href="/referrals" className="text-pulse">Referrals page</Link>.</p>
             </div>
           </Reveal>
           <Reveal delay={140}>
@@ -154,9 +151,9 @@ export function ReferralNetworkSection() {
           </Reveal>
         </div>
         <Reveal delay={120}>
-          <div className="rounded-2xl border border-line bg-panel/50 p-6">
+          <div className="mx-auto w-full max-w-md rounded-2xl border border-line bg-panel/50 p-5">
             <div className="font-mono text-[10px] tracking-[0.25em] text-fog">NETWORK TOPOLOGY · LIVE MODEL</div>
-            <div className="anim-drift mt-2"><NetworkViz /></div>
+            <div className="mt-1"><NetworkViz /></div>
           </div>
         </Reveal>
       </div>
@@ -170,7 +167,7 @@ export function FaqDiagnostics() {
     <section className="border-y border-white/5 bg-void/60" aria-label="FAQ and diagnostics">
       <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[0.85fr_1.15fr]">
         <Reveal>
-          <TechEyebrow index="09" label="INFORMATION" />
+          <TechEyebrow index="08" label="INFORMATION" />
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Questions, answered.</h2>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-mist/75">Straight answers on money, timing and access. Anything deeper lives on the FAQ page.</p>
           <div className="mt-6">
@@ -201,11 +198,11 @@ export function FinalCta() {
           <div className="absolute left-1/2 top-0 h-40 w-[36rem] max-w-full -translate-x-1/2 bg-[radial-gradient(ellipse_at_top,rgba(34,211,238,0.14),transparent_70%)]" aria-hidden="true" />
           <div className="relative">
             <div className="ping-soft mx-auto grid h-12 w-12 place-items-center rounded-full border border-pulse/50 bg-pulse/10 font-mono text-sm font-bold text-pulse">A×</div>
-            <h2 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">Activate consensus.</h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fog">Four agents. One gate. Your capital, on autopilot — tracked on a dashboard that shows everything.</p>
+            <h2 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">Switch it on.</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fog">Deposits, modules, payouts and withdrawals — one account, tracked end to end.</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link href="/register" className="rounded-lg bg-pulse px-7 py-3 text-sm font-bold text-black shadow-glow transition hover:-translate-y-0.5 hover:brightness-110">Activate account</Link>
-              <Link href="#simulator" className="rounded-lg border border-line px-7 py-3 text-sm transition hover:border-pulse/50 hover:text-white">Try the simulator</Link>
+              <Link href="#modules" className="rounded-lg border border-line px-7 py-3 text-sm transition hover:border-pulse/50 hover:text-white">View the modules</Link>
             </div>
           </div>
         </div>

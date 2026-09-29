@@ -7,9 +7,9 @@ import { useInViewOnce } from '@/components/landing/motion';
 
 const STEPS = [
   ['01', 'Create your account', 'Register with email and password, then enter the 6-digit verification code.'],
-  ['02', 'Fund your account', 'Deposit from an external wallet. Assets convert to USDT on arrival.'],
-  ['03', 'Choose a module', 'Pick a 30, 60 or 90-day term. The server quotes binding figures before you confirm.'],
-  ['04', 'Track & withdraw', 'Follow settlements on your dashboard and withdraw available balance in the daily window.'],
+  ['02', 'Fund it in crypto', 'Deposit from an external wallet. Assets convert to USDT on arrival.'],
+  ['03', 'Choose your module', 'Pick a 30, 60 or 90-day term. The server quotes binding figures before you confirm.'],
+  ['04', 'Collect on schedule', 'Earnings settle to your ledger at maturity. Withdraw available balance in the daily window.'],
 ];
 
 // Boot sequence: nodes activate in staged order with a traveling signal
@@ -33,8 +33,8 @@ export function BootSequence() {
     <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Boot sequence">
       <Reveal>
         <div className="text-center">
-          <div className="inline-block"><TechEyebrow index="04" label="BOOT SEQUENCE" /></div>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Four steps to your first settlement.</h2>
+          <div className="inline-block"><TechEyebrow index="03" label="BOOT SEQUENCE" /></div>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Four steps to your first payout.</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-fog">No queues, no manual approvals. Five minutes to an active deployment.</p>
         </div>
       </Reveal>

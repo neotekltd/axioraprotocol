@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Reveal } from '@/components/Reveal';
-import { TechEyebrow, CircuitRail } from '@/components/landing/background';
+import { TechEyebrow } from '@/components/landing/background';
 import { SystemViz } from '@/components/landing/network-viz';
 import { ModuleCards, ModuleCta } from '@/components/landing/ModuleCards';
 import { SimulatorHome } from '@/components/landing/SimulatorHome';
@@ -13,9 +13,8 @@ import { PROTOCOL_CONFIG } from '@/lib/config';
 export function ModulesSection() {
   return (
     <section id="modules" className="relative mx-auto max-w-[1200px] scroll-mt-24 px-5 py-20 md:px-8 md:py-28" aria-label="Investment modules">
-      <CircuitRail nodes={3} />
       <Reveal>
-        <TechEyebrow index="02" label="MODULES" />
+        <TechEyebrow index="01" label="MODULES" />
         <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Pick the module that fits your capital.</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">
           Three fixed terms on one capital range. Every rate below is Axiora&apos;s own model rate —
@@ -33,7 +32,7 @@ export function SimulatorSection() {
     <section id="simulator" className="scroll-mt-24 border-y border-white/5 bg-void/60" aria-label="Simulator">
       <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28">
         <Reveal>
-          <TechEyebrow index="03" label="SIMULATOR" />
+          <TechEyebrow index="02" label="SIMULATOR" />
           <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Run the numbers before you run the plan.</h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">Live Axiora arithmetic — the same functions the public calculator uses. Nothing hardcoded.</p>
         </Reveal>
@@ -48,10 +47,10 @@ export function SimulatorSection() {
 export { BootSequence };
 
 const SPECS: [string, string, string, string][] = [
-  ['01', 'Server-side quotes', 'Every deployment confirmation re-quotes on the server. Frontend estimates are never trusted for activation.', 'API · VALIDATED'],
-  ['02', 'Idempotent activation', 'Each activation carries a unique idempotency key — double-submits can never create duplicate deployments.', 'DB · UNIQUE KEY'],
-  ['03', 'Ledger-backed records', 'Amounts stored as NUMERIC, every mutation validated, full state history per transaction and deployment.', 'LEDGER · RLS'],
-  ['04', 'Balance-checked execution', 'Deployments and withdrawals validate against live available balance server-side before anything is recorded.', 'SERVER · ATOMIC'],
+  ['01', 'Fixed schedule', 'Every module runs a fixed 30, 60 or 90-day term with payout at maturity. No open-ended positions.', 'TERMS · 30/60/90D'],
+  ['02', 'Automatic withdrawals', 'Withdrawal requests record instantly with a balance hold and track state to completion.', 'REQUEST · TRACKED'],
+  ['03', 'Principal returned', 'Deployed principal reserves for the term and returns at maturity per ledger records.', 'MATURITY · SETTLED'],
+  ['04', 'Everything on record', 'Deployments, payouts, withdrawals and referrals write immutable ledger rows with full history.', 'LEDGER · RLS'],
 ];
 
 export function SpecsSection() {
@@ -61,15 +60,15 @@ export function SpecsSection() {
         <Reveal>
           <div className="rounded-2xl border border-line bg-panel/70 p-6 sm:p-8">
             <div className="font-mono text-[10px] tracking-[0.25em] text-fog">AXIORA CORE · CONSENSUS FABRIC</div>
-            <div className="anim-drift mt-4"><SystemViz /></div>
+            <div className="mt-4"><SystemViz /></div>
             <p className="mt-4 text-xs leading-relaxed text-fog">Original Axiora system render. Four agents, one gate, zero manual execution paths.</p>
           </div>
         </Reveal>
         <div>
           <Reveal>
-            <TechEyebrow index="05" label="SPECIFICATIONS" />
+            <TechEyebrow index="04" label="SPECIFICATIONS" />
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Built to run without you watching.</h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-mist/75">Only shipped, implemented behavior is listed. Nothing aspirational.</p>
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-mist/75">Only shipped, implemented behavior is listed. Axiora provides the capital, accounting and settlement layer for strategies operated by external execution infrastructure.</p>
           </Reveal>
           <div className="mt-6 space-y-2.5">
             {SPECS.map(([n, t, b, m], i) => (

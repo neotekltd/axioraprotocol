@@ -1,23 +1,24 @@
-// Landing hero v3: multi-model intelligence is the core message.
-// H1 "Frontier AI. Unified execution." with staged boot sequence, factual
-// status panel (integrations honestly STANDBY), and the agent-topology
-// visual showing agents → consensus → risk → execution.
+// Landing hero: settlement-platform positioning. "Capital on autopilot."
+// with a compact externally-backed intelligence strip (Claude/GPT/Fable/
+// Astra are owner-confirmed models of the SEPARATE external strategy app —
+// shown only as the external source, never as Axiora activity). Factual
+// terms panel, capital-flow visual.
 
 import Link from 'next/link';
 import { TechEyebrow } from '@/components/landing/background';
-import { AgentTopology } from '@/components/landing/AgentTopology';
+import { CapitalFlowViz } from '@/components/landing/CapitalFlowViz';
 import { PROTOCOL_CONFIG } from '@/lib/config';
-import type { AgentState } from '@/lib/agents';
+
+const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
 
 const STATUS_ROWS: [string, string][] = [
-  ['INTELLIGENCE', 'Multi-model · consensus-gated'],
-  ['AGENTS DEFINED', '4 / 4'],
-  ['MODEL INTEGRATIONS', 'Standby'],
   ['MINIMUM', `$${PROTOCOL_CONFIG.minDeployment}`],
   ['TERMS', `${PROTOCOL_CONFIG.minTermDays}–${PROTOCOL_CONFIG.maxTermDays} days`],
+  ['PAYOUTS', 'At maturity'],
+  ['PRINCIPAL', 'Returned at maturity'],
 ];
 
-export function HeroAutopilot({ agents }: { agents: AgentState[] }) {
+export function HeroAutopilot() {
   return (
     <section className="relative overflow-hidden pb-14 pt-24 md:pb-16 md:pt-32" aria-label="Introduction">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_72%_32%,rgba(34,211,238,0.1),transparent)]" aria-hidden="true" />
@@ -38,23 +39,22 @@ export function HeroAutopilot({ agents }: { agents: AgentState[] }) {
       <div className="relative mx-auto grid w-full max-w-[1200px] items-center gap-10 px-5 md:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:gap-6">
         <div>
           <div className="hero-in" style={{ animationDelay: '250ms' }}>
-            <TechEyebrow index="AI" label="MULTI-MODEL INTELLIGENCE" />
+            <TechEyebrow index="" label="AXIORA PROTOCOL / SETTLEMENT PLATFORM" />
           </div>
           <h1 className="mt-4 max-w-[12ch] text-[2.6rem] font-bold leading-[1.0] tracking-[-0.025em] sm:text-6xl xl:text-[4rem]">
-            <span className="hero-in block" style={{ animationDelay: '400ms' }}>Frontier AI.</span>
-            <span className="hero-in block text-pulse text-glow" style={{ animationDelay: '500ms' }}>Unified execution.</span>
+            <span className="hero-in block" style={{ animationDelay: '400ms' }}>Capital on autopilot.</span>
+            <span className="hero-in block text-pulse text-glow" style={{ animationDelay: '500ms' }}>Backed by frontier intelligence.</span>
           </h1>
           <p className="hero-in mt-5 max-w-md text-[15px] leading-relaxed text-mist/80" style={{ animationDelay: '650ms' }}>
-            Axiora orchestrates intelligence across independent AI agents, combines their signals
-            through a consensus layer, applies risk controls, and routes authorized strategies
-            through its execution engine.
+            One place for deposits, scheduled earnings and withdrawals. Strategies powering
+            Axiora are developed and evaluated using leading frontier AI models.
           </p>
           <div className="hero-in mt-7 flex flex-wrap items-center gap-3" style={{ animationDelay: '800ms' }}>
             <Link href="/register" className="rounded-md bg-pulse px-5 py-2.5 text-[13px] font-bold text-black shadow-glow transition hover:brightness-110">
-              Launch Axiora
+              Activate account
             </Link>
-            <Link href="#intelligence" className="rounded-md border border-line px-5 py-2.5 text-[13px] text-mist transition hover:border-pulse/50 hover:text-white">
-              Explore the intelligence layer
+            <Link href="/how-it-works" className="rounded-md border border-line px-5 py-2.5 text-[13px] text-mist transition hover:border-pulse/50 hover:text-white">
+              How it works
             </Link>
           </div>
           <div className="hero-in mt-6 max-w-sm rounded-lg border border-line bg-void/70" style={{ animationDelay: '900ms' }}>
@@ -70,8 +70,30 @@ export function HeroAutopilot({ agents }: { agents: AgentState[] }) {
           </div>
         </div>
         <div className="hero-in relative" style={{ animationDelay: '950ms' }}>
-          <AgentTopology agents={agents} />
-          <p className="mt-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-fog">AXIORA INTELLIGENCE FABRIC · ORIGINAL RENDER</p>
+          <CapitalFlowViz />
+          <p className="mt-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-fog">AXIORA SETTLEMENT FLOW · ORIGINAL RENDER</p>
+        </div>
+      </div>
+      <div className="hero-in relative mx-auto mt-10 max-w-[1200px] px-5 md:px-8" style={{ animationDelay: '1050ms' }}>
+        <div className="rounded-xl border border-line bg-void/60 px-5 py-4">
+          <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
+            <div className="text-center md:text-left">
+              <div className="font-mono text-[10px] tracking-[0.25em] text-fog">POWERED BY FRONTIER INTELLIGENCE</div>
+              <div className="mt-2 flex flex-wrap justify-center gap-x-6 gap-y-1 md:justify-start">
+                {MODELS.map((m) => (
+                  <span key={m} className="flex items-center gap-2 font-mono text-sm font-bold tracking-[0.15em] text-white">
+                    <span className="h-1.5 w-1.5 rounded-full bg-pulse/70" aria-hidden="true" />{m}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 font-mono text-[10px] tracking-[0.18em] text-fog">
+              <span className="text-center">EXTERNAL<br />STRATEGY ENGINE</span>
+              <span className="text-pulse" aria-hidden="true">↓</span>
+              <span className="rounded-md border border-pulse/40 bg-pulse/[0.07] px-3 py-2 text-center text-pulse">AXIORA<br />CAPITAL · PLANS · PAYOUTS</span>
+            </div>
+          </div>
+          <p className="mt-3 text-center text-[11px] text-fog md:text-left">Model strategy operates in a separate application. Axiora handles capital, accounting and settlement.</p>
         </div>
       </div>
     </section>

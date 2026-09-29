@@ -35,7 +35,7 @@ inspect (git status, deployments list, config, package.json)
 
 ## Reference
 
-- Worker: `axiora-protocol` → https://axiora-protocol.jaidanem6.workers.dev
+- Worker: `axioraprotocol` → https://axioraprotocol.jaidanem6.workers.dev (deployment origin; public canonical URL is https://axioraprotocol.com once custom-domain routing is configured)
 - Runtime secrets (set via `wrangler secret put`, never committed):
   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - Rollback: pick a prior version ID from `deployments list`; never delete versions.

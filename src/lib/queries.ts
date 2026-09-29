@@ -386,6 +386,11 @@ export interface ProtocolStats {
   winRate: number;
   activePositions: number;
   currentValue: number;
+  deposited: number;
+  withdrawn: number;
+  accounts: number;
+  payouts: number;
+  daysOperation: number;
   updatedAt: string;
 }
 
@@ -394,7 +399,7 @@ export async function getProtocolStats(): Promise<ProtocolStats | null> {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('protocol_stats')
-      .select('capital,verified_trades,total_pnl,win_rate,active_positions,current_value,updated_at')
+      .select('capital,verified_trades,total_pnl,win_rate,active_positions,current_value,deposited,withdrawn,accounts,payouts,days_operation,updated_at')
       .eq('id', 1)
       .maybeSingle();
     if (error || !data) return null;
@@ -406,6 +411,11 @@ export async function getProtocolStats(): Promise<ProtocolStats | null> {
       winRate: num(s.win_rate),
       activePositions: Number(s.active_positions ?? 0),
       currentValue: num(s.current_value),
+      deposited: num(s.deposited),
+      withdrawn: num(s.withdrawn),
+      accounts: Number(s.accounts ?? 0),
+      payouts: Number(s.payouts ?? 0),
+      daysOperation: Number(s.days_operation ?? 0),
       updatedAt: String(s.updated_at ?? ''),
     };
   } catch {

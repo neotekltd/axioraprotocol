@@ -49,7 +49,6 @@ export function ModuleCards() {
                   className={`boot-line h-full rounded-full bg-gradient-to-r from-pulseDim via-pulse to-pulseBright ${inView ? 'go' : ''}`}
                   style={{ width: `${Math.round((r.dailyRate / maxRate) * 100)}%` }}
                 />
-                <span className={`signal-x ${inView ? '' : '[animation-play-state:paused]'}`} style={{ animationDuration: '4s' }} />
               </div>
               <dl className="mt-3.5 space-y-[5px] text-xs">
                 {[
@@ -59,8 +58,10 @@ export function ModuleCards() {
                   ['Cycle', 'Daily'],
                   ['Payouts', 'At maturity'],
                   ['Term', `${term} days`],
-                  ['Modeled', `+${formatUSD(calculateDeployment({ amount: SAMPLE, termDays: term }).netProfit)} / $1k`],
-                  ['Principal', 'Reserved for term'],
+                  ['Payout interval', 'At maturity'],
+                  ['Payouts', '1'],
+                  ['Modeled total', `+${formatUSD(calculateDeployment({ amount: SAMPLE, termDays: term }).netProfit)} / $1k`],
+                  ['Principal', 'Returned at maturity'],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3">
                     <dt className="text-fog">{k}</dt>
