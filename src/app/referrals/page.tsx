@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { SectionEyebrow, SectionTitle, Card } from '@/components/ui';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 
-export const metadata = { title: 'Referrals' };
+export const metadata = {
+  title: 'Referrals',
+  description: 'Axiora referral program: instant bonuses and daily profit shares across five levels.',
+  alternates: { canonical: '/referrals' },
+};
 
 export default function ReferralsPage() {
   return (

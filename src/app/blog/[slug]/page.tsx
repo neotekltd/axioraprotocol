@@ -9,7 +9,7 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: { params: { slug: string } }) {
   const post = BLOG_POSTS.find((p) => p.slug === params.slug);
   if (!post) return { title: 'Article not found' };
-  return { title: post.title, description: post.excerpt };
+  return { title: post.title, description: post.excerpt, alternates: { canonical: `/blog/${params.slug}` } };
 }
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {

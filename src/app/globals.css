@@ -36,11 +36,11 @@
   --text-secondary: #9aa7b4;
   --text-muted: #6b7684;
 
-  --accent: #00d294;
-  --accent-bright: #34d399;
-  --accent-deep: #00bb7f;
+  --accent: #22d3ee;
+  --accent-bright: #67e8f9;
+  --accent-deep: #0e9db8;
   --accent-cyan: #22d3ee;
-  --accent-glow: rgba(0, 210, 148, 0.16);
+  --accent-glow: rgba(34, 211, 238, 0.16);
   --danger: #fb2c36;
   --warning: #f99c00;
 }
@@ -58,7 +58,7 @@ body {
 }
 
 ::selection {
-  background-color: #00bb7f4d;
+  background-color: #0e9db84d;
 }
 
 /* ---------- type scale (display: Space Grotesk; body: Geist Sans) ---------- */
@@ -88,7 +88,7 @@ body {
 }
 
 .text-glow {
-  text-shadow: 0 0 28px rgba(0, 210, 148, 0.4);
+  text-shadow: 0 0 28px rgba(34, 211, 238, 0.4);
 }
 
 .thin-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
@@ -124,8 +124,90 @@ body {
 }
 .pulse-node { animation: pulse-node 2.4s ease-in-out infinite; }
 
+/* ---------- landing motion language (AIMEX-grade terminal aesthetic) --- */
+@keyframes hero-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.hero-in { opacity: 0; animation: hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@keyframes drift-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+.anim-drift { animation: drift-slow 7s ease-in-out infinite; }
+
+@keyframes float-chip {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.92; }
+  50% { transform: translate3d(0, -6px, 0); opacity: 1; }
+}
+.anim-chip { animation: float-chip 5s ease-in-out infinite; }
+.anim-chip-2 { animation: float-chip 6.5s ease-in-out -2s infinite; }
+.anim-chip-3 { animation: float-chip 5.8s ease-in-out -3.4s infinite; }
+
+@keyframes signal-x {
+  0% { left: 0; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: calc(100% - 6px); opacity: 0; }
+}
+.signal-x { position: absolute; top: -2px; width: 6px; height: 6px; border-radius: 9999px; background: #67e8f9; box-shadow: 0 0 12px 2px rgba(34, 211, 238, 0.8); animation: signal-x 3.2s linear infinite; }
+
+@keyframes signal-y {
+  0% { top: 0; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { top: calc(100% - 6px); opacity: 0; }
+}
+.signal-y { position: absolute; left: -2px; width: 6px; height: 6px; border-radius: 9999px; background: #67e8f9; box-shadow: 0 0 12px 2px rgba(34, 211, 238, 0.8); animation: signal-y 3.2s linear infinite; }
+
+@keyframes sweep {
+  0% { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(240%) skewX(-12deg); }
+}
+.card-sweep { position: relative; overflow: hidden; }
+.card-sweep::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.07), transparent);
+  transform: translateX(-120%) skewX(-12deg); pointer-events: none;
+}
+.card-sweep:hover::after { animation: sweep 0.9s ease; }
+
+@keyframes ping-soft {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.ping-soft { position: relative; }
+.ping-soft::before {
+  content: ''; position: absolute; inset: 0; border-radius: 9999px;
+  border: 1px solid rgba(34, 211, 238, 0.7); animation: ping-soft 2.2s ease-out infinite;
+}
+
+@keyframes boot-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.boot-line { transform-origin: left; }
+.boot-line.go { animation: boot-line 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+.tech-grid {
+  background-image:
+    linear-gradient(rgba(148, 197, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 197, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.tech-dots {
+  background-image: radial-gradient(rgba(148, 197, 255, 0.13) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; translate: none; scale: none; transition: none; }
+  .hero-in { animation: none; opacity: 1; }
   .pulse-node, .flow-line { animation: none; }
+  .anim-drift, .anim-chip, .anim-chip-2, .anim-chip-3,
+  .signal-x, .signal-y, .ping-soft::before { animation: none; }
+  .card-sweep:hover::after { animation: none; }
+  .boot-line.go { animation: none; transform: scaleX(1); }
   html { scroll-behavior: auto; }
 }

@@ -1,7 +1,11 @@
 import { CalculatorWidget } from '@/components/CalculatorWidget';
 import { SectionEyebrow, SectionTitle } from '@/components/ui';
 
-export const metadata = { title: 'Calculator' };
+export const metadata = {
+  title: 'Calculator',
+  description: 'Model Axiora deployment outcomes by amount and term. Instant estimates, server-quoted at confirmation.',
+  alternates: { canonical: '/calculator' },
+};
 
 export default function CalculatorPage() {
   return (

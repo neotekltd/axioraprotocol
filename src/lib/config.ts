@@ -2,10 +2,15 @@
 // All fees, limits and referral levels MUST be read from backend/admin in prod.
 // These defaults are for demo UI only and clearly labeled as such.
 
-// Canonical public URL (sharing, referral links, metadata). Overridable via
-// NEXT_PUBLIC_APP_URL; static access so Next inlines it into client bundles.
+// Canonical public URL (sharing, referral links, metadata, sitemap).
+// Overridable via NEXT_PUBLIC_SITE_URL; static access so Next inlines it
+// into client bundles. Canonical production domain is axioraprotocol.com;
+// the workers.dev address remains only as deployment origin, never as
+// public/canonical URL.
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? 'https://axioraprotocol.jaidanem6.workers.dev';
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  'https://axioraprotocol.com';
 
 export const PROTOCOL_CONFIG = {
   brand: 'Axiora',

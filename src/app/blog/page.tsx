@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { BLOG_POSTS } from '@/lib/mock';
 import { SectionEyebrow, SectionTitle } from '@/components/ui';
 
-export const metadata = { title: 'Blog' };
+export const metadata = {
+  title: 'Blog',
+  description: 'Axiora research and updates: consensus trading, risk engineering and protocol design.',
+  alternates: { canonical: '/blog' },
+};
 
 export default function BlogPage() {
   return (

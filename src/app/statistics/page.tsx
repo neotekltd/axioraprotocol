@@ -2,7 +2,11 @@ import { SectionEyebrow, SectionTitle, Stat, Card } from '@/components/ui';
 import { getProtocolStats } from '@/lib/queries';
 import { formatUSD } from '@/lib/finance';
 
-export const metadata = { title: 'Statistics' };
+export const metadata = {
+  title: 'Statistics',
+  description: 'Audited Axiora protocol statistics: capital, verified trades, P&L and win rate.',
+  alternates: { canonical: '/statistics' },
+};
 
 export default async function StatisticsPage() {
   const stats = await getProtocolStats();

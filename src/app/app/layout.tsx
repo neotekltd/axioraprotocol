@@ -1,6 +1,9 @@
 import { AppNav } from '@/components/AppNav';
 
-export const metadata = { title: 'App' };
+export const metadata = {
+  title: 'App',
+  robots: { index: false, follow: false },
+};
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

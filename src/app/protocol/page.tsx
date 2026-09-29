@@ -1,5 +1,11 @@
 import { SectionEyebrow, SectionTitle, Card } from '@/components/ui';
 
+export const metadata = {
+  title: 'Protocol',
+  description: 'Axiora convergence architecture: four agents, consensus gate, risk validation and ledger settlement.',
+  alternates: { canonical: '/protocol' },
+};
+
 const FLOW = [
   ['MARKET DATA', 'Aggregated venues, order books, funding rates.'],
   ['SIGNAL ANALYSIS', 'Technicals, structure, liquidity, BTC/ETH/BNB.'],

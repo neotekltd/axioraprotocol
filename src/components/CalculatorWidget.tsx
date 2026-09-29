@@ -19,12 +19,12 @@ export function CalculatorWidget({ compact = false }: { compact?: boolean }) {
         <div className="space-y-6">
           <div>
             <div className="flex justify-between text-sm"><span className="text-fog">Term</span><span className="font-semibold">{r.termDays} days</span></div>
-            <input type="range" min={PROTOCOL_CONFIG.minTermDays} max={PROTOCOL_CONFIG.maxTermDays} value={term} onChange={(e) => setTerm(Number(e.target.value))} className="mt-3 w-full accent-[#34F5A5]" />
+            <input type="range" min={PROTOCOL_CONFIG.minTermDays} max={PROTOCOL_CONFIG.maxTermDays} value={term} onChange={(e) => setTerm(Number(e.target.value))} className="mt-3 w-full accent-[#22D3EE]" />
             <div className="flex justify-between text-[11px] text-fog"><span>20 days</span><span>90 days</span></div>
           </div>
           <div>
             <div className="flex justify-between text-sm"><span className="text-fog">Capital</span><span className="font-semibold">{formatUSD(r.amount, { decimals: 0 })}</span></div>
-            <input type="range" min={10} max={100000} step={10} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="mt-3 w-full accent-[#34F5A5]" />
+            <input type="range" min={10} max={100000} step={10} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="mt-3 w-full accent-[#22D3EE]" />
             <input
               type="number" min={10} max={100000} value={amount} onChange={(e) => setAmount(Number(e.target.value))}
               className="mt-3 w-full rounded-xl border border-line bg-void px-4 py-2.5 text-sm outline-none focus:border-pulse"

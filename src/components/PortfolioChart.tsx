@@ -14,7 +14,7 @@ export function PortfolioChart({ series }: { series: { t: string; value: number 
             contentStyle={{ background: '#0B0F16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12 }}
             formatter={(v) => [formatUSD(Number(v)), 'Deployed']}
           />
-          <Line type="monotone" dataKey="value" stroke="#00D294" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="value" stroke="#22D3EE" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

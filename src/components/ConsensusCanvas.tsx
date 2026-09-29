@@ -35,14 +35,14 @@ function Nodes() {
   return (
     <group ref={group}>
       <lineSegments geometry={spokes}>
-        <lineBasicMaterial color="#00D294" transparent opacity={0.35} />
+        <lineBasicMaterial color="#22D3EE" transparent opacity={0.35} />
       </lineSegments>
       {positions.map((p, i) => (
         <mesh key={i} position={[p[0], p[1], p[2]]}>
           <sphereGeometry args={[i === 4 ? 0.14 : 0.08, 24, 24]} />
           <meshStandardMaterial
-            color={i === 4 ? '#00D294' : '#0a3d2c'}
-            emissive={i === 4 ? '#00D294' : '#06301f'}
+            color={i === 4 ? '#22D3EE' : '#0a3440'}
+            emissive={i === 4 ? '#22D3EE' : '#062a38'}
             emissiveIntensity={i === 4 ? 0.9 : 0.7}
             roughness={0.35}
             metalness={0.1}
@@ -73,7 +73,7 @@ function Particles({ count = 220 }: { count?: number }) {
   });
   return (
     <points ref={ref} geometry={geometry}>
-      <pointsMaterial color="#34F5A5" size={0.025} transparent opacity={0.55} />
+      <pointsMaterial color="#67E8F9" size={0.025} transparent opacity={0.55} />
     </points>
   );
 }
@@ -94,12 +94,12 @@ export function ConsensusCanvas() {
     canvas.addEventListener('webglcontextlost', onLost);
     return () => canvas.removeEventListener('webglcontextlost', onLost);
   }, []);
-  if (lost) return <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(0,210,148,0.14),transparent_65%)]" />;
+  if (lost) return <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(34,211,238,0.14),transparent_65%)]" />;
   return (
     <div ref={holder} className="absolute inset-0">
     <Canvas camera={{ position: [0, 0, 6], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <ambientLight intensity={0.6} />
-      <pointLight position={[4, 4, 4]} color="#00D294" intensity={2.5} distance={14} />
+      <pointLight position={[4, 4, 4]} color="#22D3EE" intensity={2.5} distance={14} />
       <Nodes />
       <Particles />
     </Canvas>

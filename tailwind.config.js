@@ -15,9 +15,9 @@ module.exports = {
         line: 'rgba(255,255,255,0.05)',
         fog: '#9AA7B4',
         mist: '#CBD5E1',
-        pulse: '#00D294',
-        pulseBright: '#34D399',
-        pulseDim: '#00BB7F',
+        pulse: '#22D3EE',
+        pulseBright: '#67E8F9',
+        pulseDim: '#0E9DB8',
         cyanx: '#22D3EE',
         danger: '#FB2C36',
         amberx: '#F99C00',
@@ -32,7 +32,7 @@ module.exports = {
         page: '1280px',
       },
       boxShadow: {
-        glow: '0 0 44px rgba(0,210,148,0.16)',
+        glow: '0 0 44px rgba(34,211,238,0.16)',
         card: '0 8px 32px rgba(0,0,0,0.45)',
       },
       borderRadius: {

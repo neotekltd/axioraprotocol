@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 
-export const metadata = { title: 'Log in' };
+export const metadata = {
+  title: 'Log in',
+  description: 'Sign in to your Axiora Protocol account.',
+  alternates: { canonical: '/login' },
+};
 
 export default function LoginPage() {
   return (

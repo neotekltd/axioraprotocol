@@ -1,7 +1,11 @@
 import { Suspense } from 'react';
 import { VerifyEmailForm } from '@/components/auth/VerifyEmailForm';
 
-export const metadata = { title: 'Verify email' };
+export const metadata = {
+  title: 'Verify email',
+  description: 'Enter the 6-digit code to verify your Axiora email address.',
+  alternates: { canonical: '/verify-email' },
+};
 
 export default function VerifyEmailPage() {
   return (
