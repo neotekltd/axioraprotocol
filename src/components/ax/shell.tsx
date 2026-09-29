@@ -32,7 +32,11 @@ export function AppHeader({ email, unread = 0 }: { email?: string | null; unread
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-[1180px] items-center justify-between px-5 md:px-7">
-        <Link href="/app/dashboard" className="flex items-center gap-2.5" aria-label="Axiora home">
+        <Link
+          href="/"
+          aria-label="Axiora Protocol home"
+          className="flex min-h-[44px] items-center gap-2.5 rounded-lg"
+        >
           <AxioraMark size={36} />
           <span className="text-[17px] font-extrabold tracking-tight text-white">
             AXIORA<span className="text-[#2FD6FF]">.</span>

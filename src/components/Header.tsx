@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
+import { createClient } from '@/lib/supabase/client';
 
 const NAV = [
   { href: '/protocol', label: 'Protocol' },
@@ -19,6 +20,26 @@ export function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // Same Supabase session as the app: when authenticated, the public CTA
+  // leads to the dashboard instead of the auth pages. Read-only session
+  // check — never signs out, never writes storage.
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    createClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (mounted) setAuthed(Boolean(data.session));
+      })
+      .catch(() => {});
+    const { data: sub } = createClient().auth.onAuthStateChange((_e, session) => {
+      if (mounted) setAuthed(Boolean(session));
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
   useEffect(() => {
     const f = () => setScrolled(window.scrollY > 24);
     f();
@@ -60,12 +81,20 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-2.5 lg:flex">
-          <Link href="/login" className="rounded-md px-3.5 py-2 text-[13px] text-mist hover:text-pulse border border-line hover:border-pulse/40 transition-colors">
-            Sign In
-          </Link>
-          <Link href="/register" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
-            Get Started
-          </Link>
+          {authed ? (
+            <Link href="/app/dashboard" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-md px-3.5 py-2 text-[13px] text-mist hover:text-pulse border border-line hover:border-pulse/40 transition-colors">
+                Sign In
+              </Link>
+              <Link href="/register" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
         <button className="lg:hidden p-2 text-mist" onClick={() => setOpen(!open)} aria-label="Menu">
           {open ? <X size={22} /> : <Menu size={22} />}
@@ -73,7 +102,7 @@ export function Header() {
       </div>
       {open && (
         <div className="lg:hidden border-t border-line bg-void/95 backdrop-blur-xl px-4 py-4 space-y-1">
-          {[...NAV, { href: '/login', label: 'Sign In' }, { href: '/register', label: 'Get Started' }].map((n) => (
+          {[...NAV, ...(authed ? [{ href: '/app/dashboard', label: 'Dashboard' }] : [{ href: '/login', label: 'Sign In' }, { href: '/register', label: 'Get Started' }])].map((n) => (
             <Link key={n.href + n.label} href={n.href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-[15px] text-mist hover:bg-surface hover:text-white">
               {n.label}
             </Link>
