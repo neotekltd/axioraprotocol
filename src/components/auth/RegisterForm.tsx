@@ -160,7 +160,7 @@ export function RegisterForm() {
             <AxInput
               id="email" name="email" required type="email" value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com" autoComplete="username" inputMode="email"
+              placeholder="you@example.com" autoComplete="email" inputMode="email"
               autoCapitalize="none" spellCheck={false} className="mt-2 min-h-[58px] text-[16px]"
             />
             <div className="mb-2 mt-6 flex items-baseline justify-between gap-3">

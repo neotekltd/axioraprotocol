@@ -26,7 +26,7 @@ tests/              # unit (finance/validation/ledger rules), integration (api+a
 
 ## Key contracts
 
-- `calculateDeployment({amount, termDays})` pure in `src/lib/finance.ts`; Route Handler re-runs + snapshots rates; client never authoritative.
+- `quotePlan(planKey, amount)` pure in `src/lib/plans.ts` (single source of truth for plan economics); Route Handler `/api/deployments/quote` re-runs server-side; client never authoritative. (The old term-based `calculateDeployment` model was retired in the plan-engine migration.)
 - Zod at every boundary (`CalculatorQuery`, `CreateDeployment` incl. idempotencyKey, `WithdrawalQuote`).
 - Money: NUMERIC/minor-units, never float; ledger append-only; txs wrap balance-check→lock→insert→ledger→commit.
 - Auth: `@supabase/ssr` cookies; RLS owns rows; server re-checks ownership/role per request.

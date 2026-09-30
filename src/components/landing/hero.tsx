@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { TechEyebrow } from '@/components/landing/background';
-import { EngineViz } from '@/components/landing/EngineViz';
+import { HeroRobotStage } from '@/components/landing/robot/HeroRobotStage';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 
 const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
@@ -71,7 +71,7 @@ export function HeroAutopilot() {
           </div>
         </div>
         <div className="hero-in relative" style={{ animationDelay: '950ms' }}>
-          <EngineViz />
+          <HeroRobotStage />
           <p className="mt-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-fog">DEPOSIT → PLAN → SETTLEMENT → WALLET</p>
         </div>
       </div>

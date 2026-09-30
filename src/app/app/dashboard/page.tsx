@@ -4,7 +4,7 @@ import { SITE_URL, PROTOCOL_CONFIG } from '@/lib/config';
 import {
   getSessionUser, getProfile, getPortfolioSummary, getReferrals, getReferralEarnings,
 } from '@/lib/queries';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Layers } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata = { title: 'Dashboard' };
@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[26px] font-bold tracking-tight text-white sm:text-[30px]">
+        <h1 className="text-[34px] font-bold tracking-tight text-white sm:text-[38px]">
           Welcome, {firstName}
         </h1>
         <p className="mt-1 text-[15px] text-[#AAB5C7]">Your account is ready. Here is how to start.</p>
@@ -37,18 +37,23 @@ export default async function DashboardPage() {
 
       <OnboardingStepsCard doneDeposited={summary.deposited > 0} doneDeployed={summary.deployedActive > 0} />
 
-      <div>
-        <SectionHeader
-          title="Plans"
-          action={<Link href="/app/deploy" className="flex items-center gap-1 text-[14px] text-[#AAB5C7] hover:text-white">Compare <ArrowRight size={15} /></Link>}
-        />
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+      <AxCard className="p-6 sm:p-7">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#2A394D] bg-[#151B27] text-[#AAB5C7]">
+              <Layers size={20} />
+            </span>
+            <h2 className="text-[24px] font-bold tracking-tight text-white">Plans</h2>
+          </div>
+          <Link href="/app/deploy" className="flex items-center gap-1 text-[14px] text-[#AAB5C7] hover:text-white">Compare <ArrowRight size={15} /></Link>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
           {(['essential', 'premium', 'exclusive'] as const).map((key) => (
             <PlanCard key={key} planKey={key} />
           ))}
         </div>
-        <p className="mt-2.5 font-mono text-[10px] tracking-[0.15em] text-[#596579]">MOD-01…03 · RATES ARE MODEL ESTIMATES</p>
-      </div>
+        <p className="mt-3 font-mono text-[10px] tracking-[0.15em] text-[#596579]">MOD-01…03 · RATES ARE MODEL ESTIMATES</p>
+      </AxCard>
 
       <ReferralSummaryCard link={link} count={referrals.length} earned={referralTotal} />
 

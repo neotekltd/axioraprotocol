@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowRight, Check, Coins, Copy, Layers, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+import { ArrowRight, Check, Coins, Copy, Eye, EyeOff, Layers, Target, TrendingUp, Users, Wallet } from 'lucide-react';
 import { AxCard, IconBox, SegmentedSchedule } from '@/components/ax/primitives';
 import { PLANS, type PlanKey } from '@/lib/plans';
 import { PROTOCOL_CONFIG } from '@/lib/config';
@@ -30,17 +30,48 @@ export function WalletSummaryRow({ icon, title, subtitle, amount, tone = 'neutra
 export function BalanceHeroCard({ total, available, earning, invested, hasDeposits }: {
   total: number; available: number; earning: number; invested: number; hasDeposits: boolean;
 }) {
+  const [hidden, setHidden] = useState(false);
+  const mask = (v: string) => (hidden ? '••••••' : v);
   return (
-    <AxCard variant="hero" className="p-6 sm:p-7">
+    <AxCard variant="hero" className="rounded-[24px] p-6 sm:p-7">
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[55%] opacity-60"
+        viewBox="0 0 300 400"
+        preserveAspectRatio="xMaxYMid slice"
+      >
+        <g stroke="#22D3EE" strokeOpacity="0.16" strokeWidth="1" fill="none">
+          <path d="M40,20 L150,110 L250,60 L290,180 L180,260 L90,220 Z" />
+          <path d="M150,110 L180,260 M250,60 L90,220" strokeOpacity="0.6" />
+          <circle cx="150" cy="110" r="26" strokeOpacity="0.35" />
+          <circle cx="180" cy="260" r="40" strokeOpacity="0.2" strokeDasharray="4 4" />
+        </g>
+        <g fill="#22D3EE">
+          <circle cx="150" cy="110" r="3" opacity="0.5" className="pulse-node" />
+          <circle cx="250" cy="60" r="2.5" opacity="0.45" />
+          <circle cx="180" cy="260" r="2.5" opacity="0.4" className="pulse-node" />
+          <circle cx="90" cy="220" r="2" opacity="0.35" />
+        </g>
+      </svg>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-70"
         style={{ background: 'radial-gradient(circle at 85% 30%, rgba(47,214,255,0.10), transparent 55%)' }}
       />
       <div className="relative">
-        <div className="text-[14px] text-[#AAB5C7]">Total balance</div>
-        <div className="mt-1 font-mono text-[44px] font-bold leading-none tracking-tight text-white sm:text-[52px]">
-          {formatUSD(total)}
+        <div className="flex items-center gap-2 text-[14px] text-[#AAB5C7]">
+          Total balance
+          <button
+            onClick={() => setHidden((v) => !v)}
+            aria-label={hidden ? 'Show balance' : 'Hide balance'}
+            aria-pressed={hidden}
+            className="rounded-md p-1.5 text-[#78859A] transition hover:text-white"
+          >
+            {hidden ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        </div>
+        <div className="mt-1 font-mono text-[56px] font-bold leading-none tracking-tight text-white sm:text-[64px]" aria-live="polite">
+          {mask(formatUSD(total))}
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <Link href="/app/deposit" className="flex min-h-[54px] items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99]">
@@ -51,12 +82,12 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
           </Link>
         </div>
         <div className="mt-2">
-          <WalletSummaryRow icon={<Wallet size={22} />} title="Deposit wallet" subtitle="Use it to invest" amount={formatUSD(available)} tone="cyan" />
-          <WalletSummaryRow icon={<Coins size={22} />} title="Earning wallet" subtitle="You can withdraw this" amount={formatUSD(earning)} tone="green" />
+          <WalletSummaryRow icon={<Wallet size={22} />} title="Deposit wallet" subtitle="Use it to invest" amount={mask(formatUSD(available))} tone="cyan" />
+          <WalletSummaryRow icon={<Coins size={22} />} title="Earning wallet" subtitle="You can withdraw this" amount={mask(formatUSD(earning))} tone="green" />
           <WalletSummaryRow
             icon={<Layers size={22} />} title="Invested"
-            subtitle={hasDeposits ? `${formatUSD(invested)} deployed` : 'No plans yet'}
-            amount={formatUSD(invested)} tone="neutral"
+            subtitle={hasDeposits ? `${mask(formatUSD(invested))} deployed` : 'No plans yet'}
+            amount={mask(formatUSD(invested))} tone="neutral"
           />
         </div>
       </div>
@@ -79,29 +110,41 @@ export function OnboardingStepsCard({ doneDeposited, doneDeployed }: { doneDepos
         <span className="grid h-10 w-10 place-items-center rounded-[12px] border border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] text-[#2FD6FF]">
           <Target size={20} />
         </span>
-        <h2 className="text-xl font-bold tracking-tight text-white">Get started in 3 steps</h2>
+        <h2 className="text-[24px] font-bold tracking-tight text-white">Get started in 3 steps</h2>
       </div>
-      <ol className="relative mt-5 space-y-3">
+      <ol className="relative mt-6 space-y-4">
         {ONBOARDING.map((s, i) => {
           const isDone = done[i];
           const isOpen = i === firstOpen;
           return (
-            <li
-              key={s.n}
-              className={`relative rounded-[16px] border p-5 transition ${isOpen ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.05)] shadow-[0_0_28px_rgba(47,214,255,0.10)]' : 'border-[#202A3A] bg-[#0D111A]'}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-[12px] font-mono text-[15px] font-bold ${isOpen ? 'bg-[#2FD6FF] text-[#06121A]' : isDone ? 'border border-[rgba(53,217,139,0.5)] bg-[rgba(53,217,139,0.1)] text-[#35D98B]' : 'border border-[#2A394D] bg-[#151B27] text-[#596579]'}`}>
+            <li key={s.n} className="relative flex gap-4">
+              <span className="flex flex-col items-center" aria-hidden="true">
+                <span className={`z-10 grid h-12 w-12 shrink-0 place-items-center rounded-[14px] font-mono text-[15px] font-bold transition ${
+                  isOpen
+                    ? 'bg-[#2FD6FF] text-[#06121A] shadow-[0_0_24px_rgba(47,214,255,0.35)]'
+                    : isDone
+                      ? 'border border-[rgba(53,217,139,0.5)] bg-[rgba(53,217,139,0.1)] text-[#35D98B]'
+                      : 'border border-[#2A394D] bg-[#151B27] text-[#596579]'
+                }`}>
                   {isDone && !isOpen ? <Check size={18} /> : s.n}
                 </span>
+                {i < ONBOARDING.length - 1 && (
+                  <span className={`w-px flex-1 ${i < firstOpen || (firstOpen === -1) ? 'bg-[rgba(47,214,255,0.5)]' : 'bg-[#2A394D]'}`} style={{ minHeight: 18 }} />
+                )}
+              </span>
+              <div className={`min-w-0 flex-1 rounded-[18px] border p-5 transition ${
+                isOpen
+                  ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.05)] shadow-[0_0_28px_rgba(47,214,255,0.10)]'
+                  : 'border-[#202A3A] bg-[#0D111A]'
+              }`}>
                 <div className="text-[17px] font-bold text-white">{s.title}</div>
+                <p className="mt-1.5 text-[14px] leading-relaxed text-[#AAB5C7]">{s.body}{i === 0 && ` ${[...PROTOCOL_CONFIG.supportedAssets].join(', ')}.`}</p>
+                {isOpen && (
+                  <Link href={s.href} className="mt-4 inline-flex min-h-[48px] items-center rounded-[12px] bg-[#2FD6FF] px-5 text-[14px] font-bold text-[#06121A] transition hover:brightness-110">
+                    {s.cta}
+                  </Link>
+                )}
               </div>
-              <p className="mt-2.5 text-[14px] text-[#AAB5C7]">{s.body}{i === 0 && ` ${[...PROTOCOL_CONFIG.supportedAssets].join(', ')}.`}</p>
-              {isOpen && (
-                <Link href={s.href} className="mt-4 inline-flex min-h-[48px] items-center rounded-[12px] bg-[#2FD6FF] px-5 text-[14px] font-bold text-[#06121A] transition hover:brightness-110">
-                  {s.cta}
-                </Link>
-              )}
             </li>
           );
         })}
@@ -151,10 +194,16 @@ export function ReferralSummaryCard({ link, count, earned }: { link: string | nu
   };
   return (
     <AxCard className="p-6 sm:p-7">
-      <div className="flex items-start gap-4">
-        <IconBox tone="cyan" size={60}><Users size={26} /></IconBox>
+      <div className="flex items-center gap-4">
+        <span className="relative grid h-[72px] w-[72px] shrink-0 place-items-center" aria-hidden="true">
+          <span className="absolute inset-0 rounded-full border border-dashed border-[#2A394D]" />
+          <span className="absolute inset-[14px] rounded-full border border-[rgba(47,214,255,0.35)]" />
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#2FD6FF] text-[#06121A]">
+            <Users size={18} />
+          </span>
+        </span>
         <div>
-          <div className="text-[19px] font-bold text-white">Invite friends</div>
+          <div className="text-[24px] font-bold tracking-tight text-white">Invite friends</div>
           <p className="mt-1 text-[14px] leading-relaxed text-[#AAB5C7]">
             Earn {PROTOCOL_CONFIG.referralLevels[0].instantPct}% of every deployment your L1 referrals make.
           </p>

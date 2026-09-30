@@ -241,5 +241,131 @@ body {
   .signal-x, .signal-y, .ping-soft::before, .auth-graph-drift { animation: none; }
   .card-sweep:hover::after { animation: none; }
   .boot-line.go { animation: none; transform: scaleX(1); }
+  .robot-hover, .robot-head, .robot-eye, .robot-core, .robot-glow-dot,
+  .orbit-spin-a, .orbit-spin-b, .orbit-spin-c, .node-drift, .node-spin,
+  .robot-particle, .beam-shimmer, .beam-mote, .greet-float, .orbit-pill-a,
+  .orbit-pill-b, .robot-projector { animation: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- hero robot stage (original Axiora illustration) ----------
+   GPU-friendly: transform + opacity only. Parallax layers read
+   --rx/--ry set by the stage (desktop pointer only); each layer has its
+   own multiplier. Inner elements carry the keyframe motion so the two
+   never fight over `transform`. */
+.hero-robot-stage {
+  --rx: 0;
+  --ry: 0;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+.robot-px { will-change: transform; }
+.robot-px-back { transform: translate3d(calc(var(--rx) * 8px), calc(var(--ry) * 8px), 0); }
+.robot-px-mid { transform: translate3d(calc(var(--rx) * 5px), calc(var(--ry) * 5px), 0); }
+.robot-px-robot { transform: translate3d(calc(var(--rx) * 3px), calc(var(--ry) * 3px), 0); }
+.robot-px-node { transform: translate3d(calc(var(--rx) * 6px), calc(var(--ry) * 6px), 0); }
+.robot-px-beam { transform: translate3d(calc(var(--rx) * 2px), 0, 0); }
+
+@keyframes robot-hover {
+  0%, 100% { transform: translate3d(0, 3px, 0); }
+  50% { transform: translate3d(0, -3px, 0); }
+}
+.robot-hover { animation: robot-hover 6s ease-in-out infinite; }
+
+@keyframes robot-head {
+  0%, 100% { transform: rotate(-1.1deg); }
+  30% { transform: rotate(0.6deg); }
+  55% { transform: rotate(1.2deg); }
+  80% { transform: rotate(-0.4deg); }
+}
+.robot-head {
+  transform-box: fill-box;
+  transform-origin: 50% 92%;
+  animation: robot-head 7.5s ease-in-out infinite;
+}
+
+@keyframes robot-eye {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+  52% { opacity: 0.55; }
+  54% { opacity: 0.9; }
+}
+.robot-eye { animation: robot-eye 4.2s ease-in-out infinite; }
+
+@keyframes robot-core {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.robot-core {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: robot-core 4.5s ease-in-out infinite;
+}
+
+@keyframes robot-glow-dot {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.robot-glow-dot { animation: robot-glow-dot 3.2s ease-in-out infinite; }
+
+@keyframes orbit-spin {
+  to { transform: rotate(360deg); }
+}
+.orbit-spin-a { animation: orbit-spin 70s linear infinite; }
+.orbit-spin-b { animation: orbit-spin 95s linear infinite reverse; }
+.orbit-spin-c { animation: orbit-spin 46s linear infinite; }
+.orbit-rotor {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes node-drift {
+  0%, 100% { transform: translate3d(0, 4px, 0) rotate(-2deg); }
+  50% { transform: translate3d(3px, -4px, 0) rotate(3deg); }
+}
+.node-drift { animation: node-drift 8s ease-in-out infinite; }
+
+@keyframes node-spin {
+  to { transform: rotate(360deg); }
+}
+.node-spin { animation: node-spin 26s linear infinite; }
+
+@keyframes robot-particle {
+  0% { transform: translate3d(0, 10px, 0); opacity: 0; }
+  25% { opacity: 0.8; }
+  100% { transform: translate3d(6px, -46px, 0); opacity: 0; }
+}
+.robot-particle { animation: robot-particle 7s linear infinite; }
+
+@keyframes beam-shimmer {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+.beam-shimmer { animation: beam-shimmer 5s ease-in-out infinite; }
+
+@keyframes beam-mote {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  30% { opacity: 0.9; }
+  100% { transform: translate3d(0, 44px, 0); opacity: 0; }
+}
+.beam-mote { animation: beam-mote 3.8s linear infinite; }
+
+@keyframes robot-projector {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.robot-projector { animation: robot-projector 4.5s ease-in-out infinite; }
+
+@keyframes greet-float {
+  0%, 100% { transform: translate3d(0, 1px, 0); }
+  50% { transform: translate3d(0, -1px, 0); }
+}
+.greet-float { animation: greet-float 5s ease-in-out infinite; }
+
+@keyframes orbit-pill {
+  to { transform: rotate(360deg); }
+}
+.orbit-pill-a { animation: orbit-pill 22s linear infinite; }
+.orbit-pill-b { animation: orbit-pill 30s linear infinite reverse; }

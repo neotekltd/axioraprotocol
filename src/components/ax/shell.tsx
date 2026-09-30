@@ -28,6 +28,8 @@ function useSessionElapsed(active: boolean) {
 
 export function AppHeader({ email, unread = 0 }: { email?: string | null; unread?: number }) {
   const elapsed = useSessionElapsed(true);
+// Dedicated authenticated-header identity (same component, explicit name
+// for the dashboard shell).
   const initials = (email?.trim()?.[0] ?? 'A').toUpperCase();
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
@@ -129,3 +131,6 @@ export function PublicFloatingSupport() {
     </div>
   );
 }
+
+// Dedicated authenticated-header identity for the dashboard shell.
+export const AuthenticatedAppHeader = AppHeader;
