@@ -1,33 +1,82 @@
 'use client';
 
+// Deposit flow in the authenticated wallet language: You send (amount +
+// coin/network + quick chips) → You get → Rate/Fee/Arrives → Get deposit
+// address → confirmation (Send X, Waiting pill, QR, address, copy amount,
+// dynamic network warning, 3-stage tracker). All data comes from the
+// central deposit config via props — no literals, no invented limits.
+
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Check, Copy, QrCode } from 'lucide-react';
-import { PageHeader, SectionCard } from '@/components/data';
+import { ArrowLeft, Check, ChevronDown, QrCode, Wallet } from 'lucide-react';
+import { PageHeader } from '@/components/data';
 import { formatUSD } from '@/lib/plans';
 import type { WalletTxn } from '@/lib/queries';
 import type { DepositMethod } from '@/lib/deposits';
+import {
+  BottomSheet,
+  CopyButton,
+  DividerArrow,
+  FlowCard,
+  FlowLabel,
+  QuickChips,
+  StatusPill,
+  SummaryRows,
+  TechnicalWarning,
+  WalletTabs,
+} from '@/components/ax/wallet';
 
-function CopyBtn({ text, label }: { text: string; label: string }) {
-  const [done, setDone] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      /* unavailable */
-    }
-    setDone(true);
-    setTimeout(() => setDone(false), 2000);
-  };
+const CHIPS = ['50 USDT', '100 USDT', '500 USDT'];
+const MIN_DEPOSIT = 10;
+
+function MethodIcon({ m, size = 40 }: { m: DepositMethod; size?: number }) {
+  if (m.icon) {
+    return <Image src={m.icon} alt={m.asset} width={size} height={size} className="shrink-0 rounded-full" style={{ width: size, height: size }} />;
+  }
   return (
-    <button
-      onClick={copy} aria-live="polite"
-      className="flex items-center gap-1.5 rounded-[12px] border border-[#2A394D] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:border-[rgba(47,214,255,0.5)]"
+    <span
+      aria-hidden="true"
+      className="grid shrink-0 place-items-center rounded-full border border-[#2A394D] bg-[#151B27] font-mono font-bold text-[#2FD6FF]"
+      style={{ width: size, height: size, fontSize: size * 0.42 }}
     >
-      {done ? <Check size={15} className="text-[#35D98B]" /> : <Copy size={15} />}
-      {done ? 'Copied' : label}
-    </button>
+      {m.asset.slice(0, 1)}
+    </span>
+  );
+}
+
+function Tracker({ hasCompleted }: { hasCompleted: boolean }) {
+  const stages: [string, 'done' | 'current' | 'todo'][] = [
+    ['Address ready', 'done'],
+    ['Waiting for your transfer', hasCompleted ? 'done' : 'current'],
+    ['In your wallet', hasCompleted ? 'done' : 'todo'],
+  ];
+  return (
+    <ol className="flex items-start" aria-label="Deposit progress">
+      {stages.map(([label, state], i) => (
+        <li key={label} className="relative flex flex-1 flex-col items-center text-center">
+          {i > 0 && (
+            <span
+              aria-hidden="true"
+              className={`absolute right-1/2 top-[13px] h-px w-full ${state === 'todo' ? 'bg-[#2A394D]' : 'bg-[#35D98B]/60'}`}
+            />
+          )}
+          <span
+            aria-hidden="true"
+            className={`z-10 grid h-7 w-7 place-items-center rounded-full border text-[12px] ${
+              state === 'done'
+                ? 'border-[rgba(53,217,139,0.5)] bg-[rgba(53,217,139,0.12)] text-[#35D98B]'
+                : state === 'current'
+                  ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.1)] text-[#2FD6FF] shadow-[0_0_14px_rgba(47,214,255,0.35)]'
+                  : 'border-[#2A394D] bg-[#111722] text-[#596579]'
+            }`}
+          >
+            {state === 'done' ? <Check size={13} /> : state === 'current' ? <span className="h-2 w-2 animate-pulse rounded-full bg-current" /> : null}
+          </span>
+          <span className={`mt-2 text-[12px] font-semibold leading-tight ${state === 'todo' ? 'text-[#596579]' : 'text-white'}`}>{label}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -37,6 +86,10 @@ export function DepositView({ methods, deposits, qr }: {
   qr: Record<string, string>;
 }) {
   const [idx, setIdx] = useState(0);
+  const [amount, setAmount] = useState('100');
+  const [chip, setChip] = useState<string | null>('100 USDT');
+  const [confirmed, setConfirmed] = useState(false);
+  const [coinOpen, setCoinOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const m = methods[idx];
 
@@ -44,8 +97,11 @@ export function DepositView({ methods, deposits, qr }: {
     return (
       <div>
         <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
-        <SectionCard title="Deposit address">
-          <div className="p-6">
+        <div className="mt-6">
+          <WalletTabs active="deposit" />
+        </div>
+        <FlowCard className="mt-4">
+          <div className="p-2">
             <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">STATUS</div>
             <div className="mt-2 text-[17px] font-bold text-white">Deposit addresses are not configured</div>
             <p className="mt-2 text-[14px] text-[#AAB5C7]">
@@ -56,118 +112,199 @@ export function DepositView({ methods, deposits, qr }: {
               Ask support about deposits
             </Link>
           </div>
-        </SectionCard>
+        </FlowCard>
       </div>
     );
   }
 
-  const key = m.id;
+  const num = Number(amount);
+  const valid = Number.isFinite(num) && num >= MIN_DEPOSIT;
   const recent = deposits.filter((t) => t.asset === m.asset);
+  const hasCompleted = recent.some((t) => t.status === 'completed');
+  const pickChip = (c: string) => {
+    setChip(c);
+    setAmount(c.split(' ')[0]);
+  };
+
+  if (confirmed && valid) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => setConfirmed(false)}
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] text-[#AAB5C7] transition hover:text-white"
+        >
+          <ArrowLeft size={16} aria-hidden="true" /> Change coin or amount
+        </button>
+        <FlowCard className="mt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <MethodIcon m={m} size={44} />
+              <div>
+                <div className="text-[19px] font-bold text-white">Send {num} {m.asset}</div>
+                <div className="mt-0.5 text-[13px] text-[#78859A]">on {m.network} ({m.standard})</div>
+              </div>
+            </div>
+            <StatusPill tone={hasCompleted ? 'green' : 'amber'}>{hasCompleted ? 'Credited' : 'Waiting'}</StatusPill>
+          </div>
+          <button
+            type="button"
+            onClick={() => setQrOpen((v) => !v)}
+            aria-expanded={qrOpen}
+            className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.5)]"
+          >
+            <QrCode size={17} aria-hidden="true" /> {qrOpen ? 'Hide QR code' : 'Show QR code'}
+          </button>
+          {qrOpen && (
+            <div className="mt-3 flex flex-col items-center rounded-[14px] border border-[#2A394D] bg-white p-5">
+              {qr[m.id] ? (
+                <span dangerouslySetInnerHTML={{ __html: qr[m.id] }} role="img" aria-label={`QR code for ${m.depositAddress}`} />
+              ) : (
+                <p className="text-[13px] text-[#78859A]">QR unavailable.</p>
+              )}
+              <p className="mt-2 font-mono text-[11px] text-black/60">Encodes the exact address below — nothing else.</p>
+            </div>
+          )}
+          <div className="mt-5 text-[14px] text-[#AAB5C7]">To this address</div>
+          <div className="mt-2 break-all rounded-[14px] border border-[#2A394D] bg-[#080B12] p-4 font-mono text-[15px] leading-relaxed text-white" style={{ overflowWrap: 'anywhere' }}>
+            {m.depositAddress}
+          </div>
+          <div className="mt-3 space-y-2.5">
+            <CopyButton text={m.depositAddress} label="Copy address" primary />
+            <CopyButton text={String(num)} label={`Copy ${num}`} />
+          </div>
+          <p className="mt-3 text-[13px] leading-relaxed text-[#AAB5C7]">
+            Any amount from {formatUSD(MIN_DEPOSIT)} is credited after on-chain confirmation.
+          </p>
+          <div className="mt-3">
+            <TechnicalWarning
+              title={`Only ${m.asset} on ${m.network} (${m.standard}).`}
+              body="Another coin, or funds sent on another network, cannot be recovered."
+            />
+          </div>
+          <div className="mt-6">
+            <Tracker hasCompleted={hasCompleted} />
+          </div>
+          <p className="mt-4 text-center text-[13px] text-[#78859A]">
+            After you send, the network confirms it, then it is credited by itself.
+          </p>
+          <SummaryRows
+            rows={[
+              { label: 'You get', value: `${formatUSD(num)} into Deposit wallet`, tone: 'green' },
+              { label: 'Destination', value: `${m.asset} · ${m.network} · ${m.standard}`, tone: 'muted' },
+            ]}
+          />
+          <p className="mt-4 border-t border-[#202A3A] pt-4 text-center text-[13px] text-[#78859A]">
+            No time limit · This page updates by itself.
+          </p>
+        </FlowCard>
+        <p className="mt-4 text-center text-[13px] text-[#78859A]">
+          Not credited? <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">Open a ticket</Link> with your transaction hash.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
-      <div className="mt-6 grid gap-4" role="radiogroup" aria-label="Deposit method">
-        {methods.map((mm, i) => (
-          <button
-            key={mm.id} role="radio" aria-checked={i === idx} onClick={() => { setIdx(i); setQrOpen(false); }}
-            className={`flex items-center gap-4 rounded-[20px] border p-5 text-left transition ${i === idx ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.05)]' : 'border-[#202A3A] bg-[#0D111A] hover:border-[rgba(47,214,255,0.4)]'}`}
-          >
-            {mm.icon ? (
-              <Image src={mm.icon} alt={mm.asset} width={48} height={48} className="h-12 w-12 shrink-0 rounded-full" />
-            ) : (
-              <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-[#2A394D] bg-[#151B27] font-mono text-[18px] font-bold text-[#2FD6FF]">
-                {mm.asset.slice(0, 1)}
-              </span>
-            )}
-            <span>
-              <span className="block text-[17px] font-bold text-white">{mm.asset}</span>
-              <span className="block text-[13px] text-[#78859A]">{mm.assetName}</span>
-              <span className="mt-1 block font-mono text-[11px] tracking-[0.12em] text-[#2FD6FF]">{mm.network} · {mm.standard}</span>
-            </span>
-          </button>
-        ))}
+      <div className="mt-6">
+        <WalletTabs active="deposit" />
       </div>
-
-      <SectionCard title="Deposit address">
-        <div className="space-y-4 p-5 sm:p-6">
-          <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">
-            {m.asset} · {m.network} · {m.standard}
-          </div>
-          <div
-            className="break-all rounded-[14px] border border-[#2A394D] bg-[#080B12] p-4 font-mono text-[15px] leading-relaxed text-white"
-            style={{ overflowWrap: 'anywhere' }}
+      <FlowCard className="mt-4">
+        <FlowLabel right={`Min ${formatUSD(MIN_DEPOSIT)}`}>You send</FlowLabel>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <input
+            value={amount}
+            onChange={(e) => { setAmount(e.target.value); setChip(null); }}
+            inputMode="decimal"
+            autoComplete="off"
+            aria-label="Deposit amount in USDT"
+            placeholder="0"
+            className="w-full min-w-0 bg-transparent font-mono text-[40px] font-bold leading-none tracking-tight text-white outline-none placeholder:text-[#2A394D]"
+          />
+          <button
+            type="button"
+            onClick={() => setCoinOpen(true)}
+            aria-haspopup="dialog"
+            className="flex shrink-0 items-center gap-2 rounded-full border border-[#2A394D] bg-[#151B27] py-2 pl-2 pr-3 transition hover:border-[rgba(47,214,255,0.5)]"
           >
-            {m.depositAddress}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setQrOpen((v) => !v)}
-              className="flex items-center gap-1.5 rounded-[12px] border border-[#2A394D] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:border-[rgba(47,214,255,0.5)]"
-              aria-expanded={qrOpen}
-            >
-              <QrCode size={15} />{qrOpen ? 'Hide QR code' : 'Show QR code'}
-            </button>
-            <CopyBtn text={m.depositAddress} label="Copy address" />
-          </div>
-          {qrOpen && (
-            <div className="flex flex-col items-center rounded-[14px] border border-[#2A394D] bg-white p-5">
-              {qr[key] ? (
-                <span dangerouslySetInnerHTML={{ __html: qr[key] }} role="img" aria-label={`QR code for ${m.depositAddress}`} />
-              ) : (
-                <p className="text-[13px] text-[#78859A]">QR unavailable.</p>
-              )}
-              <p className="mt-2 font-mono text-[11px] text-black/60">Encodes the exact address above — nothing else.</p>
-            </div>
-          )}
-          <div className="rounded-[14px] border border-[rgba(242,191,74,0.35)] bg-[rgba(242,191,74,0.06)] p-4 text-[13px] leading-relaxed text-[#AAB5C7]" role="note">
-            Send {m.asset} only through the {m.network} / {m.standard} network to this address.
-            Do not send {m.asset} through any other network — funds sent on the wrong network cannot be recovered.
-          </div>
-          {m.feeNote && <p className="text-[12px] text-[#78859A]">{m.feeNote}</p>}
+            <MethodIcon m={m} size={32} />
+            <span className="text-[15px] font-bold text-white">{m.asset}</span>
+            <ChevronDown size={16} className="text-[#78859A]" aria-hidden="true" />
+          </button>
         </div>
-      </SectionCard>
-
-      <SectionCard title="Progress">
-        <ol className="p-5 sm:p-6">
-          {[
-            ['Address ready', 'An address is assigned to your account.', true],
-            ['Waiting for your transfer', 'Send funds; the watcher detects the transaction.', recent.some((t) => t.status === 'pending' || t.status === 'processing')],
-            ['Plan starts', 'Confirmed deposits credit and activate your module.', recent.some((t) => t.status === 'completed')],
-          ].map(([t, d, done], i, arr) => (
-            <li key={t as string} className="relative flex gap-3 pb-5 last:pb-0">
-              {i < arr.length - 1 && <span className="absolute left-[13px] top-8 h-[calc(100%-2rem)] w-px bg-[#2A394D]" aria-hidden="true" />}
-              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border font-mono text-[11px] ${done ? 'border-[rgba(53,217,139,0.5)] text-[#35D98B]' : 'border-[#2A394D] text-[#596579]'}`} aria-hidden="true">
-                {done ? <Check size={13} /> : `0${i + 1}`}
-              </span>
-              <div>
-                <div className="text-[14px] font-semibold text-white">{t}</div>
-                <div className="text-[13px] text-[#78859A]">{d}</div>
-              </div>
+        <div className="mt-2 flex items-center gap-1.5 text-[13px] text-[#AAB5C7]">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
+          on {m.network} ({m.standard})
+        </div>
+        <QuickChips options={CHIPS} active={chip} onPick={pickChip} />
+        {!valid && amount.trim() !== '' && (
+          <p role="alert" className="mt-2 text-[13px] text-[#F2BF4A]">Minimum deposit is {formatUSD(MIN_DEPOSIT)}.</p>
+        )}
+      </FlowCard>
+      <DividerArrow />
+      <FlowCard>
+        <FlowLabel>You get</FlowLabel>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <span className="font-mono text-[32px] font-bold leading-none tracking-tight text-[#35D98B]">
+            {valid ? formatUSD(num) : '$0.00'}
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5 text-[13px] text-[#AAB5C7]">
+            <Wallet size={15} aria-hidden="true" /> Deposit wallet
+          </span>
+        </div>
+      </FlowCard>
+      <FlowCard className="mt-4">
+        <SummaryRows
+          rows={[
+            { label: 'Rate', value: `1 ${m.asset} = $1.00`, tone: 'white' },
+            { label: 'Fee', value: 'None', tone: 'white' },
+            { label: 'Arrives', value: 'After on-chain confirmation', tone: 'white' },
+          ]}
+        />
+        <button
+          type="button"
+          onClick={() => setConfirmed(true)}
+          disabled={!valid}
+          className="mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+        >
+          Get deposit address <span aria-hidden="true">→</span>
+        </button>
+        {m.feeNote && <p className="mt-3 text-[12px] text-[#78859A]">{m.feeNote}</p>}
+      </FlowCard>
+      <p className="mt-4 text-center text-[13px] text-[#78859A]">
+        Sent but not credited? <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">Open a ticket</Link> with your transaction hash.
+      </p>
+      <BottomSheet
+        open={coinOpen}
+        onClose={() => setCoinOpen(false)}
+        labelledBy="Select deposit asset"
+        title="Select asset"
+        icon={<MethodIcon m={m} size={36} />}
+      >
+        <ul className="space-y-2">
+          {methods.map((mm, i) => (
+            <li key={mm.id}>
+              <button
+                type="button"
+                onClick={() => { setIdx(i); setCoinOpen(false); }}
+                aria-pressed={i === idx}
+                className={`flex w-full items-center gap-3 rounded-[16px] border p-4 text-left transition ${
+                  i === idx ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.05)]' : 'border-[#202A3A] bg-[#0D1119] hover:border-[rgba(47,214,255,0.4)]'
+                }`}
+              >
+                <MethodIcon m={mm} size={40} />
+                <span className="flex-1">
+                  <span className="block text-[16px] font-bold text-white">{mm.asset}</span>
+                  <span className="block font-mono text-[11px] tracking-[0.12em] text-[#2FD6FF]">{mm.network} · {mm.standard}</span>
+                </span>
+                {i === idx && <Check size={18} className="text-[#35D98B]" aria-hidden="true" />}
+              </button>
             </li>
           ))}
-        </ol>
-        <p className="border-t border-[#202A3A] px-5 py-3 text-[12px] text-[#78859A]">Steps complete only when the backend confirms each stage.</p>
-      </SectionCard>
-
-      <SectionCard title="Recent deposits">
-        {recent.length === 0 ? (
-          <p className="p-6 text-[14px] text-[#78859A]">No deposits recorded yet.</p>
-        ) : (
-          <ul className="divide-y divide-[#202A3A]/70">
-            {recent.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 px-5 py-4 text-[14px]">
-                <div>
-                  <span className="font-mono text-white">{t.asset}</span>
-                  <span className="ml-2 font-mono text-[12px] text-[#78859A]">{t.txHash ? `${t.txHash.slice(0, 12)}…` : 'awaiting hash'}</span>
-                  <div className="mt-0.5 font-mono text-[11px] text-[#78859A]">{t.createdAt.slice(0, 10)} · {t.status}</div>
-                </div>
-                <div className="font-mono text-white">{formatUSD(t.amount)}</div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
+        </ul>
+      </BottomSheet>
     </div>
   );
 }

@@ -33,6 +33,14 @@
   --radius-lg: 20px;
   --radius-xl: 26px;
 
+  /* z-index system: page < header < fab/bottomnav < drawer < modal/sheet */
+  --ax-z-page: 0;
+  --ax-z-header: 40;
+  --ax-z-fab: 40;
+  --ax-z-bottomnav: 40;
+  --ax-z-drawer: 60;
+  --ax-z-modal: 70;
+
   /* type scale (compact technical; hero dramatic only via clamp) */
   --ax-font-xs: 0.6875rem;
   --ax-font-sm: 0.8125rem;
@@ -283,6 +291,7 @@ body {
   .mod-go .mod-rise, .mod-go .mod-chip, .mod-go .mod-rail-seg, .mod-go .mod-rail-sweep,
   .mod-telemetry span, .mod-sig span,
   .ax-fab-btn, .ax-fab-ripple { animation: none !important; }
+  .ax-sheet, .ax-sheet-overlay { animation: none !important; }
   .mod-card:hover { transform: none; }
   html { scroll-behavior: auto; }
 }
@@ -507,3 +516,22 @@ body {
 }
 .ax-fab:hover .ax-fab-btn { transform: scale(1.04); }
 .ax-fab:active .ax-fab-btn { transform: scale(0.96); }
+
+/* ---------- bottom sheet / modal system ---------- */
+@keyframes sheet-up {
+  from { opacity: 0; transform: translate3d(0, 100%, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 0.7; }
+}
+@keyframes sheet-pop {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.ax-sheet-overlay { animation: sheet-fade 0.3s ease-out both; }
+.ax-sheet { animation: sheet-up 0.36s var(--ax-ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both; }
+@media (min-width: 640px) {
+  .ax-sheet { animation-name: sheet-pop; animation-duration: 0.3s; }
+}
