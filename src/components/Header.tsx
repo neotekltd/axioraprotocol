@@ -83,7 +83,7 @@ export function Header() {
   }, [open ]);
   useEffect(() => {
     if (!open && renderDrawer) {
-      const t = setTimeout(() => setRenderDrawer(false), 320);
+      const t = setTimeout(() => setRenderDrawer(false), 420);
       return () => clearTimeout(t);
     }
   }, [open, renderDrawer]);
@@ -103,7 +103,7 @@ export function Header() {
       >
         {/* Row 1 — system bar (all widths) */}
         <div className="border-b border-line/50 px-4 font-mono text-[11px] md:px-8" aria-hidden="true">
-          <div className="mx-auto flex h-[52px] max-w-page items-center justify-between text-fog">
+          <div className="mx-auto flex h-[44px] max-w-page items-center justify-between text-fog">
             <span className="flex items-center gap-1.5 tracking-[0.18em] text-[#35D98B]">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#35D98B]" /> SYSTEM ONLINE
             </span>
@@ -116,7 +116,7 @@ export function Header() {
           </div>
         </div>
         {/* Row 2 — main nav */}
-        <div className="mx-auto flex h-[84px] max-w-page items-center justify-between gap-3 px-4 md:px-8">
+        <div className="mx-auto flex h-[72px] max-w-page items-center justify-between gap-3 px-4 md:px-8">
           <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="Axiora Protocol home">
             <AxioraMark size={34} />
             <span className="leading-none">
@@ -160,7 +160,7 @@ export function Header() {
               onClick={() => setOpen(true)}
               aria-label="Open navigation"
               aria-expanded={open}
-              className="grid h-14 w-14 shrink-0 place-items-center rounded-[14px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-[12px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
             >
               <span className="flex flex-col items-end gap-[5px]" aria-hidden="true">
                 <span className="block h-[2px] w-5 bg-current" />
@@ -175,7 +175,7 @@ export function Header() {
       {renderDrawer && (
         <div className="fixed inset-0 z-[60] lg:hidden" role="presentation">
           <div
-            className={`absolute inset-0 bg-black/75 backdrop-blur-[2px] transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 bg-black/70 transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}
             onClick={close}
             aria-hidden="true"
           />
@@ -183,7 +183,7 @@ export function Header() {
             role="dialog"
             aria-modal="true"
             aria-label="Site navigation"
-            className={`absolute bottom-0 right-0 top-0 flex w-[87vw] max-w-[420px] flex-col border-l border-[rgba(100,150,180,0.15)] bg-[#090D14] transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+            className={`absolute bottom-0 right-0 top-0 flex h-[100dvh] w-[clamp(300px,87vw,420px)] flex-col border-l border-[rgba(100,150,180,0.15)] bg-[#090D14] transition-transform duration-[400ms] ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="tech-dots pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
             <div className="relative flex items-center justify-between px-[36px] pb-2 pt-6">
@@ -195,28 +195,27 @@ export function Header() {
                 ref={closeRef}
                 onClick={close}
                 aria-label="Close navigation"
-                className="grid h-14 w-14 place-items-center rounded-[14px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
+                className="grid h-12 w-12 place-items-center rounded-[12px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse active:scale-95"
               >
-                <X size={26} />
+                <X size={22} />
               </button>
             </div>
-            <nav aria-label="Mobile" className="relative flex-1 overflow-y-auto px-[36px] pb-6 pt-[44px]">
+            <nav aria-label="Mobile" className="relative flex-1 overflow-y-auto px-[36px] pb-6 pt-[32px]">
               <ul>
                 {DRAWER_NAV.map((n, i) => (
                   <li
                     key={n.n}
                     className={`border-b border-[rgba(120,140,165,0.12)] transition-all duration-300 ${open ? 'translate-x-0 opacity-100' : 'translate-x-6 opacity-0'}`}
-                    style={{ transitionDelay: open ? `${80 + i * 32}ms` : '0ms' }}
+                    style={{ transitionDelay: open ? `${80 + i * 40}ms` : '0ms' }}
                   >
                     <Link
                       href={n.href}
                       onClick={close}
-                      className="group flex w-full items-center gap-5 py-6 text-left"
+                      className="group flex w-full items-center gap-4 rounded-lg py-[18px] text-left transition-colors hover:bg-white/[0.03] active:bg-white/[0.05]"
                     >
-                      <span className="w-12 shrink-0 font-mono text-[16px] text-pulse" aria-hidden="true">{n.n}</span>
-                      <span className="relative text-[25px] font-bold tracking-tight text-white transition group-active:text-white">
+                      <span className="w-10 shrink-0 font-mono text-[14px] text-pulse transition group-hover:brightness-125" aria-hidden="true">{n.n}</span>
+                      <span className="text-[20px] font-bold tracking-tight text-white transition-transform duration-200 group-hover:translate-x-[2px]">
                         {n.label}
-                        <span className="absolute -left-5 top-1/2 hidden h-4 w-[2px] -translate-y-1/2 bg-pulse opacity-0 transition group-active:opacity-100" aria-hidden="true" />
                       </span>
                     </Link>
                   </li>
@@ -228,7 +227,7 @@ export function Header() {
                 <Link
                   href="/app/dashboard"
                   onClick={close}
-                  className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110"
+                  className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110 active:scale-[0.99]"
                 >
                   Dashboard
                 </Link>
@@ -237,14 +236,14 @@ export function Header() {
                   <Link
                     href="/login"
                     onClick={close}
-                    className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] border border-line bg-[#111722] text-[16px] font-bold text-white transition hover:border-pulse/50"
+                    className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] border border-line bg-[#111722] text-[16px] font-bold text-white transition hover:border-pulse/50 active:scale-[0.99]"
                   >
                     Sign in
                   </Link>
                   <Link
                     href="/register"
                     onClick={close}
-                    className="flex min-h-[58px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110"
+                    className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110 active:scale-[0.99]"
                   >
                     Activate account
                   </Link>

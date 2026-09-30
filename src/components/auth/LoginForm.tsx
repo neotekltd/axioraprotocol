@@ -6,22 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
+import { isEmailLike, normalizeEmail, normalizeUsername } from '@/lib/auth-identifiers';
 import { AxButton, AxInput, AxPasswordInput, FieldError } from '@/components/ax/controls';
 import { AxCard } from '@/components/ax/primitives';
 
 const CONFIG_ERROR = 'Authentication is misconfigured. Please try again later.';
-
-function friendlyError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'Incorrect email or password. Try again or reset your password.';
-  if (m.includes('email not confirmed')) return 'Please verify your email first — check your inbox for the code.';
-  if (m.includes('rate limit') || m.includes('too many')) return 'Too many attempts. Wait a moment and try again.';
-  if (m.includes('network') || m.includes('fetch')) return 'Network error reaching authentication. Check your connection.';
-  return 'Sign-in failed. Please try again.';
-}
+// Generic on purpose: never reveal whether the identifier or the password
+// was wrong, or whether the account exists (anti-enumeration).
+const INVALID_ERROR = 'Invalid username/email or password.';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,13 +24,39 @@ export function LoginForm() {
   const params = useSearchParams();
   const next = params.get('next') || '/app/dashboard';
 
+  const resolveEmail = async (raw: string): Promise<string | null> => {
+    if (isEmailLike(raw)) return normalizeEmail(raw);
+    const username = normalizeUsername(raw);
+    if (!username) return null;
+    try {
+      const res = await fetch('/api/auth/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: username }),
+      });
+      const body = (await res.json()) as { email?: unknown };
+      return typeof body.email === 'string' && body.email.includes('@') ? body.email : null;
+    } catch {
+      return null;
+    }
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
+      // Supabase password sign-in uses the real account email; a username is
+      // resolved to its email server-side first. The password is only ever
+      // sent to Supabase Auth — never to the resolver.
+      const email = await resolveEmail(identifier);
+      if (!email) {
+        setError(INVALID_ERROR);
+        return;
+      }
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         const kind = logAuthError('login', error);
         if (kind === 'CONFIG') {
@@ -43,10 +64,10 @@ export function LoginForm() {
           return;
         }
         if (error.message.toLowerCase().includes('email not confirmed')) {
-          router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+          router.replace(`/verify-email?email=${encodeURIComponent(email)}`);
           return;
         }
-        setError(friendlyError(error.message));
+        setError(INVALID_ERROR);
         return;
       }
       router.replace(next);
@@ -66,20 +87,30 @@ export function LoginForm() {
       </Link>
       <AxCard className="mt-6 p-7 sm:p-8">
         <div className="flex gap-1.5" aria-hidden="true">
-          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
-          <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
         </div>
         <h1 className="mt-5 text-[32px] font-bold leading-tight tracking-tight text-white">
           Welcome <span className="text-[#2FD6FF]">back.</span>
         </h1>
-        <p className="mt-2 text-[14px] text-[#78859A]">Sign in with your email and password.</p>
-        <form onSubmit={submit} className="mt-7 space-y-5">
+        <p className="mt-2 text-[14px] text-[#78859A]">Sign in with your username or email.</p>
+        <form onSubmit={submit} className="mt-7 space-y-5" autoComplete="on">
           <div>
-            <label htmlFor="login-email" className="mb-2 block text-[15px] text-[#AAB5C7]">Email</label>
-            <AxInput id="login-email" name="email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@domain.com" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} />
+            <label htmlFor="login-identifier" className="mb-2 block text-[15px] text-[#AAB5C7]">Username or email</label>
+            <AxInput
+              id="login-identifier" name="identifier" required type="text" value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)} placeholder="Username or email"
+              autoComplete="username" autoCapitalize="none" spellCheck={false}
+            />
           </div>
           <div>
-            <AxPasswordInput label="Password" id="login-password" name="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="Your password" />
+            <div className="mb-2 flex items-baseline justify-between">
+              <label htmlFor="login-password" className="text-[15px] text-[#AAB5C7]">Password</label>
+              <Link href="/forgot-password" className="text-[13px] font-semibold text-[#2FD6FF] hover:brightness-110">
+                Forgot password?
+              </Link>
+            </div>
+            <AxPasswordInput id="login-password" name="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" placeholder="Your password" />
           </div>
           {params.get('error') === 'callback' && (
             <p className="text-[13px] text-[#F2BF4A]">That sign-in link was invalid or expired. Please sign in again.</p>
@@ -89,9 +120,8 @@ export function LoginForm() {
             {busy ? 'Signing in…' : <>Sign in <ArrowRight size={17} aria-hidden="true" /></>}
           </AxButton>
         </form>
-        <div className="mt-5 flex items-center justify-between text-[14px]">
-          <Link href="/forgot-password" className="text-[#AAB5C7] hover:text-white">Forgot password?</Link>
-          <Link href="/register" className="font-semibold text-white hover:text-[#2FD6FF]">Create account</Link>
+        <div className="mt-5 border-t border-[#202A3A]/80 pt-5 text-center text-[14px] text-[#AAB5C7]">
+          New to Axiora? <Link href="/register" className="font-semibold text-[#2FD6FF] hover:brightness-110">Create an account</Link>
         </div>
       </AxCard>
     </div>

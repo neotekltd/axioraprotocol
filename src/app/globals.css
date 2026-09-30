@@ -33,6 +33,41 @@
   --radius-lg: 20px;
   --radius-xl: 26px;
 
+  /* type scale (compact technical; hero dramatic only via clamp) */
+  --ax-font-xs: 0.6875rem;
+  --ax-font-sm: 0.8125rem;
+  --ax-font-md: 0.9375rem;
+  --ax-font-lg: 1.125rem;
+  --ax-font-xl: 1.375rem;
+  --ax-font-2xl: 1.75rem;
+  --ax-font-3xl: 2.5rem;
+  --ax-font-hero: clamp(2.6rem, 6vw, 4rem);
+  --ax-leading-tight: 1.1;
+  --ax-leading-body: 1.6;
+
+  /* spacing rhythm */
+  --ax-space-1: 4px;
+  --ax-space-2: 8px;
+  --ax-space-3: 12px;
+  --ax-space-4: 16px;
+  --ax-space-5: 20px;
+  --ax-space-6: 24px;
+  --ax-space-7: 32px;
+  --ax-space-8: 40px;
+  --ax-space-9: 48px;
+  --ax-space-10: 64px;
+  --ax-space-11: 80px;
+  --ax-space-12: 96px;
+
+  /* motion language: fast = press/hover, normal = menu/modal/card,
+     slow = ambient/environmental */
+  --ax-motion-fast: 180ms;
+  --ax-motion-normal: 300ms;
+  --ax-motion-slow: 650ms;
+  --ax-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ax-ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ax-ease-exit: cubic-bezier(0.4, 0, 0.6, 1);
+
   --page-max-width: 1280px;
   --page-padding-desktop: 2rem;
   --page-padding-tablet: 1.5rem;

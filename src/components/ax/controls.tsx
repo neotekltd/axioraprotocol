@@ -42,13 +42,15 @@ export function AxInput({ className = '', ...rest }: InputHTMLAttributes<HTMLInp
   );
 }
 
-export function AxPasswordInput({ label, ...rest }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
+export function AxPasswordInput({ label, ...rest }: { label?: string } & InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   return (
     <div>
-      <label className="mb-2 block text-[15px] text-[#AAB5C7]">
-        {label}
-      </label>
+      {label ? (
+        <label className="mb-2 block text-[15px] text-[#AAB5C7]">
+          {label}
+        </label>
+      ) : null}
       <div className="relative">
         <AxInput {...rest} type={show ? 'text' : 'password'} className="pr-14" />
         <button
