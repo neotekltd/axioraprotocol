@@ -1,94 +1,220 @@
 'use client';
 
 // Module cards on the authoritative plan engine (lib/plans.ts — the only
-// finance source). Card selection drives the simulator through shared state.
-// Pointer-tracked radial highlight + staged telemetry draw on viewport entry.
+// finance source). Data-driven technical module composition: HUD corner
+// accents, traveling left-edge telemetry, chip icon, signal bars, daily
+// rate, segmented daily-credit rail, semantic spec rows, select CTA.
+// Card selection drives the simulator through shared plan-sync state.
+// Pointer-tracked radial highlight + scroll-gated entrance choreography.
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { Reveal } from '@/components/Reveal';
-import { PLANS, quotePlan, examplePlanAmount, formatUSD, formatPct, type PlanQuote } from '@/lib/plans';
+import { PLANS, quotePlan, examplePlanAmount, formatUSD, formatPct, type PlanDef, type PlanQuote } from '@/lib/plans';
 import { useInViewOnce } from '@/components/landing/motion';
 import { usePlanSync } from '@/components/landing/plan-sync';
 
-const SAMPLE = 1000;
+const TELEMETRY_SEGS = 12;
 
-export function ModuleCards() {
-  const { plan: selectedPlan, setPlan } = usePlanSync();
-  const [ref, inView] = useInViewOnce<HTMLDivElement>(0.2);
-  const maxRate = PLANS[PLANS.length - 1].ratePerCredit;
+function ChipIcon() {
+  return (
+    <svg viewBox="0 0 40 40" aria-hidden="true" className="mod-chip h-11 w-11 text-[#2FD6FF]">
+      <g stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.85">
+        <line x1="8" y1="2" x2="8" y2="9" />
+        <line x1="16" y1="2" x2="16" y2="9" />
+        <line x1="24" y1="2" x2="24" y2="9" />
+        <line x1="32" y1="2" x2="32" y2="9" />
+        <line x1="8" y1="31" x2="8" y2="38" />
+        <line x1="16" y1="31" x2="16" y2="38" />
+        <line x1="24" y1="31" x2="24" y2="38" />
+        <line x1="32" y1="31" x2="32" y2="38" />
+        <line x1="2" y1="8" x2="9" y2="8" />
+        <line x1="2" y1="16" x2="9" y2="16" />
+        <line x1="2" y1="24" x2="9" y2="24" />
+        <line x1="2" y1="32" x2="9" y2="32" />
+        <line x1="31" y1="8" x2="38" y2="8" />
+        <line x1="31" y1="16" x2="38" y2="16" />
+        <line x1="31" y1="24" x2="38" y2="24" />
+        <line x1="31" y1="32" x2="38" y2="32" />
+      </g>
+      <rect x="10" y="10" width="20" height="20" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
+      <rect x="16" y="16" width="8" height="8" rx="1.5" fill="currentColor" opacity="0.9" />
+    </svg>
+  );
+}
 
+function SignalBars() {
+  return (
+    <span aria-hidden="true" className="mod-sig flex items-end gap-[3px]">
+      <span className="w-[4px] rounded-sm bg-[#2FD6FF]" style={{ height: 8 }} />
+      <span className="w-[4px] rounded-sm bg-[#2FD6FF]" style={{ height: 13 }} />
+      <span className="w-[4px] rounded-sm bg-[#2FD6FF]" style={{ height: 18 }} />
+    </span>
+  );
+}
+
+function CycleRail({ segments, go }: { segments: number; go: boolean }) {
+  return (
+    <div className="relative" aria-hidden="true">
+      <div className="flex gap-[5px]">
+        {Array.from({ length: segments }, (_, i) => (
+          <span
+            key={i}
+            className={`mod-rail-seg h-[9px] flex-1 rounded-[3px] ${i === segments - 1 ? 'bg-[#2FD6FF] shadow-[0_0_12px_rgba(47,214,255,0.7)]' : 'bg-[#1B2940]'}`}
+            style={go ? { animationDelay: `${0.15 + i * 0.07}s` } : undefined}
+          />
+        ))}
+      </div>
+      {go && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[3px]">
+          <span className="mod-rail-sweep absolute inset-y-0 left-0 w-[30%] bg-gradient-to-r from-transparent via-[rgba(165,243,252,0.35)] to-transparent" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface SpecRow {
+  label: string;
+  value: string;
+  tone: 'cyan' | 'amber' | 'green' | 'muted';
+}
+
+const TONE: Record<SpecRow['tone'], string> = {
+  cyan: 'text-[#2FD6FF]',
+  amber: 'text-[#F2BF4A]',
+  green: 'text-[#35D98B]',
+  muted: 'text-mist',
+};
+
+function specRows(plan: PlanDef, q: PlanQuote | null): SpecRow[] {
+  return [
+    { label: 'Invest', value: `$${plan.min.toLocaleString()} – $${plan.max.toLocaleString()}`, tone: 'cyan' },
+    { label: 'Rate', value: `${formatPct(plan.ratePerCredit * 100)} per payout`, tone: 'cyan' },
+    { label: 'Cycle', value: `Every ${plan.cycleHours} hours`, tone: 'amber' },
+    { label: 'Payouts', value: `${plan.creditsPerDay} per day`, tone: 'amber' },
+    {
+      label: 'Est. daily',
+      value: q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : 'Calculation unavailable',
+      tone: 'cyan',
+    },
+    { label: 'Principal', value: 'Returned at maturity', tone: 'green' },
+  ];
+}
+
+function PlanModuleCard({ plan, index, go, active, onSelect }: {
+  plan: PlanDef;
+  index: number;
+  go: boolean;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  // Per-plan valid example amount (never one global sample). Defensive
+  // fallback renders honestly instead of crashing the homepage.
+  let q: PlanQuote | null = null;
+  try {
+    q = quotePlan(plan.key, examplePlanAmount(plan));
+  } catch {
+    q = null;
+  }
+  const cardRef = useRef<HTMLButtonElement>(null);
   const onPointer = (e: React.PointerEvent<HTMLButtonElement>) => {
     const el = e.currentTarget;
     const r = el.getBoundingClientRect();
     el.style.setProperty('--mouse-x', `${e.clientX - r.left}px`);
     el.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
   };
+  const rows = specRows(plan, q);
+  const dailyPct = formatPct(plan.ratePerCredit * plan.creditsPerDay * 100);
 
   return (
-    <div ref={ref} className="mt-10 grid gap-4 lg:grid-cols-3">
-      {PLANS.map((plan, i) => {
-        // Per-plan valid example amount (never one global sample). Defensive
-        // fallback renders honestly instead of crashing the homepage.
-        let q: PlanQuote | null = null;
-        try {
-          q = quotePlan(plan.key, examplePlanAmount(plan));
-        } catch {
-          q = null;
-        }
-        const active = selectedPlan === plan.key;
-        return (
-          <Reveal key={plan.key} delay={i * 100}>
-            <button
-              onClick={() => setPlan(plan.key)}
-              onPointerMove={onPointer}
-              aria-pressed={active}
-              className={`card-sweep group relative block h-full w-full rounded-xl border bg-panel/80 p-5 text-left transition-all duration-200 hover:-translate-y-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse ${
-                active ? 'border-pulse/70 shadow-glow' : 'border-line hover:border-pulse/50'
-              }`}
-            >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                style={{ background: 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(34,211,238,0.09), transparent 45%)' }}
-              />
-              <div className="relative flex items-center justify-between font-mono text-[10px] tracking-[0.22em] text-fog">
-                <span>{plan.code} · FIXED MODULE</span>
-                <span aria-hidden="true" className="text-pulse/70">◈</span>
-              </div>
-              <div className="relative mt-2.5 text-lg font-bold">{plan.name}</div>
-              <div className="relative mt-1 font-mono text-[2rem] font-bold leading-none tracking-tight text-white">
-                {formatPct(plan.ratePerCredit * 100)}
-                <span className="ml-1 align-middle text-[11px] font-normal text-fog">every 6h</span>
-              </div>
-              <div className="relative mt-3.5 h-[3px] overflow-hidden rounded-full bg-white/[0.07]" aria-hidden="true">
-                <div
-                  className={`boot-line h-full rounded-full bg-gradient-to-r from-pulseDim via-pulse to-pulseBright ${inView ? 'go' : ''}`}
-                  style={{ width: `${Math.round((plan.ratePerCredit / maxRate) * 100)}%` }}
-                />
-              </div>
-              <dl className="relative mt-3.5 space-y-[5px] text-xs">
-                {[
-                  ['Invest', `$${plan.min.toLocaleString()} – $${plan.max.toLocaleString()}`],
-                  ['Rate', `${formatPct(plan.ratePerCredit * 100)} per payout`],
-                  ['Cycle', 'Every 6 hours'],
-                  ['Payouts', '4 per day'],
-                  ['Est. daily', q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : 'Calculation unavailable'],
-                  ['Principal', 'Returned at maturity'],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between gap-3">
-                    <dt className="text-fog">{k}</dt>
-                    <dd className="font-mono text-mist">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-              <span className={`relative mt-4 block rounded-md py-2.5 text-center text-[13px] font-bold transition ${active ? 'bg-pulse text-black' : 'bg-white/[0.06] text-white hover:bg-pulse hover:text-black'}`}>
-                {active ? 'Selected' : `Select — ${plan.name}`}
-              </span>
-            </button>
-          </Reveal>
-        );
-      })}
+    <button
+      ref={cardRef}
+      onClick={onSelect}
+      onPointerMove={onPointer}
+      aria-pressed={active}
+      className={`mod-card card-sweep group relative block h-full w-full overflow-visible rounded-2xl border bg-gradient-to-b from-[#0D1420] to-[#080C14] p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse sm:p-6 ${
+        active ? 'border-pulse/70 shadow-glow' : 'border-line'
+      }`}
+    >
+      {/* HUD corner accents */}
+      <span aria-hidden="true" className="pointer-events-none absolute left-2 top-2 h-3.5 w-3.5 rounded-tl-md border-l-2 border-t-2 border-[#2FD6FF]/70" />
+      <span aria-hidden="true" className="pointer-events-none absolute right-2 top-2 h-3.5 w-3.5 rounded-tr-md border-r-2 border-t-2 border-[#2FD6FF]/70" />
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-2 left-2 h-3.5 w-3.5 rounded-bl-md border-b-2 border-l-2 border-[#2FD6FF]/40" />
+      <span aria-hidden="true" className="pointer-events-none absolute bottom-2 right-2 h-3.5 w-3.5 rounded-br-md border-b-2 border-r-2 border-[#2FD6FF]/40" />
+      {/* traveling left-edge telemetry */}
+      <span aria-hidden="true" className="mod-telemetry absolute -left-[7px] top-8 flex flex-col gap-[7px]">
+        {Array.from({ length: TELEMETRY_SEGS }, (_, i) => (
+          <span key={i} className="block h-[9px] w-[5px] rounded-[1px] bg-[#2FD6FF]" style={{ ['--i' as string]: i }} />
+        ))}
+      </span>
+      {/* pointer-tracked highlight */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+        style={{ background: 'radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(34,211,238,0.09), transparent 45%)' }}
+      />
+      {/* header */}
+      <div className={`relative flex items-start justify-between gap-3 ${go ? 'mod-rise' : 'opacity-0'}`} style={{ animationDelay: `${index * 60}ms` }}>
+        <span className="flex items-center gap-3">
+          <ChipIcon />
+          <span>
+            <span className="block font-mono text-[10px] tracking-[0.24em] text-fog">{plan.code}</span>
+            <span className="mt-0.5 block text-[19px] font-bold tracking-tight text-white">{plan.name}</span>
+          </span>
+        </span>
+        <SignalBars />
+      </div>
+      {/* rate */}
+      <div className={`relative mt-4 ${go ? 'mod-rise' : 'opacity-0'}`} style={{ animationDelay: `${120 + index * 60}ms` }}>
+        <span className="font-mono text-[2.6rem] font-bold leading-none tracking-tight text-white">{dailyPct}</span>
+        <span className="ml-2 align-middle font-mono text-[11px] tracking-[0.2em] text-fog">A DAY</span>
+        <p className="mt-1.5 text-[13px] text-fog">Paid every {plan.cycleHours} hours · {plan.creditsPerDay} credits a day</p>
+      </div>
+      {/* daily credit rail */}
+      <div className={`relative mt-4 ${go ? 'mod-rise' : 'opacity-0'}`} style={{ animationDelay: `${200 + index * 60}ms` }}>
+        <CycleRail segments={plan.creditsPerDay} go={go} />
+        <p className="mt-1.5 font-mono text-[10px] tracking-[0.18em] text-fog">DAILY CREDIT CYCLE</p>
+      </div>
+      {/* spec rows */}
+      <dl className="relative mt-3 space-y-0 text-[13px]">
+        {rows.map((r, i) => (
+          <div
+            key={r.label}
+            className={`flex items-center justify-between gap-3 border-t border-white/[0.06] py-2 ${go ? 'mod-rise' : 'opacity-0'}`}
+            style={{ animationDelay: `${260 + index * 60 + i * 55}ms` }}
+          >
+            <dt className="text-fog">{r.label}</dt>
+            <dd className={`text-right font-mono font-semibold ${TONE[r.tone]}`}>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {/* action */}
+      <span
+        className={`relative mt-4 flex min-h-[52px] items-center justify-center gap-2 rounded-xl border text-[14px] font-bold transition ${
+          active
+            ? 'border-pulse/70 bg-pulse text-black'
+            : 'border-[#2A394D] bg-[#111722] text-white hover:border-[rgba(47,214,255,0.55)]'
+        }`}
+      >
+        {active ? 'Selected' : `Select — ${plan.name}`}
+        <span aria-hidden="true" className="mod-cta-arrow font-mono">→</span>
+      </span>
+    </button>
+  );
+}
+
+export function ModuleCards() {
+  const { plan: selectedPlan, setPlan } = usePlanSync();
+  const [ref, inView] = useInViewOnce<HTMLDivElement>(0.15);
+
+  return (
+    <div ref={ref} className={`${inView ? 'mod-go' : ''} mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-4`}>
+      {PLANS.map((plan, i) => (
+        <Reveal key={plan.key} delay={i * 110}>
+          <PlanModuleCard plan={plan} index={i} go={inView} active={selectedPlan === plan.key} onSelect={() => setPlan(plan.key)} />
+        </Reveal>
+      ))}
     </div>
   );
 }

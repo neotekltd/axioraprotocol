@@ -108,14 +108,23 @@ export function MobileBottomNav() {
   );
 }
 
+// Global floating support widget: fixed to the viewport, above page
+// content but below drawers/modals (z-40 vs public drawer z-60), offset
+// above the mobile bottom nav in-app, safe-area aware everywhere.
+// Destination is the existing in-app support route — no external
+// Telegram/username is invented anywhere in the project.
 export function FloatingSupportButton() {
   return (
     <Link
       href="/app/support"
-      aria-label="Contact support"
-      className="fixed bottom-[104px] right-[18px] z-40 grid h-14 w-14 place-items-center rounded-full bg-[#2FD6FF] text-[#06121A] shadow-[0_8px_28px_rgba(47,214,255,0.4)] transition hover:scale-105 hover:brightness-110 active:scale-95 lg:bottom-8"
+      aria-label="Open Axiora support"
+      className="ax-fab fixed bottom-[calc(104px+env(safe-area-inset-bottom))] right-[14px] z-40 grid h-14 w-14 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FD6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:bottom-[calc(24px+env(safe-area-inset-bottom))] lg:right-[24px]"
     >
-      <MessageCircle size={24} />
+      <span aria-hidden="true" className="ax-fab-ring" />
+      <span aria-hidden="true" className="ax-fab-ripple" />
+      <span className="ax-fab-btn">
+        <MessageCircle size={24} />
+      </span>
     </Link>
   );
 }
@@ -126,7 +135,7 @@ export function PublicFloatingSupport() {
   const pathname = usePathname();
   if (pathname.startsWith('/app')) return null;
   return (
-    <div className="[&_a]:!bottom-6">
+    <div className="[&_a]:!bottom-[calc(24px+env(safe-area-inset-bottom))]">
       <FloatingSupportButton />
     </div>
   );

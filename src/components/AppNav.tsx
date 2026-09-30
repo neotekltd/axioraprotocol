@@ -54,7 +54,7 @@ export function AppNav() {
       </div>
       {/* Mobile drawer */}
       {open && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Application menu">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Application menu">
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
           <nav className="thin-scroll absolute right-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto border-l border-line bg-void p-4">
             <div className="space-y-1">
