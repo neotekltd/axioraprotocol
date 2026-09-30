@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="250" viewBox="0 0 300 250">
+  <rect width="300" height="250" rx="12" fill="#0B1220"/>
+  <rect x="1" y="1" width="298" height="248" rx="11" fill="none" stroke="#2FD6FF" stroke-opacity="0.35" stroke-width="1.5"/>
+  <path d="M128 30 L146 68 H138 L128 44 L118 68 H110 Z" fill="#2FD6FF"/>
+  <rect x="122" y="58" width="12" height="3" fill="#0B1220"/>
+  <text x="150" y="100" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#FFFFFF" text-anchor="middle">AXIORA.</text>
+  <text x="150" y="122" font-family="Arial, sans-serif" font-size="11" fill="#78859A" letter-spacing="3" text-anchor="middle">AUTONOMOUS CAPITAL</text>
+  <line x1="40" y1="140" x2="260" y2="140" stroke="#202A3A" stroke-width="1"/>
+  <text x="150" y="166" font-family="Arial, sans-serif" font-size="14" fill="#AAB5C7" text-anchor="middle">Capital on autopilot.</text>
+  <text x="150" y="186" font-family="Arial, sans-serif" font-size="12" fill="#596579" text-anchor="middle">axioraprotocol.com</text>
+  <rect x="75" y="200" width="150" height="34" rx="8" fill="#2FD6FF"/>
+  <text x="150" y="222" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#06121A" text-anchor="middle">INVEST →</text>
+</svg>

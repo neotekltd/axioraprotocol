@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="728" height="90" viewBox="0 0 728 90">
+  <rect width="728" height="90" rx="10" fill="#0B1220"/>
+  <rect x="1" y="1" width="726" height="88" rx="9" fill="none" stroke="#2FD6FF" stroke-opacity="0.35" stroke-width="1.5"/>
+  <path d="M40 18 L58 56 H50 L40 32 L30 56 H22 Z" fill="#2FD6FF"/>
+  <rect x="34" y="46" width="12" height="3" fill="#0B1220"/>
+  <text x="70" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#FFFFFF" letter-spacing="1">AXIORA.</text>
+  <text x="70" y="62" font-family="Arial, sans-serif" font-size="12" fill="#78859A" letter-spacing="3">CAPITAL ON AUTOPILOT</text>
+  <text x="360" y="42" font-family="Arial, sans-serif" font-size="14" fill="#AAB5C7">Structured plan modules · Daily settlement</text>
+  <text x="360" y="62" font-family="Arial, sans-serif" font-size="12" fill="#596579">axioraprotocol.com</text>
+  <rect x="596" y="24" width="104" height="42" rx="8" fill="#2FD6FF"/>
+  <text x="648" y="50" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#06121A" text-anchor="middle">INVEST →</text>
+</svg>

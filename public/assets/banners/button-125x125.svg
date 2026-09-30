@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="125" height="125" viewBox="0 0 125 125">
+  <rect width="125" height="125" rx="12" fill="#0B1220"/>
+  <rect x="1" y="1" width="123" height="123" rx="11" fill="none" stroke="#2FD6FF" stroke-opacity="0.35" stroke-width="1.5"/>
+  <path d="M53 22 L71 60 H63 L53 36 L43 60 H35 Z" fill="#2FD6FF"/>
+  <rect x="47" y="50" width="12" height="3" fill="#0B1220"/>
+  <text x="62" y="84" font-family="Arial, sans-serif" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">AXIORA.</text>
+  <text x="62" y="100" font-family="Arial, sans-serif" font-size="9" fill="#78859A" letter-spacing="2" text-anchor="middle">AUTOPILOT</text>
+  <rect x="28" y="106" width="69" height="4" rx="2" fill="#2FD6FF" opacity="0.6"/>
+</svg>
