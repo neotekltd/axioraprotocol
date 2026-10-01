@@ -11,7 +11,7 @@ const NAV = [
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/technology', label: 'Technology' },
   { href: '/calculator', label: 'Calculator' },
-  { href: '/referrals', label: 'Referrals' },
+  { href: '/referral-program', label: 'Referrals' },
   { href: '/blog', label: 'Blog' },
   { href: '/faq', label: 'FAQ' },
 ];
@@ -23,7 +23,7 @@ const DRAWER_NAV = [
   { n: '02', href: '/how-it-works', label: 'How it works' },
   { n: '03', href: '/technology', label: 'Features' },
   { n: '04', href: '/statistics', label: 'Live stats' },
-  { n: '05', href: '/referrals', label: 'Referrals' },
+  { n: '05', href: '/referral-program', label: 'Referrals' },
   { n: '06', href: '/faq', label: 'FAQ' },
 ];
 

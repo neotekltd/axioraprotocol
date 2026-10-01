@@ -5,7 +5,7 @@ import { PROTOCOL_CONFIG } from '@/lib/config';
 export const metadata = {
   title: 'Referrals',
   description: 'Axiora referral program: instant bonuses and daily profit shares across five levels.',
-  alternates: { canonical: '/referrals' },
+  alternates: { canonical: '/referral-program' },
 };
 
 export default function ReferralsPage() {

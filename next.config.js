@@ -14,6 +14,14 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // The public marketing page moved so no public route twins an
+      // authenticated /app/* segment (twin segments confused route
+      // resolution in the deployed bundle and crashed /app/referrals).
+      { source: '/referrals', destination: '/referral-program', permanent: true },
+    ];
+  },
 };
 
 module.exports = nextConfig;

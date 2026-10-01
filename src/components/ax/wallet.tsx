@@ -170,13 +170,15 @@ export function CopyButton({ text, label, primary = false }: { text: string; lab
   );
 }
 
-export function BottomSheet({ open, onClose, title, icon, children, labelledBy }: {
+export function BottomSheet({ open, onClose, title, icon, children, labelledBy, overlayClassName = '', overlayTop }: {
   open: boolean;
   onClose: () => void;
   title: React.ReactNode;
   icon?: React.ReactNode;
   children: React.ReactNode;
   labelledBy?: string;
+  overlayClassName?: string;
+  overlayTop?: number;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -196,14 +198,23 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy }
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[70]" role="presentation">
-      <div className="ax-sheet-overlay absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[8%] sm:inset-0 sm:grid sm:place-items-center sm:p-6">
+    <div className="pointer-events-none fixed inset-0 z-[70]" role="presentation">
+      <div
+        className={cn('ax-sheet-overlay pointer-events-auto absolute inset-0 bg-black/70', overlayClassName)}
+        style={overlayTop !== undefined ? { top: overlayTop } : undefined}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 sm:inset-0 sm:grid sm:place-items-center sm:p-6"
+        style={{ top: '8%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+      >
         <div
           role="dialog"
           aria-modal="true"
           aria-label={labelledBy}
-          className="ax-sheet pointer-events-auto mx-auto flex h-full w-full max-w-[520px] flex-col overflow-hidden rounded-t-[24px] border border-[#2A394D] bg-[#0C1119] sm:h-auto sm:max-h-[88dvh] sm:rounded-[24px]"
+          className="ax-sheet pointer-events-auto w-full overflow-hidden rounded-t-[24px] border border-[#2A394D] bg-[#0C1119] sm:rounded-[24px]"
+          style={{ margin: '0 auto', maxWidth: 520, maxHeight: '80dvh', display: 'flex', flexDirection: 'column' }}
         >
           <div className="flex items-center justify-between gap-3 border-b border-[#202A3A] px-5 py-4">
             <div className="flex min-w-0 items-center gap-3">
@@ -220,7 +231,7 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy }
               <X size={20} />
             </button>
           </div>
-          <div className="thin-scroll overflow-y-auto px-5 py-5">{children}</div>
+          <div className="thin-scroll min-h-0 overflow-y-auto px-5 py-5">{children}</div>
         </div>
       </div>
     </div>

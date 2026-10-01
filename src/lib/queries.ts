@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 export interface SessionUser {
   id: string;
   email: string | null;
+  username: string | null;
   emailConfirmed: boolean;
   createdAt: string | null;
 }
@@ -18,9 +19,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const supabase = createClient();
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) return null;
+    const metaUsername = (data.user.user_metadata as { username?: unknown } | null)?.username;
     return {
       id: data.user.id,
       email: data.user.email ?? null,
+      username: typeof metaUsername === 'string' && metaUsername.trim() ? metaUsername.trim() : null,
       emailConfirmed: Boolean(data.user.email_confirmed_at),
       createdAt: data.user.created_at ?? null,
     };

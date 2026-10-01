@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Bell, Home, LifeBuoy, TrendingUp, Users, Wallet, MessageCircle } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
+import { AccountMenu } from '@/components/ax/account-menu';
 import { cn } from '@/lib/utils';
 
 function useSessionElapsed(active: boolean) {
@@ -26,11 +27,8 @@ function useSessionElapsed(active: boolean) {
   return `${h}:${m}:${s}`;
 }
 
-export function AppHeader({ email, unread = 0 }: { email?: string | null; unread?: number }) {
+export function AppHeader({ email, username, unread = 0 }: { email?: string | null; username?: string | null; unread?: number }) {
   const elapsed = useSessionElapsed(true);
-// Dedicated authenticated-header identity (same component, explicit name
-// for the dashboard shell).
-  const initials = (email?.trim()?.[0] ?? 'A').toUpperCase();
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-[1180px] items-center justify-between px-5 md:px-7">
@@ -62,13 +60,7 @@ export function AppHeader({ email, unread = 0 }: { email?: string | null; unread
               </span>
             )}
           </Link>
-          <Link
-            href="/app/profile"
-            aria-label="Profile"
-            className="grid h-10 w-10 place-items-center rounded-[12px] border border-[rgba(47,214,255,0.45)] bg-[rgba(47,214,255,0.08)] text-[15px] font-bold text-[#2FD6FF]"
-          >
-            {initials}
-          </Link>
+          <AccountMenu email={email} username={username} />
         </div>
       </div>
     </header>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PageHeader, SectionCard, EmptyState, StatusBadge } from '@/components/data';
-import { AxButton, AxInput, FieldError, FieldSuccess } from '@/components/ax/controls';
+import { AxButton, AxInput, AxSelect, AxTextarea, FieldError, FieldSuccess } from '@/components/ax/controls';
 import { FAQS } from '@/lib/mock';
 import { createSupportTicket } from '@/lib/actions';
 import type { SupportTicket } from '@/lib/queries';
@@ -105,20 +105,12 @@ export function SupportView({ tickets }: { tickets: SupportTicket[] }) {
               <label htmlFor="ticket-subject" className="mb-2 block text-[14px] text-[#AAB5C7]">Subject</label>
               <AxInput id="ticket-subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="How can we help?" maxLength={120} />
             </div>
-            <div>
-              <label htmlFor="ticket-category" className="mb-2 block text-[14px] text-[#AAB5C7]">Category</label>
-              <select
-                id="ticket-category" value={category} onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-[16px] border border-[#4B5C73] bg-[#151D2C] px-4 py-3.5 text-[15px] text-white outline-none focus:border-[#2FD6FF] sm:max-w-xs"
-              >
+            <div className="sm:max-w-xs">
+              <AxSelect id="ticket-category" label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>)}
-              </select>
+              </AxSelect>
             </div>
-            <div>
-              <label htmlFor="ticket-message" className="mb-2 block text-[14px] text-[#AAB5C7]">Message</label>
-              <textarea id="ticket-message" rows={5} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe the issue, including what you expected and what happened." maxLength={4000}
-                className="w-full rounded-[16px] border border-[#4B5C73] bg-[#151D2C] px-4 py-3.5 text-[15px] text-white outline-none transition placeholder:text-[#596579] focus:border-[#2FD6FF] focus:shadow-[0_0_0_2px_rgba(47,214,255,0.12)]" />
-            </div>
+            <AxTextarea id="ticket-message" label="Message" rows={5} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe the issue, including what you expected and what happened." maxLength={4000} />
             {result && (result.ok
               ? <FieldSuccess message={result.text} />
               : <FieldError message={result.text} />)}

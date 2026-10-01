@@ -148,13 +148,13 @@ export function ReferralNetworkSection() {
                   <span className="font-mono text-xs text-fog">{r.instantPct}% instant · {r.dailySharePct}% daily</span>
                 </div>
               ))}
-              <p className="pt-1 text-xs text-fog">+ L4–L5 deeper levels — full table on the <Link href="/referrals" className="text-pulse">Referrals page</Link>.</p>
+              <p className="pt-1 text-xs text-fog">+ L4–L5 deeper levels — full table on the <Link href="/referral-program" className="text-pulse">Referrals page</Link>.</p>
             </div>
           </Reveal>
           <Reveal delay={140}>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/register" className="rounded-lg bg-pulse px-6 py-3 text-sm font-bold text-black transition hover:brightness-110">Create account to get your link</Link>
-              <Link href="/referrals" className="rounded-lg border border-line px-6 py-3 text-sm hover:border-pulse/50">How referrals work</Link>
+              <Link href="/referral-program" className="rounded-lg border border-line px-6 py-3 text-sm hover:border-pulse/50">How referrals work</Link>
             </div>
           </Reveal>
         </div>

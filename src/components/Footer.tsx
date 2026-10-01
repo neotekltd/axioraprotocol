@@ -35,7 +35,7 @@ export function Footer() {
           <div className={col}>PRODUCT</div>
           <div className="mt-3 space-y-2">
             <Link className={link} href="/calculator">Calculator</Link>
-            <Link className={link} href="/referrals">Referrals</Link>
+            <Link className={link} href="/referral-program">Referrals</Link>
             <Link className={link} href="/statistics">Statistics</Link>
             <Link className={link} href="/blog">Blog</Link>
           </div>

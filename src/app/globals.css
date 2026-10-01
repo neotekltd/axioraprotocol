@@ -42,6 +42,22 @@
   --ax-z-modal: 70;
 
   /* type scale (compact technical; hero dramatic only via clamp) */
+  --ax-text-xs: 11px;
+  --ax-text-sm: 13px;
+  --ax-text-md: 15px;
+  --ax-text-lg: 17px;
+  --ax-text-xl: 22px;
+  --ax-text-2xl: 28px;
+  --ax-text-3xl: 36px;
+  --ax-text-value: 42px;
+  --ax-text-hero: clamp(42px, 8vw, 78px);
+
+  /* shadow / glow discipline (depth from surface contrast first) */
+  --ax-shadow-card: 0 8px 30px rgba(0, 0, 0, 0.22);
+  --ax-glow-cyan: 0 0 18px rgba(47, 214, 255, 0.18);
+  --ax-glow-cyan-strong: 0 0 26px rgba(47, 214, 255, 0.28);
+
+  --ax-radius-pill: 999px;
   --ax-font-xs: 0.6875rem;
   --ax-font-sm: 0.8125rem;
   --ax-font-md: 0.9375rem;
