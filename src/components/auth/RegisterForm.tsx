@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
+import { normalizeAuthEmail } from '@/lib/auth-identifiers';
+import { resendSignupVerification, resendUserMessage } from '@/lib/auth-email';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AxButton, AxInput, AxPasswordInput, FieldError, FieldSuccess, PasswordStrength } from '@/components/ax/controls';
 
@@ -31,23 +33,23 @@ async function recoverExistingAccount(
   router: ReturnType<typeof useRouter>,
   setError: (m: string | null) => void
 ) {
-  const { error: resendError } = await supabase.auth.resend({
-    type: 'signup',
-    email: cleanEmail,
-    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-  });
-  if (!resendError) {
+  const result = await resendSignupVerification(
+    supabase,
+    cleanEmail,
+    `${window.location.origin}/auth/callback`
+  );
+  if (result.ok) {
     router.replace(`/verify-email?email=${encodeURIComponent(cleanEmail)}&resent=1`);
     return;
   }
-  logAuthError('signup:resend', resendError);
-  const m = resendError.message.toLowerCase();
-  const status = (resendError as { status?: number }).status;
-  if (status === 429 || m.includes('rate limit') || m.includes('too many')) {
-    setError('Too many attempts. Wait a moment and try again — or use Resend on the verification page.');
-  } else {
-    setError('An account with this email already exists. Try signing in instead.');
+  if (result.code !== 'RATE_LIMIT') {
+    logAuthError('signup:resend:unconfirmed', { message: result.code });
   }
+  setError(
+    result.code === 'RATE_LIMIT'
+      ? 'Too many attempts. Wait a moment and try again — or use Resend on the verification page.'
+      : 'An account with this email already exists. Try signing in instead.'
+  );
 }
 
 export function RegisterForm() {
@@ -84,7 +86,7 @@ export function RegisterForm() {
     setError(null);
     try {
       const supabase = createClient();
-      const cleanEmail = email.trim();
+      const cleanEmail = normalizeAuthEmail(email);
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,

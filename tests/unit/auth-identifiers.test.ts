@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isEmailLike, isResolvableUsername, normalizeEmail, normalizeUsername } from '@/lib/auth-identifiers';
+import { isEmailLike, isResolvableUsername, normalizeAuthEmail, normalizeUsername } from '@/lib/auth-identifiers';
 
 describe('login identifiers', () => {
   it('detects email-like input', () => {
@@ -11,7 +11,7 @@ describe('login identifiers', () => {
   });
 
   it('normalizes email for sign-in', () => {
-    expect(normalizeEmail('  JAIDANEM6@Example.COM ')).toBe('jaidanem6@example.com');
+    expect(normalizeAuthEmail('  JAIDANEM6@Example.COM ')).toBe('jaidanem6@example.com');
   });
 
   it('normalizes usernames for lookup', () => {

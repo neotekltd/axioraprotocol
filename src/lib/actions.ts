@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { createClient } from '@/lib/supabase/server';
 import { CreateDeploymentSchema, WithdrawalQuoteSchema } from '@/lib/validation';
 import { getPlan, quotePlan } from '@/lib/plans';
+import { ASSET_IDS, DEPOSIT_CONFIG, getDepositAddress, isValidTxHash } from '@/lib/deposits';
 import { getPortfolioSummary } from '@/lib/queries';
 import { z } from 'zod';
 
@@ -252,5 +253,60 @@ export async function createSupportTicket(form: { subject: string; message: stri
     return { ok: true, message: 'Ticket opened. We will follow up by email.' };
   } catch {
     return { ok: false, message: 'Could not open the ticket. Please try again.' };
+  }
+}
+
+const TxSubmitSchema = z.object({
+  assetId: z.string(),
+  amount: z.coerce.number().positive().max(100000000),
+  txHash: z.string().trim().min(16).max(128),
+});
+
+// User submits the blockchain transaction hash (TXID) after sending funds
+// to the configured deposit address. This creates a PENDING deposit record
+// for review — it never credits anything by itself. The TXID is verified
+// (existence, network, recipient, asset, amount, confirmations) before any
+// credit; duplicates are rejected by the (network, tx_hash) unique index.
+export async function submitDepositTx(form: { assetId: string; amount: number; txHash: string }): Promise<ActionResult> {
+  const parsed = TxSubmitSchema.safeParse(form);
+  if (!parsed.success) return { ok: false, message: 'Enter a valid amount and transaction hash.' };
+  const { assetId, amount, txHash } = parsed.data;
+  if (!((ASSET_IDS as readonly string[]).includes(assetId))) {
+    return { ok: false, message: 'Unknown deposit asset.' };
+  }
+  const cleanHash = txHash.trim().toLowerCase();
+  if (!isValidTxHash(assetId, cleanHash)) {
+    return { ok: false, message: 'That transaction hash does not match the expected format for this network.' };
+  }
+  const cfg = DEPOSIT_CONFIG[assetId as (typeof ASSET_IDS)[number]];
+  const address = getDepositAddress(assetId);
+  if (!address) return { ok: false, message: 'This deposit method is not configured right now.' };
+  if (amount < 10) return { ok: false, message: 'Minimum deposit is $10.00.' };
+  const uid = await userId();
+  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  try {
+    const supabase = createClient();
+    const { error } = await supabase.from('wallet_transactions').insert({
+      user_id: uid,
+      type: 'deposit',
+      asset: cfg.symbol,
+      amount: amount.toFixed(2),
+      status: 'pending',
+      network: cfg.network,
+      address,
+      tx_hash: cleanHash,
+      meta: { asset_id: assetId, standard: cfg.standard },
+    });
+    if (error) {
+      if ((error as { code?: string }).code === '23505') {
+        return { ok: false, message: 'This transaction was already submitted and is being processed.' };
+      }
+      throw error;
+    }
+    await notify(supabase, uid, 'deposit', 'Transaction submitted', `${amount.toFixed(2)} ${cfg.symbol} · ${cfg.network} · awaiting review`);
+    revalidatePath('/app');
+    return { ok: true, message: 'Transaction submitted. It will be credited after on-chain verification and review.' };
+  } catch {
+    return { ok: false, message: 'Could not submit the transaction. Please try again.' };
   }
 }

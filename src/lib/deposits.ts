@@ -1,16 +1,8 @@
-// Central deposit-address configuration — SINGLE SOURCE OF TRUTH for every
-// supported deposit asset. Server-side only: this module reads process.env
-// and the deposit_methods table; UI code must consume getDepositMethods() /
-// getDepositAddress() and never scatter env reads or address literals.
-//
-// Receiving addresses are PUBLIC operational data (users send funds to
-// them) — never confuse with secrets. No private keys exist anywhere here.
-// Secrets (RESEND_API_KEY, SUPABASE_*, CLOUDFLARE_*) must never enter this
-// module's outputs or any client bundle.
-//
-// Precedence: environment variable wins; the Supabase deposit_methods table
-// is a fallback for assets with no env address. An asset is "configured"
-// only when a non-empty, format-valid address exists.
+// Server-side deposit-method registry. SINGLE SOURCE OF TRUTH chain:
+// central DEPOSIT_CONFIG (metadata + env bootstrap) -> Supabase
+// crypto_networks (admin-managed canonical records) -> UI. The legacy
+// deposit_methods table is no longer read. Receiving addresses are PUBLIC
+// (users send funds to them) — never confuse with secrets.
 
 import { createHash } from 'crypto';
 import { createClient } from '@/lib/supabase/server';
@@ -197,6 +189,10 @@ export interface DepositMethod {
   enabled: boolean;
   icon: string | null;
   feeNote: string | null;
+  memoRequired: boolean;
+  memoLabel: string | null;
+  confirmations: number | null;
+  minimumDeposit: number | null;
 }
 
 function methodFromConfig(id: AssetId, address: string): DepositMethod {
@@ -213,12 +209,35 @@ function methodFromConfig(id: AssetId, address: string): DepositMethod {
     enabled: true,
     icon: c.icon,
     feeNote: c.feeNote,
+    memoRequired: false,
+    memoLabel: null,
+    confirmations: null,
+    minimumDeposit: null,
   };
 }
 
-// Served deposit methods: env config first (precedence), Supabase
-// deposit_methods table as fallback for assets with no env address. Every
-// address is format-validated before it can appear; empties never surface.
+// TXID / transaction-hash format validation per network family. This only
+// checks SHAPE (64 hex chars; 0x-prefixed for EVM) — it never claims the
+// transaction exists, matches, or is confirmed. Existence/ownership/amount
+// verification happens in review, never on format alone.
+export function isValidTxHash(assetId: string, hash: string): boolean {
+  const h = (hash ?? '').trim();
+  if (!((ASSET_IDS as readonly string[]).includes(assetId))) return false;
+  switch (assetId) {
+    case 'ETH':
+    case 'BNB':
+    case 'USDT_ERC20':
+    case 'USDT_BEP20':
+      return /^0x[0-9a-fA-F]{64}$/.test(h);
+    default:
+      return /^[0-9a-fA-F]{64}$/.test(h);
+  }
+}
+
+// Served deposit methods: env bootstrap first (precedence), then the
+// admin-managed crypto_networks records for assets with no env address.
+// Every address is format-validated before it can appear; empties and
+// disabled networks never surface.
 export async function getDepositMethods(): Promise<DepositMethod[]> {
   const out: DepositMethod[] = [];
   const covered = new Set<AssetId>();
@@ -231,36 +250,37 @@ export async function getDepositMethods(): Promise<DepositMethod[]> {
   }
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('deposit_methods')
-      .select('asset,asset_name,network,standard,contract_address,decimals,deposit_address,enabled')
-      .eq('enabled', true);
-    if (!error && data) {
-      for (const r of data as Record<string, unknown>[]) {
-        const asset = String(r.asset ?? '');
-        const network = String(r.network ?? '');
-        const standard = String(r.standard ?? '');
-        const addr = String(r.deposit_address ?? '').trim();
-        if (!asset || !addr) continue;
-        const match = (Object.keys(DEPOSIT_CONFIG) as AssetId[]).find(
-          (id) =>
-            !covered.has(id) &&
-            DEPOSIT_CONFIG[id].symbol === asset &&
-            DEPOSIT_CONFIG[id].network === network &&
-            DEPOSIT_CONFIG[id].standard === standard &&
-            isValidDepositAddress(id, addr)
-        );
-        if (match) {
-          const base = methodFromConfig(match, addr);
-          out.push({
-            ...base,
-            assetName: String(r.asset_name ?? '') || base.assetName,
-            contractAddress: (r.contract_address as string | null) ?? base.contractAddress,
-            decimals: typeof r.decimals === 'number' ? r.decimals : base.decimals,
-          });
-          covered.add(match);
-        }
-      }
+    const [{ data: nets }, { data: assets }] = await Promise.all([
+      supabase
+        .from('crypto_networks')
+        .select('id,asset_id,network_code,network_name,deposit_address,token_contract_address,memo_required,memo_label,confirmations_required,minimum_deposit,deposit_enabled,withdrawal_enabled')
+        .eq('deposit_enabled', true),
+      supabase.from('crypto_assets').select('id,symbol,name'),
+    ]);
+    const names = new Map<string, { symbol: string; name: string }>();
+    for (const a of (assets ?? []) as Record<string, unknown>[]) {
+      names.set(String(a.id), { symbol: String(a.symbol ?? ''), name: String(a.name ?? '') });
+    }
+    for (const r of (nets ?? []) as Record<string, unknown>[]) {
+      const id = String(r.id ?? '');
+      if (!((ASSET_IDS as readonly string[]).includes(id)) || covered.has(id as AssetId)) continue;
+      const cfg = DEPOSIT_CONFIG[id as AssetId];
+      const addr = String(r.deposit_address ?? '').trim();
+      if (!addr || !isValidDepositAddress(id as AssetId, addr)) continue;
+      const meta = names.get(String(r.asset_id ?? ''));
+      out.push({
+        ...methodFromConfig(id as AssetId, addr),
+        asset: meta?.symbol || cfg.symbol,
+        assetName: meta?.name || cfg.name,
+        network: String(r.network_name ?? '') || cfg.network,
+        standard: String(r.network_code ?? '') || cfg.standard,
+        contractAddress: (r.token_contract_address as string | null) ?? cfg.contractAddress,
+        memoRequired: Boolean(r.memo_required),
+        memoLabel: (r.memo_label as string | null) ?? null,
+        confirmations: typeof r.confirmations_required === 'number' ? r.confirmations_required : null,
+        minimumDeposit: r.minimum_deposit != null ? Number(r.minimum_deposit) : null,
+      });
+      covered.add(id as AssetId);
     }
   } catch {
     // DB unavailable: env-configured methods still served.

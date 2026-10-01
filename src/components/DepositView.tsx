@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { ArrowLeft, Check, ChevronDown, QrCode, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/data';
 import { formatUSD } from '@/lib/plans';
+import { submitDepositTx } from '@/lib/actions';
 import type { WalletTxn } from '@/lib/queries';
 import type { DepositMethod } from '@/lib/deposits';
 import {
@@ -91,6 +92,9 @@ export function DepositView({ methods, deposits, qr }: {
   const [confirmed, setConfirmed] = useState(false);
   const [coinOpen, setCoinOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [txHash, setTxHash] = useState('');
+  const [txBusy, setTxBusy] = useState(false);
+  const [txMsg, setTxMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const m = methods[idx];
 
   if (!m) {
@@ -124,6 +128,15 @@ export function DepositView({ methods, deposits, qr }: {
   const pickChip = (c: string) => {
     setChip(c);
     setAmount(c.split(' ')[0]);
+  };
+
+  const submitTx = async () => {
+    setTxBusy(true);
+    setTxMsg(null);
+    const res = await submitDepositTx({ assetId: m.id, amount: num, txHash });
+    setTxBusy(false);
+    setTxMsg({ ok: res.ok, text: res.message });
+    if (res.ok) setTxHash('');
   };
 
   if (confirmed && valid) {
@@ -188,6 +201,39 @@ export function DepositView({ methods, deposits, qr }: {
           <p className="mt-4 text-center text-[13px] text-[#78859A]">
             After you send, the network confirms it, then it is credited by itself.
           </p>
+          <div className="mt-5 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-4 sm:p-5">
+            <div className="text-[15px] font-bold text-white">Have you sent the funds?</div>
+            <label htmlFor="deposit-txid" className="mb-2 mt-3 block text-[13px] text-[#AAB5C7]">
+              Transaction hash / TXID
+            </label>
+            <input
+              id="deposit-txid"
+              value={txHash}
+              onChange={(e) => setTxHash(e.target.value)}
+              placeholder={m.asset === 'USDT' && m.network !== 'TRON' ? '0x…' : 'Enter transaction hash'}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              className="w-full rounded-[12px] border border-[#2A394D] bg-[#080B12] px-4 py-3.5 font-mono text-[13px] text-white outline-none transition placeholder:text-[#596579] focus:border-[#2FD6FF]"
+            />
+            <p className="mt-2 text-[12px] leading-relaxed text-[#78859A]">
+              You can find your transaction hash in the wallet or exchange you used to send the funds.
+              Submitting it notifies review — it does not credit your account by itself.
+            </p>
+            {txMsg && (
+              <p role={txMsg.ok ? 'status' : 'alert'} className={`mt-2 text-[13px] font-semibold ${txMsg.ok ? 'text-[#35D98B]' : 'text-[#F2BF4A]'}`}>
+                {txMsg.text}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => void submitTx()}
+              disabled={txBusy || txHash.trim().length < 16}
+              className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.55)] active:scale-[0.99] disabled:opacity-50"
+            >
+              {txBusy ? 'Submitting…' : 'Submit transaction'}
+            </button>
+          </div>
           <SummaryRows
             rows={[
               { label: 'You get', value: `${formatUSD(num)} into Deposit wallet`, tone: 'green' },

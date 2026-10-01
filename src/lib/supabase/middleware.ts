@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { env } from '@/lib/env';
+import { isSoleAdminEmail } from '@/lib/admin-email';
+
+// Note: this redirect is routing convenience only. The definitive check
+// lives in is_admin() + the /admin layout gate, which always re-verify
+// server-side from the authenticated session.
 
 // Refreshes the Supabase session on every request so server code always sees
 // a current user. Also gates /app/* behind authentication.
@@ -36,7 +41,12 @@ export async function updateSession(request: NextRequest) {
   }
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
     const app = request.nextUrl.clone();
-    app.pathname = '/app/dashboard';
+    // Already-authenticated admins visiting auth pages go straight to /admin
+    // (no dashboard flash); everyone else to the dashboard. The /admin
+    // layout gate re-verifies authorization independently.
+    const isAdmin = isSoleAdminEmail(user.email ?? null);
+    app.pathname = isAdmin ? '/admin' : '/app/dashboard';
+    app.search = '';
     return NextResponse.redirect(app);
   }
   return response;

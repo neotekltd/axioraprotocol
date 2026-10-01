@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
+import { resendSignupVerification, resendUserMessage } from '@/lib/auth-email';
 import { OtpInput } from '@/components/auth/OtpInput';
 import { AxButton, FieldError } from '@/components/ax/controls';
 import { AxCard } from '@/components/ax/primitives';
@@ -87,20 +88,13 @@ export function VerifyEmailForm() {
     setResendError(null);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
+      const result = await resendSignupVerification(
+        supabase,
         email,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) {
-        logAuthError('verify:resend', error);
-        const m = error.message.toLowerCase();
-        const status = (error as { status?: number }).status;
-        setResendError(
-          status === 429 || m.includes('rate limit') || m.includes('too many')
-            ? 'Too many resend attempts. Wait a minute and try again.'
-            : 'Could not resend the code right now. Wait a moment and try again.'
-        );
+        `${window.location.origin}/auth/callback`
+      );
+      if (!result.ok) {
+        setResendError(resendUserMessage(result.code));
         return;
       }
       setCooldown(COOLDOWN);

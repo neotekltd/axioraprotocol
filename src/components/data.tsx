@@ -60,6 +60,7 @@ const BADGE_STYLES: Record<string, string> = {
   open: 'border-[rgba(242,191,74,0.4)] bg-[rgba(242,191,74,0.08)] text-[#F2BF4A]',
   failed: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
   cancelled: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
+  rejected: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
 };
 
 export function StatusBadge({ status }: { status: string }) {

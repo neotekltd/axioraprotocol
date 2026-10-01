@@ -9,7 +9,10 @@ export function isEmailLike(raw: string): boolean {
   return EMAIL_RE.test(raw.trim());
 }
 
-export function normalizeEmail(raw: string): string {
+// Canonical auth-email normalization (single funnel for signup, resend,
+// verification UI, and login so no variant like "Email@example.com "
+// ever diverges from the Auth user "email@example.com").
+export function normalizeAuthEmail(raw: string): string {
   return raw.trim().toLowerCase();
 }
 

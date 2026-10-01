@@ -6,6 +6,7 @@ import {
   isConfigured,
   isValidDepositAddress,
   isValidTronAddress,
+  isValidTxHash,
 } from '@/lib/deposits';
 
 const TRC20 = 'TX3VNFswkExvKDwq3BSSVmEbVWRR9gkwdk';
@@ -98,5 +99,30 @@ describe('central deposit configuration', () => {
     expect(getDepositAddress('USDT')).toBe('');
     expect(getDepositAddress('BNB_WALLET')).toBe('');
     expect(isConfigured('USDT')).toBe(false);
+  });
+});
+
+describe('transaction hash validation', () => {
+  const TRON_TX = 'a'.repeat(64);
+  const EVM_TX = '0x' + 'b'.repeat(64);
+
+  it('accepts TRON-shaped hashes for TRC20', () => {
+    expect(isValidTxHash('USDT_TRC20', TRON_TX)).toBe(true);
+    expect(isValidTxHash('TRX', TRON_TX.toUpperCase())).toBe(true);
+  });
+
+  it('accepts 0x hashes for EVM networks only', () => {
+    expect(isValidTxHash('USDT_ERC20', EVM_TX)).toBe(true);
+    expect(isValidTxHash('USDT_BEP20', EVM_TX)).toBe(true);
+    expect(isValidTxHash('ETH', EVM_TX)).toBe(true);
+    expect(isValidTxHash('USDT_TRC20', EVM_TX)).toBe(false);
+    expect(isValidTxHash('USDT_TRC20', TRON_TX)).toBe(true);
+  });
+
+  it('rejects malformed hashes', () => {
+    expect(isValidTxHash('USDT_TRC20', 'short')).toBe(false);
+    expect(isValidTxHash('USDT_TRC20', '')).toBe(false);
+    expect(isValidTxHash('USDT_ERC20', 'no-prefix' + 'c'.repeat(54))).toBe(false);
+    expect(isValidTxHash('UNKNOWN', TRON_TX)).toBe(false);
   });
 });

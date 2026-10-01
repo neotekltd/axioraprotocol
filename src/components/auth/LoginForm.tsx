@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
-import { isEmailLike, normalizeEmail, normalizeUsername } from '@/lib/auth-identifiers';
+import { isEmailLike, normalizeAuthEmail, normalizeUsername } from '@/lib/auth-identifiers';
 import { AxButton, AxInput, AxPasswordInput, FieldError } from '@/components/ax/controls';
 import { AxCard } from '@/components/ax/primitives';
 
@@ -22,10 +22,10 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') || '/app/dashboard';
+  const next = params.get('next');
 
   const resolveEmail = async (raw: string): Promise<string | null> => {
-    if (isEmailLike(raw)) return normalizeEmail(raw);
+    if (isEmailLike(raw)) return normalizeAuthEmail(raw);
     const username = normalizeUsername(raw);
     if (!username) return null;
     try {
@@ -70,7 +70,10 @@ export function LoginForm() {
         setError(INVALID_ERROR);
         return;
       }
-      router.replace(next);
+      // Destination is decided server-side from the verified session via
+      // /auth/landing: sole admin -> /admin with no dashboard flash,
+      // everyone else -> requested in-app path or dashboard.
+      router.replace(next ? `/auth/landing?next=${encodeURIComponent(next)}` : '/auth/landing');
       router.refresh();
     } catch (err) {
       const kind = logAuthError('login:exception', err);
