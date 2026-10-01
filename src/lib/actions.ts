@@ -74,6 +74,9 @@ export async function createDeployment(form: { amount: number; plan: string }): 
       idempotencyKey,
     });
     const now = new Date();
+    const planDef = getPlan(validated.plan);
+    const cycleHours = planDef?.cycleHours ?? 6;
+    const nextPayoutAt = new Date(now.getTime() + cycleHours * 3600 * 1000);
     const { data, error } = await supabase
       .from('deployments')
       .insert({
@@ -87,6 +90,15 @@ export async function createDeployment(form: { amount: number; plan: string }): 
         started_at: now.toISOString(),
         matures_at: null,
         idempotency_key: validated.idempotencyKey,
+        // Server-authoritative payout schedule: first credit due one cycle
+        // after activation. The processor (pg_cron + settle-on-read) owns
+        // everything after this; the browser never decides payouts.
+        rate_per_credit: quote.ratePerCredit,
+        cycle_hours: cycleHours,
+        next_payout_at: nextPayoutAt.toISOString(),
+        payouts_completed: 0,
+        payouts_total: null,
+        earned_total: '0.00',
       })
       .select('ref')
       .single();

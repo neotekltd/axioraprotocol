@@ -11,49 +11,6 @@ import { PROTOCOL_CONFIG } from '@/lib/config';
 import { formatUSD } from '@/lib/finance';
 import { FAQS } from '@/lib/mock';
 
-function ActivityPanel({ kind }: { kind: 'INCOMING' | 'OUTGOING' }) {
-  return (
-    <div className="rounded-xl border border-line bg-panel/70">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <span className="font-mono text-[11px] font-bold tracking-[0.25em] text-pulse">{kind}</span>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] text-fog">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pulse" aria-hidden="true" /> LISTENING
-        </span>
-      </div>
-      <div className="flex items-center justify-between border-b border-line/50 px-5 py-2 font-mono text-[10px] tracking-[0.18em] text-fog">
-        <span>PUBLISHED BATCHES</span>
-        <span className="text-mist">0</span>
-      </div>
-      <div className="p-8 text-center">
-        <div className="font-bold text-mist/80">Awaiting live activity</div>
-        <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-fog">
-          {kind === 'INCOMING'
-            ? 'Deposits publish here with truncated identifiers once the first audited batch lands.'
-            : 'Withdrawals and settlements publish here — real rows or nothing.'}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export function ActivitySection() {
-  return (
-    <section className="border-y border-white/5 bg-void/60" aria-label="Protocol activity">
-      <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28">
-        <Reveal>
-          <TechEyebrow index="06" label="ACTIVITY" />
-          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Money moving right now.</h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">Individual accounts stay private. Only protocol-level batches are ever published — never simulated.</p>
-        </Reveal>
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
-          <Reveal><ActivityPanel kind="INCOMING" /></Reveal>
-          <Reveal delay={100}><ActivityPanel kind="OUTGOING" /></Reveal>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function ReferralNetworkSection() {
   const [level, setLevel] = useState<number | null>(null);
   return (

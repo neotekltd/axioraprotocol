@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import { PageHeader, SectionCard, TableWrap, StatusBadge, EmptyState } from '@/components/data';
 import { formatUSD } from '@/lib/finance';
-import { getDeployments, deploymentLabel } from '@/lib/queries';
+import { getDeployments, deploymentLabel, getPayoutHistory } from '@/lib/queries';
 
 export const metadata = { title: 'Deployments' };
 
 const FILTERS = ['all', 'active', 'pending', 'matured', 'cancelled'] as const;
 
 export default async function DeploymentsPage({ searchParams }: { searchParams: { status?: string } }) {
-  const all = await getDeployments();
+  const [all, payouts] = await Promise.all([getDeployments(), getPayoutHistory(50)]);
   const activeFilter = (searchParams.status ?? 'all').toLowerCase();
   const rows = activeFilter === 'all' ? all : all.filter((d) => d.status === activeFilter);
   const counts = (s: string) => (s === 'all' ? all.length : all.filter((d) => d.status === s).length);
@@ -62,6 +62,30 @@ export default async function DeploymentsPage({ searchParams }: { searchParams: 
           </TableWrap>
         </SectionCard>
       )}
+      <div className="mt-6">
+        <SectionCard title={`Payout history · ${payouts.length}`}>
+          {payouts.length === 0 ? (
+            <p className="p-4 text-sm text-fog">No payouts credited yet. Credits land here every 6 hours once a plan is active.</p>
+          ) : (
+            <TableWrap>
+              <table className="w-full min-w-[620px] text-sm">
+                <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">PAYOUT</th><th className="p-4 text-right">PLAN</th><th className="p-4 text-right">AMOUNT</th><th className="p-4 text-right">SCHEDULED FOR</th><th className="p-4 text-right">STATUS</th></tr></thead>
+                <tbody>
+                  {payouts.map((p) => (
+                    <tr key={p.id} className="border-t border-line">
+                      <td className="p-4 font-mono">#{p.payoutNumber}{p.deploymentRef ? ` · ${p.deploymentRef}` : ''}</td>
+                      <td className="p-4 text-right">{p.planName}</td>
+                      <td className="p-4 text-right font-mono text-pulse">{formatUSD(p.amount, { sign: true })}</td>
+                      <td className="p-4 text-right font-mono text-[12px]">{new Date(p.scheduledFor).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                      <td className="p-4 text-right"><StatusBadge status={p.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+          )}
+        </SectionCard>
+      </div>
     </div>
   );
 }

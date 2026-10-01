@@ -1,8 +1,10 @@
 import { BalanceHeroCard, OnboardingStepsCard, PlanCard, ReferralSummaryCard } from '@/components/ax/dashboard';
+import { ActivePlanCard } from '@/components/ax/active-plan';
 import { AxCard, SectionHeader } from '@/components/ax/primitives';
 import { SITE_URL, PROTOCOL_CONFIG } from '@/lib/config';
 import {
   getSessionUser, getProfile, getPortfolioSummary, getReferrals, getReferralEarnings,
+  getActivePlans,
 } from '@/lib/queries';
 import { ArrowRight, Layers } from 'lucide-react';
 import Link from 'next/link';
@@ -10,8 +12,9 @@ import Link from 'next/link';
 export const metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
-  const [user, profile, summary, referrals, earnings] = await Promise.all([
+  const [user, profile, summary, referrals, earnings, activePlans] = await Promise.all([
     getSessionUser(), getProfile(), getPortfolioSummary(), getReferrals(), getReferralEarnings(),
+    getActivePlans(),
   ]);
   const earning = summary.profitCredited + summary.referralCredited;
   const firstName = profile?.displayName || user?.email?.split('@')[0] || 'there';
@@ -36,6 +39,17 @@ export default async function DashboardPage() {
       />
 
       <OnboardingStepsCard doneDeposited={summary.deposited > 0} doneDeployed={summary.deployedActive > 0} />
+
+      {activePlans.length > 0 && (
+        <section aria-label="Active plans">
+          <SectionHeader title={`Active plans · ${activePlans.length}`} />
+          <div className="mt-4 space-y-4">
+            {activePlans.map((p) => (
+              <ActivePlanCard key={p.id} plan={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <AxCard className="p-6 sm:p-7">
         <div className="flex items-center justify-between gap-3">

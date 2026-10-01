@@ -6,8 +6,7 @@
 // dynamic network warning, 3-stage tracker). All data comes from the
 // central deposit config via props — no literals, no invented limits.
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState } from 'react';import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Check, ChevronDown, QrCode, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/data';
@@ -32,8 +31,19 @@ const CHIPS = ['50 USDT', '100 USDT', '500 USDT'];
 const MIN_DEPOSIT = 10;
 
 function MethodIcon({ m, size = 40 }: { m: DepositMethod; size?: number }) {
-  if (m.icon) {
-    return <Image src={m.icon} alt={m.asset} width={size} height={size} className="shrink-0 rounded-full" style={{ width: size, height: size }} />;
+  const [failed, setFailed] = useState(false);
+  if (m.icon && !failed) {
+    return (
+      <Image
+        src={m.icon}
+        alt={`${m.asset === 'USDT' ? 'Tether' : m.assetName} logo`}
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className="shrink-0 rounded-full object-contain"
+        style={{ width: size, height: size }}
+      />
+    );
   }
   return (
     <span

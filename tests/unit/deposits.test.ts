@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  ASSET_IDS,
   configStatus,
   DEPOSIT_CONFIG,
+  depositEnvVar,
   getDepositAddress,
   isConfigured,
   isValidDepositAddress,
@@ -124,5 +126,60 @@ describe('transaction hash validation', () => {
     expect(isValidTxHash('USDT_TRC20', '')).toBe(false);
     expect(isValidTxHash('USDT_ERC20', 'no-prefix' + 'c'.repeat(54))).toBe(false);
     expect(isValidTxHash('UNKNOWN', TRON_TX)).toBe(false);
+  });
+});
+
+describe('canonical asset mapping (no values asserted, only wiring)', () => {
+  const EXPECTED_VARS = {
+    BTC: 'BTC_DEPOSIT_ADDRESS',
+    BNB: 'BNB_DEPOSIT_ADDRESS',
+    DOGE: 'DOGE_DEPOSIT_ADDRESS',
+    LTC: 'LTC_DEPOSIT_ADDRESS',
+    ETH: 'ETH_DEPOSIT_ADDRESS',
+    TRX: 'TRX_DEPOSIT_ADDRESS',
+    USDT_TRC20: 'USDT_TRC20_DEPOSIT_ADDRESS',
+    USDT_BEP20: 'USDT_BEP20_DEPOSIT_ADDRESS',
+    USDT_ERC20: 'USDT_ERC20_DEPOSIT_ADDRESS',
+  } as const;
+
+  it('covers all nine assets with exact env names', () => {
+    expect([...ASSET_IDS].sort()).toEqual(Object.keys(EXPECTED_VARS).sort());
+    for (const [id, v] of Object.entries(EXPECTED_VARS)) {
+      expect(depositEnvVar(id)).toBe(v);
+    }
+    expect(depositEnvVar('USDT')).toBeNull();
+    expect(depositEnvVar('nope')).toBeNull();
+  });
+
+  it('keeps USDT networks as separate assets', () => {
+    const t = DEPOSIT_CONFIG.USDT_TRC20;
+    const b = DEPOSIT_CONFIG.USDT_BEP20;
+    const e = DEPOSIT_CONFIG.USDT_ERC20;
+    expect(t.symbol).toBe(b.symbol);
+    expect(new Set([t.id, b.id, e.id]).size).toBe(3);
+    expect(new Set([t.envVar, b.envVar, e.envVar]).size).toBe(3);
+    expect(t.network).not.toBe(b.network);
+    // one Tether mark shared across networks
+    expect(t.icon).toBe(b.icon);
+    expect(b.icon).toBe(e.icon);
+  });
+
+  it('every asset has a bundled local icon (no remote logo fetching)', () => {
+    for (const id of ASSET_IDS) {
+      const icon = DEPOSIT_CONFIG[id].icon;
+      expect(typeof icon).toBe('string');
+      expect(icon as string).toMatch(/^\/assets\/crypto\/[a-z]+\.svg$/);
+    }
+  });
+
+  it('empty variables stay unavailable (no placeholders)', () => {
+    setEnv({});
+    for (const id of ASSET_IDS) {
+      expect(isConfigured(id)).toBe(false);
+      expect(getDepositAddress(id)).toBe('');
+    }
+    expect(configStatus()).toEqual(
+      Object.fromEntries(ASSET_IDS.map((id) => [id, false]))
+    );
   });
 });

@@ -145,6 +145,119 @@ export async function getDeploymentByRef(ref: string): Promise<Deployment | null
   }
 }
 
+// Settle-on-read: run the server-authoritative payout processor for the
+// caller's own rows before deriving balances. Best-effort — a processor
+// failure must never break reads. pg_cron covers background settlement;
+// this covers freshness on every page view.
+export async function settleDuePayouts(): Promise<number> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('process_due_payouts');
+    if (error || typeof data !== 'number') return 0;
+    return data;
+  } catch {
+    return 0;
+  }
+}
+
+export interface ActivePlan {
+  id: string;
+  ref: string;
+  plan: string;
+  planName: string;
+  amount: number;
+  ratePerCredit: number;
+  cycleHours: number;
+  earnedTotal: number;
+  nextCredit: number;
+  payoutsCompleted: number;
+  payoutsTotal: number | null;
+  nextPayoutAt: string | null;
+  lastPayoutAt: string | null;
+  status: string;
+  startedAt: string | null;
+}
+
+const PLAN_NAMES: Record<string, string> = { essential: 'Essential', premium: 'Premium', exclusive: 'Exclusive' };
+
+export async function getActivePlans(): Promise<ActivePlan[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('deployments')
+      .select('id,ref,plan,amount,rate_per_credit,cycle_hours,earned_total,payouts_completed,payouts_total,next_payout_at,last_payout_at,status,started_at')
+      .in('status', ['pending', 'active'])
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map((d) => {
+      const amount = num(d.amount);
+      const rate = typeof d.rate_per_credit === 'string' ? Number(d.rate_per_credit) : Number(d.rate_per_credit ?? NaN);
+      const ratePerCredit = Number.isFinite(rate) ? rate : 0;
+      return {
+        id: String(d.id),
+        ref: String(d.ref ?? ''),
+        plan: String(d.plan ?? ''),
+        planName: PLAN_NAMES[String(d.plan ?? '')] ?? String(d.plan ?? '—'),
+        amount,
+        ratePerCredit,
+        cycleHours: Number(d.cycle_hours ?? 6),
+        earnedTotal: num(d.earned_total),
+        nextCredit: Math.round(amount * ratePerCredit * 100) / 100,
+        payoutsCompleted: Number(d.payouts_completed ?? 0),
+        payoutsTotal: d.payouts_total == null ? null : Number(d.payouts_total),
+        nextPayoutAt: (d.next_payout_at as string | null) ?? null,
+        lastPayoutAt: (d.last_payout_at as string | null) ?? null,
+        status: String(d.status ?? 'active'),
+        startedAt: (d.started_at as string | null) ?? null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+export interface PayoutRecord {
+  id: string;
+  deploymentRef: string | null;
+  plan: string;
+  planName: string;
+  payoutNumber: number;
+  amount: number;
+  scheduledFor: string;
+  creditedAt: string | null;
+  status: string;
+}
+
+export async function getPayoutHistory(limit = 50): Promise<PayoutRecord[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('plan_payouts')
+      .select('id,plan,payout_number,amount,scheduled_for,credited_at,status,deployments(ref)')
+      .order('scheduled_for', { ascending: false })
+      .limit(limit);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map((p) => {
+      const dep = p.deployments as { ref?: string } | null;
+      const plan = String(p.plan ?? '');
+      return {
+        id: String(p.id),
+        deploymentRef: dep?.ref ?? null,
+        plan,
+        planName: PLAN_NAMES[plan] ?? plan,
+        payoutNumber: Number(p.payout_number ?? 0),
+        amount: num(p.amount),
+        scheduledFor: String(p.scheduled_for ?? ''),
+        creditedAt: (p.credited_at as string | null) ?? null,
+        status: String(p.status ?? ''),
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 export interface WalletTxn {
   id: string;
   type: string;
@@ -202,6 +315,9 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
     referralCredited: 0, available: 0, totalValue: 0, totalProfit: 0,
   };
   try {
+    // Settle any due payouts first so balances below always reflect the
+    // latest authoritative ledger state (server-side, idempotent).
+    await settleDuePayouts();
     const [txns, deployments, earnings] = await Promise.all([
       getTransactions(500),
       getDeployments(),
@@ -425,8 +541,7 @@ export async function getWallets(): Promise<SavedWallet[]> {
   }
 }
 
-export interface ProtocolStats {
-  capital: number;
+export interface ProtocolStats {  capital: number;
   verifiedTrades: number;
   totalPnl: number;
   winRate: number;
@@ -466,5 +581,78 @@ export async function getProtocolStats(): Promise<ProtocolStats | null> {
     };
   } catch {
     return null;
+  }
+}
+
+// Public homepage telemetry: real ledger aggregates via the
+// homepage_telemetry() definer function (granted to anon). Only completed
+// records count; money totals are USDT-only (no invented FX). Null when the
+// backend is unreachable — the UI then shows an unavailable state, never
+// fabricated figures.
+export interface HomepageTelemetry {
+  depositedToDate: number;
+  withdrawnByMembers: number;
+  accounts: number;
+  payoutsMade: number;
+  daysInOperation: number;
+  at: string;
+}
+
+const tnum = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+
+export async function getHomepageTelemetry(): Promise<HomepageTelemetry | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('homepage_telemetry');
+    if (error || !data) return null;
+    const d = data as Record<string, unknown>;
+    return {
+      depositedToDate: tnum(d.depositedToDate),
+      withdrawnByMembers: tnum(d.withdrawnByMembers),
+      accounts: Math.max(0, Math.floor(tnum(d.accounts))),
+      payoutsMade: Math.max(0, Math.floor(tnum(d.payoutsMade))),
+      daysInOperation: Math.max(0, Math.floor(tnum(d.daysInOperation))),
+      at: String(d.at ?? ''),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export interface ActivityRow {
+  asset: string;
+  amount: number;
+  occurredAt: string;
+  txShort: string | null;
+}
+
+export interface HomepageActivity {
+  incoming: ActivityRow[];
+  outgoing: ActivityRow[];
+}
+
+function cleanRows(v: unknown): ActivityRow[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((r): r is Record<string, unknown> => typeof r === 'object' && r !== null)
+    .map((r) => ({
+      asset: String(r.asset ?? ''),
+      amount: tnum(r.amount),
+      occurredAt: String(r.occurred_at ?? ''),
+      txShort: typeof r.tx_short === 'string' && r.tx_short ? r.tx_short : null,
+    }))
+    .filter((r) => r.asset && r.occurredAt);
+}
+
+export async function getHomepageActivity(): Promise<HomepageActivity> {
+  const empty = { incoming: [], outgoing: [] };
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('homepage_live_activity');
+    if (error || !data) return empty;
+    const d = data as Record<string, unknown>;
+    return { incoming: cleanRows(d.incoming), outgoing: cleanRows(d.outgoing) };
+  } catch {
+    return empty;
   }
 }

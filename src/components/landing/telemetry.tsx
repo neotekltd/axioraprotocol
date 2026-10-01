@@ -1,40 +1,24 @@
 'use client';
 
-// Telemetry section: AIMEX-reference five-channel monitoring grid rebuilt
-// with original Axiora code. Data honesty is structural: production values
-// come only from the audited protocol_stats snapshot (or an explicit
-// awaiting state); synthetic figures exist ONLY in demo mode
-// (NEXT_PUBLIC_DEMO_TELEMETRY=true) behind a DEMO TELEMETRY badge.
+// Telemetry section: five-channel monitoring grid in the established
+// technical visual language. REAL DATA ONLY: values come exclusively from
+// the homepage_telemetry() ledger aggregate (completed records, USDT
+// accounting unit). No demo mode, no synthetic figures, no AIMEX numbers.
+// With no data the section shows an explicit awaiting state.
 // Micro-graphs/timeline are decorative instrumentation carrying no numeric
-// claims; every number shown is either ledger data or labeled demo data.
+// claims; counters animate presentation of loaded ledger values.
 
 import { Reveal } from '@/components/Reveal';
 import { TechEyebrow } from '@/components/landing/background';
 import { useAnimatedNumber, useInViewOnce } from '@/components/landing/motion';
 import { formatUSD } from '@/lib/finance';
-import type { ProtocolStats } from '@/lib/queries';
-
-const DEMO = process.env.NEXT_PUBLIC_DEMO_TELEMETRY === 'true';
-
-// Deterministic demo dataset (fixed figures, never randomized, never
-// presented as ledger data — the section badge says DEMO TELEMETRY).
-const DEMO_TELEMETRY = {
-  depositedToDate: 7437,
-  withdrawnByMembers: 2897,
-  accounts: 357,
-  payoutsMade: 1554,
-  daysInOperation: 8,
-} as const;
-
-const DEMO_TRENDS = ['↗ +1328.3% in 7 days', '↗ +14103.8% in 7 days', '↗ +335 in 7 days'] as const;
+import type { HomepageTelemetry } from '@/lib/queries';
 
 interface Channel {
   code: string;
   title: string;
-  value: string;
   rawValue: number;
   caption: string;
-  demoTrend?: string;
   visual: 'spark' | 'bars' | 'timeline';
   seed: number;
 }
@@ -86,7 +70,7 @@ function Bars({ seed, go }: { seed: number; go: boolean }) {
         <span
           key={i}
           style={{ height: `${h}%`, transitionDelay: go ? `${i * 45}ms` : undefined }}
-          className={`flex-1 rounded-[2px] transition-all duration-500 ${i >= heights.length - 3 ? 'bg-[#2FD6FF]/80 shadow-[0_0_8px_rgba(47,214,255,0.45)]' : 'bg-[#1E3A52]'} ${go ? 'opacity-100' : 'opacity-0'}`}
+          className={`flex-1 rounded-[2px] transition-all duration-500 ${i >= heights.length - 3 ? 'bg-[#2FD6FF]/80 shadow-[0_0_8px_rgba(47,214,255,0.45)]' : 'bg-[#1B2940]'} ${go ? 'opacity-100' : 'opacity-0'}`}
         />
       ))}
     </div>
@@ -117,9 +101,9 @@ function Timeline({ days, go }: { days: number; go: boolean }) {
   );
 }
 
-function TelemetryCard({ ch, index, go, demo }: { ch: Channel; index: number; go: boolean; demo: boolean }) {
+function TelemetryCard({ ch, index, go }: { ch: Channel; index: number; go: boolean }) {
   const display = useAnimatedNumber(ch.rawValue, go, 1100);
-  const isMoney = ch.visual !== 'timeline' && index < 2;
+  const isMoney = index < 2;
   const formatted = isMoney
     ? formatUSD(display, { decimals: 0 })
     : Math.round(display).toLocaleString('en-US');
@@ -135,14 +119,7 @@ function TelemetryCard({ ch, index, go, demo }: { ch: Channel; index: number; go
         <div className="mt-1 font-mono text-[46px] font-bold leading-[1.05] tracking-tight text-white" aria-live="off" suppressHydrationWarning>
           {formatted}
         </div>
-        {demo && ch.demoTrend ? (
-          <p className="mt-1 font-mono text-[15px] leading-[1.35] text-[#35D98B]">
-            {ch.demoTrend}
-            <span className="ml-2 rounded border border-[#2A394D] px-1.5 py-0.5 align-middle text-[10px] tracking-[0.14em] text-[#78859A]">DEMO TREND</span>
-          </p>
-        ) : (
-          <p className="mt-1 font-mono text-[12px] tracking-[0.08em] text-[#78859A]">{ch.caption}</p>
-        )}
+        <p className="mt-1 font-mono text-[12px] tracking-[0.08em] text-[#78859A]">{ch.caption}</p>
         {ch.visual === 'spark' && <Sparkline seed={ch.seed} go={go} id={ch.code} />}
         {ch.visual === 'bars' && <Bars seed={ch.seed} go={go} />}
         {ch.visual === 'timeline' && (
@@ -159,52 +136,34 @@ function TelemetryCard({ ch, index, go, demo }: { ch: Channel; index: number; go
   );
 }
 
-export function TelemetrySection({ stats }: { stats: ProtocolStats | null }) {
+export function TelemetrySection({ data }: { data: HomepageTelemetry | null }) {
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.15);
-  const live = !DEMO && stats;
-  const d = live && stats
-    ? {
-        depositedToDate: stats.deposited,
-        withdrawnByMembers: stats.withdrawn,
-        accounts: stats.accounts,
-        payoutsMade: stats.payouts,
-        daysInOperation: stats.daysOperation,
-      }
-    : DEMO_TELEMETRY;
-  const updated = live && stats?.updatedAt ? `Ledger total · ${stats.updatedAt.slice(0, 10)}` : 'Ledger total';
-  const channels: Channel[] = [
-    { code: 'CH-01', title: 'Deposited to date', value: '', rawValue: d.depositedToDate, caption: updated, demoTrend: DEMO_TRENDS[0], visual: 'spark', seed: 7 },
-    { code: 'CH-02', title: 'Withdrawn by members', value: '', rawValue: d.withdrawnByMembers, caption: 'Settled withdrawals', demoTrend: DEMO_TRENDS[1], visual: 'spark', seed: 21 },
-    { code: 'CH-03', title: 'Accounts', value: '', rawValue: d.accounts, caption: 'Verified members', demoTrend: DEMO_TRENDS[2], visual: 'spark', seed: 13 },
-    { code: 'CH-04', title: 'Payouts made', value: '', rawValue: d.payoutsMade, caption: 'On schedule, every 6 hours', visual: 'bars', seed: 5 },
-    { code: 'CH-05', title: 'Days in operation', value: '', rawValue: d.daysInOperation, caption: '', visual: 'timeline', seed: 0 },
-  ];
+  const channels: Channel[] = data
+    ? [
+        { code: 'CH-01', title: 'Deposited to date', rawValue: data.depositedToDate, caption: 'Ledger total · USDT', visual: 'spark', seed: 7 },
+        { code: 'CH-02', title: 'Withdrawn by members', rawValue: data.withdrawnByMembers, caption: 'Settled withdrawals', visual: 'spark', seed: 21 },
+        { code: 'CH-03', title: 'Accounts', rawValue: data.accounts, caption: 'Registered members', visual: 'spark', seed: 13 },
+        { code: 'CH-04', title: 'Payouts made', rawValue: data.payoutsMade, caption: 'Credited payouts', visual: 'bars', seed: 5 },
+        { code: 'CH-05', title: 'Days in operation', rawValue: data.daysInOperation, caption: '', visual: 'timeline', seed: 0 },
+      ]
+    : [];
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Live protocol telemetry">
       <Reveal>
-        <div className="flex items-center gap-3">
-          <TechEyebrow index="05" label="TELEMETRY" />
-          {DEMO && (
-            <span className="rounded border border-[#2A394D] px-2 py-0.5 font-mono text-[10px] tracking-[0.18em] text-[#78859A]">
-              DEMO TELEMETRY
-            </span>
-          )}
-        </div>
+        <TechEyebrow index="05" label="TELEMETRY" />
         <h2 className="mt-3 text-[38px] font-bold leading-[1.02] tracking-tight text-white sm:text-[44px]">
           <span className="block">Live readings</span>
           <span className="block">from the ledger.</span>
         </h2>
         <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-mist/80">
-          {DEMO
-            ? 'Demo telemetry shown for interface preview. Production readings are pulled from the Axiora ledger.'
-            : live
-              ? 'Pulled from the Axiora ledger every time this page loads.'
-              : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
+          {data
+            ? 'Pulled from the Axiora ledger every time this page loads.'
+            : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
         </p>
       </Reveal>
       <div ref={ref} className="mt-14 grid grid-cols-2 gap-3 sm:gap-3 md:mt-16 lg:grid-cols-5 lg:gap-4">
-        {live || DEMO ? (
-          channels.map((ch, i) => <TelemetryCard key={ch.code} ch={ch} index={i} go={inView} demo={DEMO} />)
+        {data ? (
+          channels.map((ch, i) => <TelemetryCard key={ch.code} ch={ch} index={i} go={inView} />)
         ) : (
           <>
             {['DEPOSITED', 'WITHDRAWN', 'ACCOUNTS', 'PAYOUTS'].map((label, i) => (

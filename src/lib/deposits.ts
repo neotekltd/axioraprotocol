@@ -41,49 +41,49 @@ export const DEPOSIT_CONFIG: Record<AssetId, AssetConfig> = {
   BTC: {
     id: 'BTC', symbol: 'BTC', name: 'Bitcoin', network: 'Bitcoin', standard: 'Native',
     blockchain: 'Bitcoin', decimals: 8, contractAddress: null,
-    envVar: 'BTC_DEPOSIT_ADDRESS', icon: null, feeNote: 'Bitcoin network fees apply. Minimum deposit $10.00.',
+    envVar: 'BTC_DEPOSIT_ADDRESS', icon: '/assets/crypto/btc.svg', feeNote: 'Bitcoin network fees apply. Minimum deposit $10.00.',
   },
   BNB: {
     id: 'BNB', symbol: 'BNB', name: 'BNB', network: 'BNB Smart Chain', standard: 'Native',
     blockchain: 'BNB Smart Chain', decimals: 18, contractAddress: null,
-    envVar: 'BNB_DEPOSIT_ADDRESS', icon: null, feeNote: 'BNB Smart Chain network fees apply. Minimum deposit $10.00.',
+    envVar: 'BNB_DEPOSIT_ADDRESS', icon: '/assets/crypto/bnb.svg', feeNote: 'BNB Smart Chain network fees apply. Minimum deposit $10.00.',
   },
   DOGE: {
     id: 'DOGE', symbol: 'DOGE', name: 'Dogecoin', network: 'Dogecoin', standard: 'Native',
     blockchain: 'Dogecoin', decimals: 8, contractAddress: null,
-    envVar: 'DOGE_DEPOSIT_ADDRESS', icon: null, feeNote: 'Dogecoin network fees apply. Minimum deposit $10.00.',
+    envVar: 'DOGE_DEPOSIT_ADDRESS', icon: '/assets/crypto/doge.svg', feeNote: 'Dogecoin network fees apply. Minimum deposit $10.00.',
   },
   LTC: {
     id: 'LTC', symbol: 'LTC', name: 'Litecoin', network: 'Litecoin', standard: 'Native',
     blockchain: 'Litecoin', decimals: 8, contractAddress: null,
-    envVar: 'LTC_DEPOSIT_ADDRESS', icon: null, feeNote: 'Litecoin network fees apply. Minimum deposit $10.00.',
+    envVar: 'LTC_DEPOSIT_ADDRESS', icon: '/assets/crypto/ltc.svg', feeNote: 'Litecoin network fees apply. Minimum deposit $10.00.',
   },
   ETH: {
     id: 'ETH', symbol: 'ETH', name: 'Ethereum', network: 'Ethereum', standard: 'Native',
     blockchain: 'Ethereum', decimals: 18, contractAddress: null,
-    envVar: 'ETH_DEPOSIT_ADDRESS', icon: null, feeNote: 'Ethereum network fees apply. Minimum deposit $10.00.',
+    envVar: 'ETH_DEPOSIT_ADDRESS', icon: '/assets/crypto/eth.svg', feeNote: 'Ethereum network fees apply. Minimum deposit $10.00.',
   },
   TRX: {
     id: 'TRX', symbol: 'TRX', name: 'TRON', network: 'TRON', standard: 'Native',
     blockchain: 'TRON', decimals: 6, contractAddress: null,
-    envVar: 'TRX_DEPOSIT_ADDRESS', icon: null, feeNote: 'TRON network fees are paid in TRX. Minimum deposit $10.00.',
+    envVar: 'TRX_DEPOSIT_ADDRESS', icon: '/assets/crypto/trx.svg', feeNote: 'TRON network fees are paid in TRX. Minimum deposit $10.00.',
   },
   USDT_TRC20: {
     id: 'USDT_TRC20', symbol: 'USDT', name: 'Tether USD', network: 'TRON', standard: 'TRC-20',
     blockchain: 'TRON', decimals: 6, contractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-    envVar: 'USDT_TRC20_DEPOSIT_ADDRESS', icon: '/assets/tokens/usdt.png',
+    envVar: 'USDT_TRC20_DEPOSIT_ADDRESS', icon: '/assets/crypto/usdt.svg',
     feeNote: 'TRON network fees are paid in TRX. Minimum deposit $10.00.',
   },
   USDT_BEP20: {
     id: 'USDT_BEP20', symbol: 'USDT', name: 'Tether USD', network: 'BNB Smart Chain', standard: 'BEP-20',
     blockchain: 'BNB Smart Chain', decimals: 18, contractAddress: null,
-    envVar: 'USDT_BEP20_DEPOSIT_ADDRESS', icon: '/assets/tokens/usdt.png',
+    envVar: 'USDT_BEP20_DEPOSIT_ADDRESS', icon: '/assets/crypto/usdt.svg',
     feeNote: 'BNB Smart Chain network fees apply. Minimum deposit $10.00.',
   },
   USDT_ERC20: {
     id: 'USDT_ERC20', symbol: 'USDT', name: 'Tether USD', network: 'Ethereum', standard: 'ERC-20',
     blockchain: 'Ethereum', decimals: 18, contractAddress: null,
-    envVar: 'USDT_ERC20_DEPOSIT_ADDRESS', icon: '/assets/tokens/usdt.png',
+    envVar: 'USDT_ERC20_DEPOSIT_ADDRESS', icon: '/assets/crypto/usdt.svg',
     feeNote: 'Ethereum network fees apply. Minimum deposit $10.00.',
   },
 } as const;
@@ -153,6 +153,14 @@ export function isValidDepositAddress(assetId: AssetId, address: string): boolea
     default:
       return false;
   }
+}
+
+// Canonical asset -> environment variable mapping (single source; the UI,
+// admin, QR, copy, and verification all resolve through here, never by
+// scattering process.env reads).
+export function depositEnvVar(assetId: string): string | null {
+  if (!((ASSET_IDS as readonly string[]).includes(assetId))) return null;
+  return DEPOSIT_CONFIG[assetId as AssetId].envVar;
 }
 
 // THE single helper for reading a deposit address. Returns the trimmed env
@@ -285,5 +293,6 @@ export async function getDepositMethods(): Promise<DepositMethod[]> {
   } catch {
     // DB unavailable: env-configured methods still served.
   }
-  return out.filter((m) => m.asset && m.depositAddress && m.enabled);
+  const served = out.filter((m) => m.asset && m.depositAddress && m.enabled);
+  return served;
 }

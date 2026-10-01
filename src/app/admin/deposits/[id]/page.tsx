@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { PageHeader, SectionCard, StatusBadge } from '@/components/data';
 import { DepositActions } from '@/components/admin/forms';
 import { getAdminDeposits } from '@/lib/admin';
+import { getDepositAddress } from '@/lib/deposits';
 import { formatUSD } from '@/lib/finance';
 
 export const metadata = { title: 'Admin deposit review' };
@@ -31,6 +32,12 @@ export default async function AdminDepositReview({ params }: { params: { id: str
   if (!d) notFound();
   const explorer = d.txHash && d.network && EXPLORERS[d.network] ? EXPLORERS[d.network](d.txHash) : null;
   const standard = (d.meta.standard as string | undefined) ?? '';
+  // Expected recipient: resolve the CURRENT canonical address for the same
+  // asset/network and compare with what was stored at submit time. A
+  // mismatch means configuration changed since submission — investigate.
+  const assetId = typeof d.meta.asset_id === 'string' ? d.meta.asset_id : null;
+  const expectedNow = assetId ? getDepositAddress(assetId) : '';
+  const recipientMatch = expectedNow !== '' && d.address !== null && d.address.trim() === expectedNow;
   return (
     <div>
       <Link href="/admin/deposits?status=pending" className="text-[14px] text-[#AAB5C7] hover:text-white">← Deposit queue</Link>
@@ -49,6 +56,16 @@ export default async function AdminDepositReview({ params }: { params: { id: str
         <Row k="Amount claimed" v={formatUSD(d.amount)} />
         <Row k="Deposit address" v={d.address ?? '—'} mono />
         <Row k="Transaction hash" v={d.txHash ?? 'not submitted'} mono />
+        <div className="flex items-baseline justify-between gap-3 px-5 py-3 text-[14px]">
+          <span className="shrink-0 text-[#78859A]">Expected recipient</span>
+          {expectedNow === '' ? (
+            <span className="text-right font-mono text-[12px] text-[#F2BF4A]">METHOD NOT CURRENTLY CONFIGURED</span>
+          ) : recipientMatch ? (
+            <span className="text-right font-mono text-[12px] text-[#35D98B]">matches current configuration</span>
+          ) : (
+            <span className="text-right font-mono text-[12px] text-[#F06B78]">DIFFERS from current configuration — investigate</span>
+          )}
+        </div>
       </SectionCard>
       <SectionCard title="Blockchain verification">
         <div className="px-5 py-4 text-[13px] leading-relaxed text-[#AAB5C7]">

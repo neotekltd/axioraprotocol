@@ -3,9 +3,10 @@ import { PlanSyncProvider } from '@/components/landing/plan-sync';
 import { ModulesSection, SimulatorSection, SpecsSection } from '@/components/landing/modules';
 import { BootSequence } from '@/components/landing/BootSequence';
 import { TelemetrySection } from '@/components/landing/telemetry';
-import { ActivitySection, ReferralNetworkSection, FaqDiagnostics, FinalCta } from '@/components/landing/live';
+import { LiveActivity } from '@/components/landing/live-activity';
+import { ReferralNetworkSection, FaqDiagnostics, FinalCta } from '@/components/landing/live';
 import { ProtocolBackground } from '@/components/landing/background';
-import { getProtocolStats } from '@/lib/queries';
+import { getHomepageActivity, getHomepageTelemetry } from '@/lib/queries';
 
 // Axiora homepage — AIMEX capital/settlement information architecture
 // (structure/composition only). Axiora is the capital, accounting and
@@ -14,7 +15,7 @@ import { getProtocolStats } from '@/lib/queries';
 // rules, audited snapshots, or honest empty states.
 
 export default async function Home() {
-  const stats = await getProtocolStats();
+  const [telemetry, activity] = await Promise.all([getHomepageTelemetry(), getHomepageActivity()]);
   return (
     <div className="relative overflow-x-clip bg-[#05080d]">
       <ProtocolBackground />
@@ -27,8 +28,8 @@ export default async function Home() {
         </PlanSyncProvider>
         <BootSequence />
         <SpecsSection />
-        <TelemetrySection stats={stats} />
-        <ActivitySection />
+        <TelemetrySection data={telemetry} />
+        <LiveActivity initial={activity} />
         <ReferralNetworkSection />
         <FaqDiagnostics />
         <FinalCta />
