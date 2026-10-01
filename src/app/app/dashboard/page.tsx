@@ -21,10 +21,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[34px] font-bold tracking-tight text-white sm:text-[38px]">
+        <h1 className="text-[22px] font-bold tracking-tight text-white sm:text-[24px]">
           Welcome, {firstName}
         </h1>
-        <p className="mt-1 text-[15px] text-[#AAB5C7]">Your account is ready. Here is how to start.</p>
+        <p className="mt-1 text-[14px] text-[#AAB5C7]">Your account is ready. Here is how to start.</p>
       </div>
 
       <BalanceHeroCard

@@ -29,9 +29,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-[#080B12] text-[#F1F5FA]">
       <TechGridBackground />
       <AppHeader email={user?.email} username={user?.username} unread={unread} />
-      <div className="relative mx-auto max-w-[1180px] px-7 pb-32 pt-[104px] md:px-8 lg:flex lg:pb-16">
+      <div className="relative mx-auto max-w-[1180px] px-7 pb-32 pt-[88px] md:px-8 lg:flex lg:pb-16">
         <div className="hidden lg:block lg:w-60 lg:shrink-0">
-          <nav aria-label="Application" className="sticky top-[104px] space-y-1 rounded-[20px] border border-[#202A3A] bg-[#0D111A]/80 p-3">
+          <nav aria-label="Application" className="sticky top-[88px] space-y-1 rounded-[20px] border border-[#202A3A] bg-[#0D111A]/80 p-3">
             {DESKTOP_NAV.map(([label, href]) => (
               <Link key={href} href={href} className="block rounded-[12px] px-3.5 py-2.5 text-[14px] text-[#AAB5C7] transition hover:bg-[#111722] hover:text-white">
                 {label}

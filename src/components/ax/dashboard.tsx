@@ -5,8 +5,9 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowRight, Check, Coins, Copy, Eye, EyeOff, Layers, Target, TrendingUp, Users, Wallet } from 'lucide-react';
+import { ArrowRight, Check, Coins, Copy, Download, Eye, EyeOff, Layers, Target, TrendingUp, Users, Wallet } from 'lucide-react';
 import { AxCard, IconBox, SegmentedSchedule } from '@/components/ax/primitives';
+import { RobotIllustration } from '@/components/landing/robot/RobotIllustration';
 import { PLANS, type PlanKey } from '@/lib/plans';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 import { formatUSD, formatPct } from '@/lib/plans';
@@ -33,33 +34,19 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
   const [hidden, setHidden] = useState(false);
   const mask = (v: string) => (hidden ? '••••••' : v);
   return (
-    <AxCard variant="hero" className="rounded-[24px] p-6 sm:p-7">
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[55%] opacity-60"
-        viewBox="0 0 300 400"
-        preserveAspectRatio="xMaxYMid slice"
-      >
-        <g stroke="#22D3EE" strokeOpacity="0.16" strokeWidth="1" fill="none">
-          <path d="M40,20 L150,110 L250,60 L290,180 L180,260 L90,220 Z" />
-          <path d="M150,110 L180,260 M250,60 L90,220" strokeOpacity="0.6" />
-          <circle cx="150" cy="110" r="26" strokeOpacity="0.35" />
-          <circle cx="180" cy="260" r="40" strokeOpacity="0.2" strokeDasharray="4 4" />
-        </g>
-        <g fill="#22D3EE">
-          <circle cx="150" cy="110" r="3" opacity="0.5" className="pulse-node" />
-          <circle cx="250" cy="60" r="2.5" opacity="0.45" />
-          <circle cx="180" cy="260" r="2.5" opacity="0.4" className="pulse-node" />
-          <circle cx="90" cy="220" r="2" opacity="0.35" />
-        </g>
-      </svg>
+    <AxCard variant="hero" className="rounded-[18px] p-5 sm:p-6">
+      <div aria-hidden="true" className="pointer-events-none absolute right-3 top-3 w-[104px] opacity-90 sm:w-[124px]">
+        <div className="robot-hover">
+          <RobotIllustration cycleHours={PLANS[0].cycleHours} payoutsPerDay={PLANS[0].creditsPerDay} />
+        </div>
+      </div>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-70"
         style={{ background: 'radial-gradient(circle at 85% 30%, rgba(47,214,255,0.10), transparent 55%)' }}
       />
       <div className="relative">
-        <div className="flex items-center gap-2 text-[14px] text-[#AAB5C7]">
+        <div className="flex items-center gap-2 text-[13px] text-[#AAB5C7]">
           Total balance
           <button
             onClick={() => setHidden((v) => !v)}
@@ -67,18 +54,18 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
             aria-pressed={hidden}
             className="rounded-md p-1.5 text-[#78859A] transition hover:text-white"
           >
-            {hidden ? <EyeOff size={17} /> : <Eye size={17} />}
+            {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
-        <div className="mt-1 font-mono text-[56px] font-bold leading-none tracking-tight text-white sm:text-[64px]" aria-live="polite">
+        <div className="mt-1 max-w-[70%] font-mono text-[40px] font-bold leading-none tracking-tight text-white sm:text-[44px]" aria-live="polite">
           {mask(formatUSD(total))}
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Link href="/app/deposit" className="flex min-h-[54px] items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99]">
-            <span aria-hidden="true">↓</span> Deposit
+          <Link href="/app/deposit" className="flex min-h-[52px] items-center justify-center gap-2 rounded-[12px] bg-[#2FD6FF] text-[14px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99]">
+            <Download size={16} aria-hidden="true" /> Deposit
           </Link>
-          <Link href="/app/deploy" className="flex min-h-[54px] items-center justify-center gap-2 rounded-[14px] border border-[#2A394D] bg-[#111722] text-[15px] font-bold text-white transition hover:border-[rgba(47,214,255,0.5)] active:scale-[0.99]">
-            See plans <ArrowRight size={16} aria-hidden="true" />
+          <Link href="/app/deploy" className="flex min-h-[52px] items-center justify-center gap-2 rounded-[12px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.5)] active:scale-[0.99]">
+            <TrendingUp size={16} aria-hidden="true" /> See plans
           </Link>
         </div>
         <div className="mt-2">
@@ -97,8 +84,8 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
 
 const ONBOARDING = [
   { n: '01', title: 'Deposit crypto', body: 'Fund your deposit wallet to begin.', cta: 'Make a deposit', href: '/app/deposit' },
-  { n: '02', title: 'Choose a module', body: 'Pick the term that fits your capital.', cta: 'See plans', href: '/app/deploy' },
-  { n: '03', title: 'Collect on schedule', body: 'Earnings settle to your ledger at maturity.', cta: 'How it works', href: '/how-it-works' },
+  { n: '02', title: 'Choose a module', body: 'Pick the module that fits your capital.', cta: 'See plans', href: '/app/deploy' },
+  { n: '03', title: 'Collect on schedule', body: 'Credits land in your Earning wallet on schedule.', cta: 'How it works', href: '/how-it-works' },
 ];
 
 export function OnboardingStepsCard({ doneDeposited, doneDeployed }: { doneDeposited: boolean; doneDeployed: boolean }) {
@@ -161,11 +148,11 @@ export function PlanCard({ planKey, selected }: { planKey: PlanKey; selected?: b
         <IconBox tone="cyan" size={56}><TrendingUp size={24} /></IconBox>
         <div className="text-[19px] font-bold text-white">{plan.name}</div>
       </div>
-      <div className="mt-4 font-mono text-[38px] font-bold leading-none tracking-tight text-[#2FD6FF]">
+      <div className="mt-4 font-mono text-[32px] font-bold leading-none tracking-tight text-[#2FD6FF]">
         {formatPct(plan.ratePerCredit * 100)}
         <span className="ml-1 align-middle font-sans text-[13px] font-normal text-[#78859A]">every 6h</span>
       </div>
-      <div className="mt-3"><SegmentedSchedule total={12} filled={8} /></div>
+      <div className="mt-3"><SegmentedSchedule total={plan.creditsPerDay} filled={plan.creditsPerDay} /></div>
       <div className="mt-3 text-[14px] text-[#AAB5C7]">
         Invest {formatUSD(plan.min, { decimals: 0 })} to {formatUSD(plan.max, { decimals: 0 })}
       </div>

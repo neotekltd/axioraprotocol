@@ -6,79 +6,10 @@ import { Reveal } from '@/components/Reveal';
 import { FaqAccordion } from '@/components/FaqAccordion';
 import { NetworkViz } from '@/components/landing/network-viz';
 import { TechEyebrow } from '@/components/landing/background';
-import { useAnimatedNumber, useInViewOnce } from '@/components/landing/motion';
+import { useInViewOnce } from '@/components/landing/motion';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 import { formatUSD } from '@/lib/finance';
 import { FAQS } from '@/lib/mock';
-import type { ProtocolStats } from '@/lib/queries';
-
-function MetricCard({ id, label, value, sub, started, index, money }: {
-  id: string; label: string; value: number; sub: string; started: boolean; index: number; money?: boolean;
-}) {
-  const display = useAnimatedNumber(value, started, 1100);
-  const formatted = money ? formatUSD(display, { decimals: 0 }) : Math.round(display).toLocaleString('en-US');
-  return (
-    <Reveal delay={Math.min(index, 2) * 90}>
-      <div className="card-sweep rounded-xl border border-line bg-panel/80 p-5 transition hover:border-pulse/50">
-        <div className="flex items-center justify-between font-mono text-[10px] tracking-[0.2em] text-fog">
-          <span>{label}</span>
-          <span className="flex items-center gap-1.5 text-pulse" aria-label="live channel">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-pulse" />
-          </span>
-        </div>
-        <div className="mt-2 font-mono text-[1.65rem] font-bold tracking-tight text-white">{formatted}</div>
-        <div className="mt-1 text-[11px] text-fog">{sub}</div>
-      </div>
-    </Reveal>
-  );
-}
-
-export function TelemetrySection({ stats }: { stats: ProtocolStats | null }) {
-  const [ref, inView] = useInViewOnce<HTMLDivElement>(0.2);
-  const metrics = stats
-    ? [
-        { id: 'deposited', label: 'DEPOSITED TO DATE', value: stats.deposited, sub: `Ledger total${stats.updatedAt ? ` · ${stats.updatedAt.slice(0, 10)}` : ''}`, money: true },
-        { id: 'withdrawn', label: 'WITHDRAWN BY MEMBERS', value: stats.withdrawn, sub: 'Settled withdrawals', money: true },
-        { id: 'accounts', label: 'ACCOUNTS', value: stats.accounts, sub: 'Verified members' },
-        { id: 'payouts', label: 'PAYOUTS MADE', value: stats.payouts, sub: 'Credited payouts' },
-        { id: 'days', label: 'DAYS IN OPERATION', value: stats.daysOperation, sub: 'Since launch' },
-      ]
-    : [];
-  return (
-    <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Live protocol telemetry">
-      <Reveal>
-        <TechEyebrow index="05" label="TELEMETRY" />
-        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Live readings from the ledger.</h2>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">
-          {stats
-            ? 'Pulled from the books — every figure traces to ledger records.'
-            : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
-        </p>
-      </Reveal>
-      <div ref={ref} className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-        {stats
-          ? metrics.map((m, i) => <MetricCard key={m.id} {...m} started={inView} index={i} />)
-          : ['DEPOSITED', 'WITHDRAWN', 'ACCOUNTS', 'PAYOUTS', 'DAYS ONLINE'].map((label, i) => (
-              <Reveal key={label} delay={Math.min(i, 2) * 90}>
-                <div className="rounded-xl border border-dashed border-line bg-panel/50 p-4">
-                  <div className="font-mono text-[10px] tracking-[0.2em] text-fog">{label}</div>
-                  <div className="mt-2 font-mono text-base font-bold tracking-[0.12em] text-fog">AWAITING LIVE DATA</div>
-                  <div className="relative mt-2 h-[3px] overflow-hidden rounded-full bg-white/[0.06]" aria-hidden="true">
-                    <span className="signal-x" style={{ animationDuration: '2.8s' }} />
-                  </div>
-                  <div className="mt-1.5 text-[11px] text-fog">No snapshot published</div>
-                </div>
-              </Reveal>
-            ))}
-      </div>
-      {!stats && (
-        <Reveal delay={100}>
-          <div className="mt-4 text-sm"><Link href="/statistics" className="text-pulse hover:brightness-110">Open the statistics page →</Link></div>
-        </Reveal>
-      )}
-    </section>
-  );
-}
 
 function ActivityPanel({ kind }: { kind: 'INCOMING' | 'OUTGOING' }) {
   return (

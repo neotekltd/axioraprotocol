@@ -2,7 +2,8 @@ import { HeroAutopilot, CoinsStrip } from '@/components/landing/hero';
 import { PlanSyncProvider } from '@/components/landing/plan-sync';
 import { ModulesSection, SimulatorSection, SpecsSection } from '@/components/landing/modules';
 import { BootSequence } from '@/components/landing/BootSequence';
-import { TelemetrySection, ActivitySection, ReferralNetworkSection, FaqDiagnostics, FinalCta } from '@/components/landing/live';
+import { TelemetrySection } from '@/components/landing/telemetry';
+import { ActivitySection, ReferralNetworkSection, FaqDiagnostics, FinalCta } from '@/components/landing/live';
 import { ProtocolBackground } from '@/components/landing/background';
 import { getProtocolStats } from '@/lib/queries';
 

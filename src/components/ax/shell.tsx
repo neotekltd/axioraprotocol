@@ -31,7 +31,7 @@ export function AppHeader({ email, username, unread = 0 }: { email?: string | nu
   const elapsed = useSessionElapsed(true);
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-[72px] max-w-[1180px] items-center justify-between px-5 md:px-7">
+      <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-5 md:px-7">
         <Link
           href="/"
           aria-label="Axiora Protocol home"

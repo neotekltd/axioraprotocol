@@ -11,6 +11,63 @@
 :root {
   color-scheme: dark;
 
+  /* ===== canonical source-derived system (screenshot-extracted) ===== */
+  --bg: #05070B;
+  --bg-2: #080B11;
+  --pane: #0B0F16;
+  --pane-2: #0F141D;
+  --pane-3: #161C27;
+  --line: #1A2231;
+  --line-2: #242E40;
+  --line-input: #5A677D;
+  --ink: #E9EEF5;
+  --t2: #B7C1CF;
+  --t3: #8F9BAD;
+  --t4: #7D8A9E;
+  --brand: #2FD6FF;
+  --on-brand: #021016;
+  --brand-hi: color-mix(in srgb, var(--brand) 86%, white);
+  --brand-wash: color-mix(in srgb, var(--brand) 12%, transparent);
+  --brand-soft: color-mix(in srgb, var(--brand) 7%, transparent);
+  --brand-line: color-mix(in srgb, var(--brand) 40%, transparent);
+  --glow: color-mix(in srgb, var(--brand) 40%, transparent);
+  --up: #3DDC84;
+  --down: #FF6B7F;
+  --wait: #FFC05C;
+  --up-wash: color-mix(in srgb, var(--up) 13%, transparent);
+  --down-wash: color-mix(in srgb, var(--down) 13%, transparent);
+  --wait-wash: color-mix(in srgb, var(--wait) 13%, transparent);
+  --danger: #D13448;
+  --on-danger: #FFFFFF;
+  --scrim: rgba(2, 4, 8, .72);
+  --shadow: rgba(0, 0, 0, .6);
+  --dot: rgba(143, 155, 173, .07);
+  --grid-dot: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 1.4px);
+  --surface: var(--pane-2);
+  --hairline: var(--line-2);
+  --ok: var(--up);
+  --bad: var(--down);
+  --info: var(--brand);
+  --sh-2: 0 20px 44px -14px var(--shadow);
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 16px;
+  --dur-1: .12s;
+  --dur-2: .22s;
+  --dur-3: .34s;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --ease-io: cubic-bezier(.45, 0, .55, 1);
+  --top-h: 56px;
+  --rail-w: 84px;
+  --gutter: 20px;
+  /* robot / technical metals */
+  --metal-hi: #2E394C;
+  --metal: #171E2A;
+  --metal-lo: #0A0E15;
+  --visor: #010306;
+  --visor-hi: #0A1826;
+  --sheen-soft: rgba(255, 255, 255, .07);
+
   --ax-bg: #080B12;
   --ax-bg-deep: #06070B;
   --ax-surface: #0D111A;
@@ -128,18 +185,44 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  background-color: #0a0a0a;
-  color: #fafafa;
-  font-family: var(--font-body);
+  margin: 0;
+  color: var(--ink);
+  font: 400 14px / 1.5 "Geist Sans", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1000px 480px at 12% -10%, var(--brand-soft), transparent 70%),
+    var(--grid-dot);
+  background-size: auto, 24px 24px;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1279.98px) {
+  :root { --gutter: 22px; }
+}
+
+@media (max-width: 1023.98px) {
+  :root {
+    --gutter: 16px;
+    --top-h: 56px;
+  }
 }
 
 ::selection {
-  background-color: #0e9db84d;
+  background: var(--brand);
+  color: var(--on-brand);
 }
 
 /* ---------- type scale (display: Space Grotesk; body: Geist Sans) ---------- */
@@ -308,6 +391,7 @@ body {
   .mod-telemetry span, .mod-sig span,
   .ax-fab-btn, .ax-fab-ripple { animation: none !important; }
   .ax-sheet, .ax-sheet-overlay { animation: none !important; }
+  .tele-draw { animation: none !important; stroke-dashoffset: 0; }
   .mod-card:hover { transform: none; }
   html { scroll-behavior: auto; }
 }
@@ -433,6 +517,16 @@ body {
 }
 .orbit-pill-a { animation: orbit-pill 22s linear infinite; }
 .orbit-pill-b { animation: orbit-pill 30s linear infinite reverse; }
+
+/* ---------- telemetry micro-graphics ---------- */
+@keyframes tele-draw {
+  to { stroke-dashoffset: 0; }
+}
+.tele-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: tele-draw 1.4s ease-out 0.2s forwards;
+}
 
 /* ---------- module cards: telemetry machine system ----------
    All motion is transform/opacity. Entrance choreography only runs under
