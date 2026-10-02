@@ -6,7 +6,8 @@ import { TelemetrySection } from '@/components/landing/telemetry';
 import { LiveActivity } from '@/components/landing/live-activity';
 import { ReferralNetworkSection, FaqDiagnostics, FinalCta } from '@/components/landing/live';
 import { ProtocolBackground } from '@/components/landing/background';
-import { getHomepageActivity, getHomepageTelemetry } from '@/lib/queries';
+import { getHomepageActivity } from '@/lib/queries';
+import { getProtocolTelemetry } from '@/lib/telemetry';
 
 // Axiora homepage — AIMEX capital/settlement information architecture
 // (structure/composition only). Axiora is the capital, accounting and
@@ -15,7 +16,7 @@ import { getHomepageActivity, getHomepageTelemetry } from '@/lib/queries';
 // rules, audited snapshots, or honest empty states.
 
 export default async function Home() {
-  const [telemetry, activity] = await Promise.all([getHomepageTelemetry(), getHomepageActivity()]);
+  const [telemetry, activity] = await Promise.all([getProtocolTelemetry(), getHomepageActivity()]);
   return (
     <div className="relative overflow-x-clip bg-[#05080d]">
       <ProtocolBackground />
