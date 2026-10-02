@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bell, Home, LifeBuoy, TrendingUp, Users, Wallet, MessageCircle } from 'lucide-react';
+import { Bell, Home, LifeBuoy, Send, TrendingUp, Users, Wallet } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { AccountMenu } from '@/components/ax/account-menu';
 import { cn } from '@/lib/utils';
@@ -42,7 +42,7 @@ export function AppHeader({ email, username, unread = 0 }: { email?: string | nu
             AXIORA<span className="text-[#2FD6FF]">.</span>
           </span>
         </Link>
-        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 sm:flex" role="status" aria-label="Session live">
+        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 min-[420px]:flex" role="status" aria-label="Session live">
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#35D98B]" aria-hidden="true" />
           <span className="text-[13px] font-semibold text-[#AAB5C7]">Live</span>
           <span className="font-mono text-[13px] text-[#78859A]" suppressHydrationWarning>{elapsed}</span>
@@ -115,7 +115,7 @@ export function FloatingSupportButton() {
       <span aria-hidden="true" className="ax-fab-ring" />
       <span aria-hidden="true" className="ax-fab-ripple" />
       <span className="ax-fab-btn">
-        <MessageCircle size={24} />
+        <Send size={24} />
       </span>
     </Link>
   );

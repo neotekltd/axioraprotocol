@@ -38,7 +38,7 @@ export function WalletTabs({ active }: { active: 'deposit' | 'withdraw' | 'histo
 
 export function FlowCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('rounded-[20px] border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6', className)}>
+    <div className={cn('rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6', className)}>
       {children}
     </div>
   );
@@ -115,7 +115,7 @@ export function TechnicalWarning({ title, body, action }: { title: string; body:
 
 export function DividerArrow() {
   return (
-    <div aria-hidden="true" className="relative z-10 mx-auto -my-3 grid h-9 w-9 place-items-center rounded-full border border-[#2A394D] bg-[#111722] text-[#2FD6FF]">
+    <div aria-hidden="true" className="relative z-10 mx-auto -my-3 grid h-10 w-10 place-items-center rounded-[10px] border border-[#2A394D] bg-[#111722] text-[#2FD6FF] shadow-[0_8px_20px_rgba(0,0,0,0.45)]">
       <ArrowDown size={16} />
     </div>
   );

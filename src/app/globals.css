@@ -262,6 +262,13 @@ body {
 .ax-no-scrollbar::-webkit-scrollbar { display: none; }
 .ax-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
+/* ---------- wallet page entrance (restrained: fade + 8px rise, ~280ms) --- */
+@keyframes ax-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.ax-enter { animation: ax-enter 0.28s var(--ease) both; }
+
 /* ---------- motion: reveal system ----------
    End-state uses the reference's own declarations verbatim. */
 .reveal {
@@ -391,6 +398,7 @@ body {
   .mod-telemetry span, .mod-sig span,
   .ax-fab-btn, .ax-fab-ripple { animation: none !important; }
   .ax-sheet, .ax-sheet-overlay { animation: none !important; }
+  .ax-enter { animation: none !important; }
   .tele-draw { animation: none !important; stroke-dashoffset: 0; }
   .mod-card:hover { transform: none; }
   html { scroll-behavior: auto; }

@@ -27,7 +27,7 @@ import {
   WalletTabs,
 } from '@/components/ax/wallet';
 
-const CHIPS = ['50 USDT', '100 USDT', '500 USDT'];
+const PRESET_AMOUNTS = [50, 100, 500];
 const MIN_DEPOSIT = 10;
 
 function MethodIcon({ m, size = 40 }: { m: DepositMethod; size?: number }) {
@@ -98,7 +98,7 @@ export function DepositView({ methods, deposits, qr }: {
 }) {
   const [idx, setIdx] = useState(0);
   const [amount, setAmount] = useState('100');
-  const [chip, setChip] = useState<string | null>('100 USDT');
+  const [chip, setChip] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [coinOpen, setCoinOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -109,7 +109,7 @@ export function DepositView({ methods, deposits, qr }: {
 
   if (!m) {
     return (
-      <div>
+      <div className="ax-enter">
         <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
         <div className="mt-6">
           <WalletTabs active="deposit" />
@@ -132,12 +132,30 @@ export function DepositView({ methods, deposits, qr }: {
   }
 
   const num = Number(amount);
-  const valid = Number.isFinite(num) && num >= MIN_DEPOSIT;
+  // Floor comes from the method record when the backend provides one,
+  // otherwise the workspace minimum. Client-side only gates the CTA —
+  // the server action re-validates authoritatively.
+  const minDep = m.minimumDeposit ?? MIN_DEPOSIT;
+  const valid = Number.isFinite(num) && num >= minDep;
   const recent = deposits.filter((t) => t.asset === m.asset);
   const hasCompleted = recent.some((t) => t.status === 'completed');
+  // Preset labels follow the SELECTED asset (never a hardcoded symbol).
+  // Max fills the largest one-tap amount; it never bypasses validation.
+  const chipOptions = [...PRESET_AMOUNTS.map((v) => `${v} ${m.asset}`), 'Max'];
+  const activeChip = chip ?? (PRESET_AMOUNTS.some((v) => String(v) === amount.trim()) ? `${amount.trim()} ${m.asset}` : null);
   const pickChip = (c: string) => {
+    if (c === 'Max') {
+      setAmount(String(PRESET_AMOUNTS[PRESET_AMOUNTS.length - 1]));
+      setChip('Max');
+      return;
+    }
     setChip(c);
     setAmount(c.split(' ')[0]);
+  };
+  const selectMethod = (i: number) => {
+    setIdx(i);
+    setChip(null);
+    setCoinOpen(false);
   };
 
   const submitTx = async () => {
@@ -151,7 +169,7 @@ export function DepositView({ methods, deposits, qr }: {
 
   if (confirmed && valid) {
     return (
-      <div>
+      <div className="ax-enter">
         <button
           type="button"
           onClick={() => setConfirmed(false)}
@@ -197,7 +215,7 @@ export function DepositView({ methods, deposits, qr }: {
             <CopyButton text={String(num)} label={`Copy ${num}`} />
           </div>
           <p className="mt-3 text-[13px] leading-relaxed text-[#AAB5C7]">
-            Any amount from {formatUSD(MIN_DEPOSIT)} is credited after on-chain confirmation.
+            Any amount from {formatUSD(minDep)} is credited after on-chain confirmation.
           </p>
           <div className="mt-3">
             <TechnicalWarning
@@ -262,13 +280,13 @@ export function DepositView({ methods, deposits, qr }: {
   }
 
   return (
-    <div>
+    <div className="ax-enter">
       <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
       <div className="mt-6">
         <WalletTabs active="deposit" />
       </div>
       <FlowCard className="mt-4">
-        <FlowLabel right={`Min ${formatUSD(MIN_DEPOSIT)}`}>You send</FlowLabel>
+        <FlowLabel right={`Min ${formatUSD(minDep)}`}>You send</FlowLabel>
         <div className="mt-2 flex items-center justify-between gap-3">
           <input
             value={amount}
@@ -294,9 +312,9 @@ export function DepositView({ methods, deposits, qr }: {
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
           on {m.network} ({m.standard})
         </div>
-        <QuickChips options={CHIPS} active={chip} onPick={pickChip} />
+        <QuickChips options={chipOptions} active={activeChip} onPick={pickChip} />
         {!valid && amount.trim() !== '' && (
-          <p role="alert" className="mt-2 text-[13px] text-[#F2BF4A]">Minimum deposit is {formatUSD(MIN_DEPOSIT)}.</p>
+          <p role="alert" className="mt-2 text-[13px] text-[#F2BF4A]">Minimum deposit is {formatUSD(minDep)}.</p>
         )}
       </FlowCard>
       <DividerArrow />
@@ -344,7 +362,7 @@ export function DepositView({ methods, deposits, qr }: {
             <li key={mm.id}>
               <button
                 type="button"
-                onClick={() => { setIdx(i); setCoinOpen(false); }}
+                onClick={() => selectMethod(i)}
                 aria-pressed={i === idx}
                 className={`flex w-full items-center gap-3 rounded-[16px] border p-4 text-left transition ${
                   i === idx ? 'border-[rgba(47,214,255,0.6)] bg-[rgba(47,214,255,0.05)]' : 'border-[#202A3A] bg-[#0D1119] hover:border-[rgba(47,214,255,0.4)]'
