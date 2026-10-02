@@ -37,6 +37,18 @@ export function planForAmount(amount: number): PlanDef | null {
   return PLANS.find((p) => amount >= p.min && amount <= p.max) ?? null;
 }
 
+// Display label for a deployment: plan name for plan-based rows, legacy
+// "<n>d" term for pre-plan rows, em-dash when neither exists. Pure — safe
+// for client components (queries.ts re-exports it).
+export function deploymentLabel(d: { plan?: string | null; termDays?: number }): string {
+  if (d.plan) {
+    const found = PLANS.find((p) => p.key === d.plan);
+    if (found) return found.name;
+  }
+  if (d.termDays && d.termDays > 0) return `${d.termDays}d`;
+  return '—';
+}
+
 export interface PlanQuote {
   plan: PlanKey;
   planName: string;

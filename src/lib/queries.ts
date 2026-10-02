@@ -69,12 +69,7 @@ const num = (v: unknown): number => {
 
 // Display label for a deployment: plan name for plan-based rows, legacy
 // "<n>d" term for pre-plan rows, em-dash when neither exists.
-export function deploymentLabel(d: { plan?: string | null; termDays?: number }): string {
-  const names: Record<string, string> = { essential: 'Essential', premium: 'Premium', exclusive: 'Exclusive' };
-  if (d.plan && names[d.plan]) return names[d.plan];
-  if (d.termDays && d.termDays > 0) return `${d.termDays}d`;
-  return '—';
-}
+export { deploymentLabel } from '@/lib/plans';
 
 export interface Deployment {
   id: string;
