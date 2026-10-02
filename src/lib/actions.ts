@@ -5,8 +5,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
 import { randomUUID } from 'crypto';
 import { createClient } from '@/lib/supabase/server';
+import { REFERRAL_COOKIE, normalizeReferralCode } from '@/lib/referral-cookie';
 import { CreateDeploymentSchema, WithdrawalQuoteSchema } from '@/lib/validation';
 import { getPlan, quotePlan } from '@/lib/plans';
 import { ASSET_IDS, DEPOSIT_CONFIG, getDepositAddress, isValidTxHash } from '@/lib/deposits';
@@ -17,6 +19,29 @@ export interface ActionResult {
   ok: boolean;
   message: string;
   ref?: string;
+}
+
+// Claims first-touch referral attribution for the CALLER only. Reads the
+// transport cookie server-side and delegates every decision to the
+// attach_referrer() database function (re-validates code, referrer, self,
+// already-attached — the cookie is never trusted on its own). Idempotent:
+// safe to run on every post-auth landing; attached/already/invalid/self all
+// leave existing relationships untouched. Clears the cookie once consumed.
+export async function claimReferral(): Promise<{ status: string }> {
+  try {
+    const code = normalizeReferralCode(cookies().get(REFERRAL_COOKIE)?.value ?? '');
+    if (!code) return { status: 'none' };
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('attach_referrer', { p_code: code });
+    if (error) return { status: 'error' };
+    const status = typeof data === 'string' ? data : 'error';
+    if (status === 'attached') {
+      cookies().set(REFERRAL_COOKIE, '', { path: '/', maxAge: 0 });
+    }
+    return { status };
+  } catch {
+    return { status: 'error' };
+  }
 }
 
 async function userId(): Promise<string | null> {

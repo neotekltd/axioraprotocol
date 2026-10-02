@@ -5,7 +5,7 @@
 // commission rules from PROTOCOL_CONFIG.referralLevels, banner embeds from
 // the central banner config. No invented members, earnings, or rates.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Check, Copy, Mail, MessageCircle, Send } from 'lucide-react';
@@ -17,37 +17,48 @@ import { formatUSD } from '@/lib/finance';
 import type { ReferralRow } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
-function useCopied(): [boolean, (text: string) => void] {
-  const [done, setDone] = useState(false);
+type CopyState = 'idle' | 'done' | 'failed';
+
+function useCopied(): [CopyState, (text: string) => void] {
+  const [state, setState] = useState<CopyState>('idle');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
   const copy = async (text: string) => {
+    let ok = false;
     try {
       await navigator.clipboard.writeText(text);
+      ok = true;
     } catch {
-      /* unavailable */
+      ok = false;
     }
-    setDone(true);
-    setTimeout(() => setDone(false), 2000);
+    setState(ok ? 'done' : 'failed');
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setState('idle'), 2000);
   };
-  return [done, copy];
+  return [state, copy];
 }
 
 function CopyPill({ text, label }: { text: string; label: string }) {
-  const [done, copy] = useCopied();
+  const [state, copy] = useCopied();
   return (
     <button
       type="button"
       onClick={() => void copy(text)}
       aria-live="polite"
-      aria-label={done ? 'Copied' : label}
+      aria-label={state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : label}
       className={cn(
-        'flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-[12px] border px-4 text-[13px] font-bold transition active:scale-[0.97]',
-        done
-          ? 'border-[rgba(53,217,139,0.5)] text-[#35D98B]'
-          : 'border-[#2A394D] text-white hover:border-[rgba(47,214,255,0.5)]'
+        'flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-[12px] px-4 text-[13px] font-bold transition active:scale-[0.97]',
+        state === 'done'
+          ? 'bg-[#35D98B] text-[#06121A]'
+          : state === 'failed'
+            ? 'border border-[rgba(240,107,120,0.5)] text-[#F06B78]'
+            : 'bg-[#2FD6FF] text-[#06121A] shadow-[0_0_20px_rgba(47,214,255,0.25)] hover:brightness-110'
       )}
     >
-      {done ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-      {done ? 'Copied' : label}
+      {state === 'done' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+      {state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : label}
     </button>
   );
 }
@@ -72,17 +83,17 @@ function LevelCard({ level, members, index }: {
 }) {
   const shown = members.slice(0, 5);
   const extra = members.length - shown.length;
+  // Descriptions derive from the authoritative level config — never
+  // hardcoded percentages from another product's page.
   const desc =
     level.level === 1
       ? 'When someone signs up with your link or code, they land here.'
-      : level.level === 2
-        ? 'When someone your level 1 invites joins, they land here.'
-        : 'Deeper network levels earn automatically under the same rules.';
+      : `When someone your level ${level.level - 1} invite joins, they land here and pay you ${level.instantPct}% of their deposits · ${level.dailySharePct}% of their earnings.`;
   return (
     <Reveal delay={index * 80}>
       <section
         aria-label={`Referral level ${level.level}`}
-        className="rounded-[20px] border border-[#202A3A] bg-[#0C1119] p-5 transition duration-200 hover:-translate-y-[3px] hover:border-[rgba(47,214,255,0.4)] sm:p-6"
+        className="rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 transition duration-200 hover:-translate-y-[3px] hover:border-[rgba(47,214,255,0.4)] sm:p-6"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[17px] font-bold text-white">Level {level.level}</h2>
@@ -126,10 +137,10 @@ function LevelCard({ level, members, index }: {
 }
 
 function BannerCard({ bannerId, link }: { bannerId: (typeof BANNERS)[number]; link: string | null }) {
-  const [done, copy] = useCopied();
+  const [state, copy] = useCopied();
   const code = link ? bannerEmbed(bannerId, link) : '';
   return (
-    <div className="overflow-hidden rounded-[20px] border border-[#202A3A] bg-[#0C1119] transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(47,214,255,0.4)]">
+    <div className="overflow-hidden rounded-2xl border border-[#202A3A] bg-[#0C1119] transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(47,214,255,0.4)]">
       <div className="tech-dots flex items-center justify-center bg-[#070B13] p-6">
         <Image
           src={bannerId.file}
@@ -150,8 +161,8 @@ function BannerCard({ bannerId, link }: { bannerId: (typeof BANNERS)[number]; li
           aria-live="polite"
           className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.55)] active:scale-[0.99] disabled:opacity-50"
         >
-          {done ? <Check size={16} className="text-[#35D98B]" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-          {done ? 'Copied' : 'Copy code'}
+          {state === 'done' ? <Check size={16} className="text-[#35D98B]" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+          {state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Copy code'}
         </button>
       </div>
     </div>
@@ -166,13 +177,13 @@ export function ReferralsView({ link, code, referrals, earned }: {
 }) {
   const team = referrals.length;
   return (
-    <div>
+    <div className="ax-enter mx-auto w-full max-w-[680px]">
       <PageHeader
         title="Referrals"
         sub="Share your link. Each time someone you invited deposits or earns from a plan, a commission lands in your Earning wallet."
       />
       <Reveal>
-        <section aria-label="Your referral link" className="mt-6 rounded-[20px] border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
+        <section aria-label="Your referral link" className="mt-6 rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
           <h2 className="text-[15px] font-bold text-white">Your referral link</h2>
           {link ? (
             <div className="mt-3 flex gap-2">
@@ -232,8 +243,16 @@ export function ReferralsView({ link, code, referrals, earned }: {
         </Link>
       </p>
       <Reveal>
-        <section aria-label="Banners with your link" className="mt-6 rounded-[20px] border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
-          <h2 className="text-[15px] font-bold text-white">Banners with your link</h2>
+        <section aria-label="Banners with your link" className="mt-6 rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
+          <div className="flex items-center gap-2.5">
+            <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" className="shrink-0">
+              <rect x="1" y="1" width="20" height="20" rx="6" fill="#101724" stroke="#2A394D" />
+              <rect x="6" y="11" width="2.4" height="5" rx="1.2" fill="#2FD6FF" opacity="0.45" />
+              <rect x="9.8" y="8" width="2.4" height="8" rx="1.2" fill="#2FD6FF" opacity="0.7" />
+              <rect x="13.6" y="5" width="2.4" height="11" rx="1.2" fill="#2FD6FF" />
+            </svg>
+            <h2 className="text-[15px] font-bold text-white">Banners with your link</h2>
+          </div>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#78859A]">
             Each one already carries your referral link. Copy its code into a website, a blog or a forum signature.
           </p>

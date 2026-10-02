@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { logAuthError } from '@/lib/auth-errors';
+import { writeReferralCookieIfAbsent } from '@/lib/referral-cookie';
 import { normalizeAuthEmail } from '@/lib/auth-identifiers';
 import { resendSignupVerification, resendUserMessage } from '@/lib/auth-email';
 import { AuthShell } from '@/components/auth/AuthShell';
@@ -52,13 +53,13 @@ async function recoverExistingAccount(
   );
 }
 
-export function RegisterForm() {
+export function RegisterForm({ referredCode = null }: { referredCode?: string | null }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [referral, setReferral] = useState('');
+  const [referral, setReferral] = useState(referredCode ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -171,7 +172,13 @@ export function RegisterForm() {
             </div>
             <AxInput
               id="referral" name="referral" value={referral}
-              onChange={(e) => setReferral(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setReferral(next);
+                // Manual entry also persists first-touch (only when no
+                // /r/ code was captured earlier — never overwrites it).
+                writeReferralCookieIfAbsent(next);
+              }}
               placeholder="Referral code" autoComplete="off" className="mt-2 min-h-[58px] text-[16px]"
             />
             <p className="mt-2.5 text-[13px] leading-relaxed text-[#78859A]">They get the credit, paid from protocol rewards — not out of your deposit.</p>

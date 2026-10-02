@@ -45,6 +45,10 @@ export const BANNERS: BannerDef[] = [
 ];
 
 export function bannerEmbed(b: BannerDef, referralUrl: string): string {
+  // Escape attribute-breaking characters: the URL is server-built from the
+  // canonical domain + the user's own code, but embed HTML is copied to
+  // third-party pages, so quote-safety is enforced here, not assumed.
+  const safeUrl = referralUrl.replace(/["<>]/g, '');
   const src = `${SITE_URL}${b.file}`;
-  return `<a href="${referralUrl}"><img src="${src}" width="${b.width}" height="${b.height}" alt="Axiora Protocol"></a>`;
+  return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer"><img src="${src}" width="${b.width}" height="${b.height}" alt="Axiora Protocol"></a>`;
 }
