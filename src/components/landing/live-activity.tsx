@@ -45,7 +45,7 @@ function ActivityRowView({ r, index, go }: { r: FeedRow; index: number; go: bool
   return (
     <li
       style={{ transitionDelay: go ? `${index * 55}ms` : undefined }}
-      className={`flex items-center gap-3 border-b border-[#202A3A]/60 px-4 py-3 text-[13px] transition-all duration-300 last:border-0 hover:bg-[rgba(47,214,255,0.04)] motion-reduce:transition-none ${go ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}
+      className={`flex min-w-0 items-center gap-3 border-b border-[#202A3A]/60 px-4 py-3 text-[13px] transition-all duration-300 last:border-0 hover:bg-[rgba(47,214,255,0.04)] motion-reduce:transition-none ${go ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}
     >
       <span className="w-10 shrink-0 font-mono text-[12px] text-[#78859A]" suppressHydrationWarning>
         {shown}
@@ -54,7 +54,7 @@ function ActivityRowView({ r, index, go }: { r: FeedRow; index: number; go: bool
       <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-[#78859A]">
         {r.middle}
       </span>
-      <span className="shrink-0 text-right">
+      <span className="shrink-0 whitespace-nowrap text-right tabular-nums">
         <span className={`block font-mono text-[13px] font-bold tabular-nums ${r.incoming ? 'text-[#35D98B]' : 'text-white'}`}>
           {r.incoming ? '+' : '−'}{formatUSD(Math.abs(r.amount))}
         </span>
@@ -73,7 +73,7 @@ function Panel({ title, sub, rows, incoming, go }: {
   go: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-[20px] border border-[#202A3A] bg-[#0C1119]">
+    <div className="min-w-0 overflow-hidden rounded-[20px] border border-[#202A3A] bg-[#0C1119]">
       <div className="flex items-center justify-between border-b border-[#202A3A] px-5 py-3.5">
         <span className="font-mono text-[11px] font-bold tracking-[0.25em] text-[#2FD6FF]">{title}</span>
         <span className="flex items-center gap-1.5 font-mono text-[10px] text-[#78859A]">
@@ -162,10 +162,10 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
         </p>
       </Reveal>
       <div ref={ref} className="mt-6 grid gap-4 md:grid-cols-2">
-        <Reveal delay={0}>
+        <Reveal delay={0} className="min-w-0">
           <Panel title="INCOMING.LOG" sub={demo ? 'Reference deposits' : 'Confirmed deposits'} rows={data.incoming} incoming go={inView} />
         </Reveal>
-        <Reveal delay={100}>
+        <Reveal delay={100} className="min-w-0">
           <Panel title="OUTGOING.LOG" sub={demo ? 'Reference withdrawals' : 'Completed withdrawals'} rows={data.outgoing} incoming={false} go={inView} />
         </Reveal>
       </div>

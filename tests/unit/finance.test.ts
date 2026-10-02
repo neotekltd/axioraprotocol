@@ -12,4 +12,15 @@ describe('format helpers', () => {
     expect(formatPct(1)).toBe('+1.00%');
     expect(formatPct(0.015 * 100)).toBe('+1.50%');
   });
+
+  it('formats compact telemetry headlines without cents', () => {
+    expect(formatUSD(0, { decimals: 0 })).toBe('$0');
+    expect(formatUSD(7696, { decimals: 0 })).toBe('$7,696');
+    expect(formatUSD(1250000, { decimals: 0 })).toBe('$1,250,000');
+  });
+
+  it('retains cents on transaction rows', () => {
+    expect(formatUSD(50)).toBe('$50.00');
+    expect(formatUSD(8.86)).toBe('$8.86');
+  });
 });

@@ -126,15 +126,15 @@ function TelemetryCard({ ch, index, go, wide }: { ch: Channel; index: number; go
     ? formatUSD(display, { decimals: 0 })
     : Math.round(display).toLocaleString('en-US');
   return (
-    <Reveal delay={index * 35} className={wide ? 'col-span-2' : undefined}>
+    <Reveal delay={index * 35} className={wide ? 'col-span-2 min-w-0' : 'min-w-0'}>
       <article
-        className="group relative h-full overflow-hidden rounded-[20px] border border-[rgba(54,94,117,0.35)] bg-[linear-gradient(180deg,rgba(19,31,44,0.85),rgba(8,13,20,0.98))] p-5 transition-all duration-300 hover:-translate-y-[2px] hover:border-[rgba(47,214,255,0.45)] hover:shadow-[0_0_22px_rgba(47,214,255,0.12)] motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6"
+        className="group relative h-full min-w-0 overflow-hidden rounded-[20px] border border-[rgba(54,94,117,0.35)] bg-[linear-gradient(180deg,rgba(19,31,44,0.85),rgba(8,13,20,0.98))] p-5 transition-all duration-300 hover:-translate-y-[2px] hover:border-[rgba(47,214,255,0.45)] hover:shadow-[0_0_22px_rgba(47,214,255,0.12)] motion-reduce:transition-none motion-reduce:hover:transform-none sm:p-6"
       >
         <span aria-hidden="true" className="pointer-events-none absolute left-2 top-2 h-3 w-3 rounded-tl-md border-l-2 border-t-2 border-[#2FD6FF]/60" />
         <span aria-hidden="true" className="pointer-events-none absolute right-2 top-2 h-3 w-3 rounded-tr-md border-r-2 border-t-2 border-[#2FD6FF]/60" />
         <div className="font-mono text-[12px] font-semibold uppercase tracking-[0.22em] text-[#2FD6FF]">{ch.code}</div>
         <h3 className="mt-1.5 text-[19px] font-medium leading-tight text-[#AAB5C7]">{ch.title}</h3>
-        <div className="mt-1 font-mono text-[46px] font-bold leading-[1.05] tracking-tight text-white sm:text-[54px]" aria-live="off" suppressHydrationWarning>
+        <div className="mt-1 min-w-0 max-w-full overflow-hidden whitespace-nowrap font-mono text-[clamp(20px,7.8vw,29px)] font-bold leading-none tracking-tight tabular-nums text-white sm:text-[46px] lg:text-[54px]" aria-live="off" suppressHydrationWarning>
           {formatted}
         </div>
         <p className="mt-1 font-mono text-[12px] tracking-[0.08em] text-[#78859A]">{ch.caption}</p>
