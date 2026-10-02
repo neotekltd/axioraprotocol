@@ -5,7 +5,7 @@
 // here for display only. Mutations live in actions.ts.
 
 import { createClient } from '@/lib/supabase/server';
-import { activityMode, demoActivityFeed } from '@/lib/activity-shared';
+import { activityMode, aimexActivityFeed, demoActivityFeed } from '@/lib/activity-shared';
 import type { FeedRow, HomepageFeed } from '@/lib/activity-shared';
 
 export interface SessionUser {
@@ -663,7 +663,9 @@ export async function getHomepageActivity(): Promise<HomepageActivity> {
 // dataset (no database reads, no writes); real mode maps confirmed ledger
 // rows into display rows. Modes never mix.
 export async function getHomepageFeed(): Promise<HomepageFeed> {
-  if (activityMode() === 'demo') return demoActivityFeed();
+  const mode = activityMode();
+  if (mode === 'aimex') return aimexActivityFeed();
+  if (mode === 'demo') return demoActivityFeed();
   const activity = await getHomepageActivity();
   const mapRow = (r: ActivityRow, i: number, incoming: boolean): FeedRow => ({
     key: `${r.occurredAt}-${r.txShort ?? i}-${i}`,

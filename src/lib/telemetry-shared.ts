@@ -1,7 +1,7 @@
 // Client-safe telemetry helpers (no server imports — safe for 'use client'
 // bundles). Server data fetching lives in src/lib/telemetry.ts.
 
-export type TelemetryMode = 'production' | 'demo';
+export type TelemetryMode = 'production' | 'demo' | 'aimex';
 
 export interface ProtocolTelemetry {
   deposited: number;
@@ -38,6 +38,22 @@ const REFERENCE_SNAPSHOT: Omit<ProtocolTelemetry, 'mode'> = {
 // Legacy alias kept for continuity; TELEMETRY_SOURCE is the canonical switch.
 export const DEMO_TELEMETRY: Omit<ProtocolTelemetry, 'mode'> = REFERENCE_SNAPSHOT;
 
+// Authorized external presentation dataset (AIMEX-sourced homepage figures,
+// provided by the operator). Presentation-only: never written to the Axiora
+// ledger, never consumed by accounting. Shown with a SOURCE · AIMEX indicator.
+export const AIMEX_TELEMETRY: Omit<ProtocolTelemetry, 'mode'> = {
+  deposited: 2839,
+  withdrawn: 627,
+  accounts: 190,
+  payouts: 425,
+  daysOperating: 5,
+  depositedSeries: demoSeries(5, 2),
+  withdrawnSeries: demoSeries(17, 4),
+  accountsSeries: demoSeries(23, 1),
+  payoutsSeries: demoSeries(41, 3),
+  launchDate: null,
+};
+
 // Deterministic pseudo-series: seeded integer walk, stable across renders.
 export function demoSeries(seed: number, stride: number): number[] {
   const out: number[] = [];
@@ -51,9 +67,14 @@ export function demoSeries(seed: number, stride: number): number[] {
 }
 
 export function telemetryMode(): TelemetryMode {
-  // Canonical switch: TELEMETRY_SOURCE=reference shows the labeled homepage
-  // reference snapshot; =axiora (or unset) reads the real ledger.
-  // AXIORA_TELEMETRY_MODE=demo is a legacy alias for reference mode.
+  // Canonical switch: HOMEPAGE_DATA_SOURCE selects the homepage provider.
+  // aimex = authorized external presentation dataset (labeled SOURCE · AIMEX).
+  // axiora (or unset) = real Axiora ledger. reference = staging snapshot.
+  const src = process.env.HOMEPAGE_DATA_SOURCE;
+  if (src === 'aimex') return 'aimex';
+  if (src === 'axiora') return 'production';
+  if (src === 'reference') return 'demo';
+  // Legacy fallbacks.
   if (process.env.TELEMETRY_SOURCE === 'reference') return 'demo';
   if (process.env.TELEMETRY_SOURCE === 'axiora') return 'production';
   return process.env.AXIORA_TELEMETRY_MODE === 'demo' ? 'demo' : 'production';

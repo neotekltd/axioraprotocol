@@ -11,10 +11,18 @@
 // =real (or unset) reads the ledger. Client-safe types + demo dataset live
 // here; the server resolver lives in src/lib/queries.ts (getHomepageFeed).
 
-export type ActivityMode = 'demo' | 'real';
+export type ActivityMode = 'demo' | 'real' | 'aimex';
 
 export function activityMode(): ActivityMode {
-  return process.env.HOME_ACTIVITY_MODE === 'demo' ? 'demo' : 'real';
+  // Canonical switch: HOMEPAGE_DATA_SOURCE selects the homepage provider.
+  // aimex = authorized external presentation rows (labeled SOURCE · AIMEX).
+  // axiora (or unset) = real confirmed ledger rows. demo = staging reference.
+  const src = process.env.HOMEPAGE_DATA_SOURCE;
+  if (src === 'aimex') return 'aimex';
+  if (src === 'axiora' || src === 'real') return 'real';
+  if (src === 'reference' || src === 'demo') return 'demo';
+  if (process.env.HOME_ACTIVITY_MODE === 'demo') return 'demo';
+  return 'real';
 }
 
 export interface FeedRow {
@@ -85,6 +93,33 @@ export function demoActivityFeed(): HomepageFeed {
     mode: 'demo',
     incoming: DEMO_INCOMING.map((s) => toFeedRow(s, true)),
     outgoing: DEMO_OUTGOING.map((s) => toFeedRow(s, false)),
+  };
+}
+
+// Authorized external presentation rows (AIMEX-sourced activity, provided by
+// the operator). Presentation-only: never written to the Axiora ledger, never
+// consumed by accounting. Shown with a SOURCE · AIMEX indicator.
+const AIMEX_INCOMING: DemoSeed[] = [
+  { id: 'ai-1', asset: 'USDT', maskedAccount: 'mal•••is', action: 'Deposit confirmed', amount: 50, ageMin: 21 },
+  { id: 'ai-2', asset: 'USDT', maskedAccount: 'mal•••is', action: 'Deposit confirmed', amount: 0.99, ageMin: 21 },
+  { id: 'ai-3', asset: 'LTC', maskedAccount: 'roc•••67', action: 'Deposit confirmed', amount: 10, ageMin: 32 },
+  { id: 'ai-4', asset: 'USDT', maskedAccount: 'ysr•••81', action: 'Deposit confirmed', amount: 110, ageMin: 120 },
+  { id: 'ai-5', asset: 'USDT', maskedAccount: 'hec•••or', action: 'Deposit confirmed', amount: 20, ageMin: 240 },
+];
+
+const AIMEX_OUTGOING: DemoSeed[] = [
+  { id: 'ao-1', asset: 'USDT', maskedAccount: 'jos•••09', action: 'Withdrawal sent', amount: 8.86, ageMin: 60 },
+  { id: 'ao-2', asset: 'USDT', maskedAccount: 'ysr•••81', action: 'Withdrawal sent', amount: 2, ageMin: 120 },
+  { id: 'ao-3', asset: 'USDT', maskedAccount: 'sqm•••or', action: 'Withdrawal sent', amount: 9.49, ageMin: 300 },
+  { id: 'ao-4', asset: 'USDT', maskedAccount: 'sv2•••06', action: 'Withdrawal sent', amount: 2, ageMin: 300 },
+  { id: 'ao-5', asset: 'USDT', maskedAccount: 'yva•••ev', action: 'Withdrawal sent', amount: 11.2, ageMin: 360 },
+];
+
+export function aimexActivityFeed(): HomepageFeed {
+  return {
+    mode: 'aimex',
+    incoming: AIMEX_INCOMING.map((s) => toFeedRow(s, true)),
+    outgoing: AIMEX_OUTGOING.map((s) => toFeedRow(s, false)),
   };
 }
 

@@ -101,9 +101,12 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
   const [data, setData] = useState(initial);
   const [live, setLive] = useState(true);
   const demo = initial.mode === 'demo';
+  const aimex = initial.mode === 'aimex';
+  // Fixed presentation sets (demo staging reference, aimex sourced feed):
+  // never poll, never overwrite with ledger zeros.
+  const staticFeed = demo || aimex;
   useEffect(() => {
-    // Demo rows are a fixed reference set: never poll, never overwrite.
-    if (demo) return;
+    if (staticFeed) return;
     let dead = false;
     const id = setInterval(async () => {
       try {
@@ -138,7 +141,7 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
       dead = true;
       clearInterval(id);
     };
-  }, [demo]);
+  }, [staticFeed]);
   return (
     <section className="mx-auto max-w-[1200px] px-5 pb-20 md:px-8 md:pb-28" aria-label="Live ledger activity">
       <Reveal>
@@ -151,22 +154,29 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
           ) : (
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold ${live ? 'border-[rgba(53,217,139,0.4)] text-[#35D98B]' : 'border-[rgba(242,191,74,0.4)] text-[#F2BF4A]'}`} role="status">
               <span className={`h-1.5 w-1.5 rounded-full ${live ? 'animate-pulse bg-[#35D98B]' : 'bg-[#F2BF4A]'}`} aria-hidden="true" />
-              {live ? 'LIVE LEDGER' : 'LEDGER · SYNCING'}
+              {live ? 'LIVE' : 'SYNCING'}
+            </span>
+          )}
+          {aimex && (
+            <span className="font-mono text-[10px] tracking-[0.22em] text-[#596579]">
+              SOURCE · AIMEX
             </span>
           )}
         </div>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#78859A]">
           {demo
             ? 'Reference activity for illustration — live ledger records appear once confirmed deposits exist.'
-            : 'Latest confirmed deposits and completed withdrawals from the Axiora ledger. Nothing here is simulated.'}
+            : aimex
+              ? 'Sourced activity served from the configured homepage feed.'
+              : 'Latest confirmed deposits and completed withdrawals from the Axiora ledger. Nothing here is simulated.'}
         </p>
       </Reveal>
       <div ref={ref} className="mt-6 grid gap-4 md:grid-cols-2">
         <Reveal delay={0} className="min-w-0">
-          <Panel title="INCOMING.LOG" sub={demo ? 'Reference deposits' : 'Confirmed deposits'} rows={data.incoming} incoming go={inView} />
+          <Panel title="INCOMING.LOG" sub={demo ? 'Reference deposits' : aimex ? 'Sourced feed' : 'Confirmed deposits'} rows={data.incoming} incoming go={inView} />
         </Reveal>
         <Reveal delay={100} className="min-w-0">
-          <Panel title="OUTGOING.LOG" sub={demo ? 'Reference withdrawals' : 'Completed withdrawals'} rows={data.outgoing} incoming={false} go={inView} />
+          <Panel title="OUTGOING.LOG" sub={demo ? 'Reference withdrawals' : aimex ? 'Sourced feed' : 'Completed withdrawals'} rows={data.outgoing} incoming={false} go={inView} />
         </Reveal>
       </div>
     </section>

@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { DEMO_TELEMETRY, demoSeries, launchLabel, telemetryMode } from '@/lib/telemetry-shared';
+import { AIMEX_TELEMETRY, DEMO_TELEMETRY, demoSeries, launchLabel, telemetryMode } from '@/lib/telemetry-shared';
 import { seriesPath, seriesPoints } from '@/components/landing/telemetry';
 
 describe('telemetry modes', () => {
   it('defaults to production (demo never leaks without explicit env)', () => {
     expect(telemetryMode()).toBe('production');
+  });
+
+  it('aimex snapshot carries the operator-supplied source figures', () => {
+    expect(AIMEX_TELEMETRY.deposited).toBe(2839);
+    expect(AIMEX_TELEMETRY.withdrawn).toBe(627);
+    expect(AIMEX_TELEMETRY.accounts).toBe(190);
+    expect(AIMEX_TELEMETRY.payouts).toBe(425);
+    expect(AIMEX_TELEMETRY.daysOperating).toBe(5);
   });
 
   it('reference snapshot carries the requested $7,696 deposited figure', () => {
@@ -14,16 +22,22 @@ describe('telemetry modes', () => {
     expect(DEMO_TELEMETRY.payouts).toBeGreaterThan(0);
   });
 
-  it('TELEMETRY_SOURCE=reference selects demo mode; =axiora selects production', () => {
-    const prev = process.env.TELEMETRY_SOURCE;
+  it('HOMEPAGE_DATA_SOURCE selects the provider (aimex/axiora/reference)', () => {
+    const prev = process.env.HOMEPAGE_DATA_SOURCE;
+    const prevLegacy = process.env.TELEMETRY_SOURCE;
     try {
-      process.env.TELEMETRY_SOURCE = 'reference';
-      expect(telemetryMode()).toBe('demo');
-      process.env.TELEMETRY_SOURCE = 'axiora';
+      delete process.env.TELEMETRY_SOURCE;
+      process.env.HOMEPAGE_DATA_SOURCE = 'aimex';
+      expect(telemetryMode()).toBe('aimex');
+      process.env.HOMEPAGE_DATA_SOURCE = 'axiora';
       expect(telemetryMode()).toBe('production');
+      process.env.HOMEPAGE_DATA_SOURCE = 'reference';
+      expect(telemetryMode()).toBe('demo');
     } finally {
-      if (prev === undefined) delete process.env.TELEMETRY_SOURCE;
-      else process.env.TELEMETRY_SOURCE = prev;
+      if (prev === undefined) delete process.env.HOMEPAGE_DATA_SOURCE;
+      else process.env.HOMEPAGE_DATA_SOURCE = prev;
+      if (prevLegacy === undefined) delete process.env.TELEMETRY_SOURCE;
+      else process.env.TELEMETRY_SOURCE = prevLegacy;
     }
   });
 

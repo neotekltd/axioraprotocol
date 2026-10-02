@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  activityMode, coinIconSrc, demoActivityFeed, demoAgeLabel,
+  activityMode, aimexActivityFeed, coinIconSrc, demoActivityFeed, demoAgeLabel,
 } from '@/lib/activity-shared';
 
 describe('homepage activity feed', () => {
@@ -8,16 +8,20 @@ describe('homepage activity feed', () => {
     expect(activityMode()).toBe('real');
   });
 
-  it('HOME_ACTIVITY_MODE=demo selects demo; =real selects real', () => {
-    const prev = process.env.HOME_ACTIVITY_MODE;
+  it('HOMEPAGE_DATA_SOURCE=aimex selects aimex; =axiora selects real', () => {
+    const prev = process.env.HOMEPAGE_DATA_SOURCE;
+    const prevLegacy = process.env.HOME_ACTIVITY_MODE;
     try {
-      process.env.HOME_ACTIVITY_MODE = 'demo';
-      expect(activityMode()).toBe('demo');
-      process.env.HOME_ACTIVITY_MODE = 'real';
+      delete process.env.HOME_ACTIVITY_MODE;
+      process.env.HOMEPAGE_DATA_SOURCE = 'aimex';
+      expect(activityMode()).toBe('aimex');
+      process.env.HOMEPAGE_DATA_SOURCE = 'axiora';
       expect(activityMode()).toBe('real');
     } finally {
-      if (prev === undefined) delete process.env.HOME_ACTIVITY_MODE;
-      else process.env.HOME_ACTIVITY_MODE = prev;
+      if (prev === undefined) delete process.env.HOMEPAGE_DATA_SOURCE;
+      else process.env.HOMEPAGE_DATA_SOURCE = prev;
+      if (prevLegacy === undefined) delete process.env.HOME_ACTIVITY_MODE;
+      else process.env.HOME_ACTIVITY_MODE = prevLegacy;
     }
   });
 
@@ -35,6 +39,22 @@ describe('homepage activity feed', () => {
       expect(r.middle).toContain('•••');
       expect(r.action.length).toBeGreaterThan(0);
       expect(r.amount).toBeGreaterThan(0);
+      expect(r.occurredAt).toBeNull();
+    }
+  });
+
+  it('aimex feed carries the operator-supplied source rows, deterministic', () => {
+    const a = aimexActivityFeed();
+    expect(a).toEqual(aimexActivityFeed());
+    expect(a.mode).toBe('aimex');
+    expect(a.incoming).toHaveLength(5);
+    expect(a.outgoing).toHaveLength(5);
+    expect(a.incoming[0]).toMatchObject({ asset: 'USDT', amount: 50, age: '21m' });
+    expect(a.outgoing[0]).toMatchObject({ asset: 'USDT', amount: 8.86, age: '1h' });
+    const keys = [...a.incoming, ...a.outgoing].map((r) => r.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const r of [...a.incoming, ...a.outgoing]) {
+      expect(r.middle).toContain('•••');
       expect(r.occurredAt).toBeNull();
     }
   });

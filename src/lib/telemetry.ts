@@ -12,7 +12,7 @@
 // Production can never show demo values unless explicitly configured.
 
 import { createClient } from '@/lib/supabase/server';
-import { DEMO_TELEMETRY, telemetryMode } from '@/lib/telemetry-shared';
+import { AIMEX_TELEMETRY, DEMO_TELEMETRY, telemetryMode } from '@/lib/telemetry-shared';
 import type { ProtocolTelemetry } from '@/lib/telemetry-shared';
 
 export type { ProtocolTelemetry, TelemetryMode } from '@/lib/telemetry-shared';
@@ -68,7 +68,9 @@ async function productionTelemetry(): Promise<Omit<ProtocolTelemetry, 'mode'> | 
 }
 
 export async function getProtocolTelemetry(): Promise<ProtocolTelemetry | null> {
-  if (telemetryMode() === 'demo') return { ...DEMO_TELEMETRY, mode: 'demo' };
+  const mode = telemetryMode();
+  if (mode === 'aimex') return { ...AIMEX_TELEMETRY, mode: 'aimex' };
+  if (mode === 'demo') return { ...DEMO_TELEMETRY, mode: 'demo' };
   const prod = await productionTelemetry();
   if (!prod) return null;
   return { ...prod, mode: 'production' };

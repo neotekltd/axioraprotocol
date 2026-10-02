@@ -149,13 +149,16 @@ function TelemetryCard({ ch, index, go, wide }: { ch: Channel; index: number; go
 export function TelemetrySection({ data }: { data: ProtocolTelemetry | null }) {
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.15);
   const demo = data?.mode === 'demo';
+  const aimex = data?.mode === 'aimex';
   const launched = data ? launchLabel(data.launchDate) : null;
+  const captionFor = (production: string, illustrative = 'Illustrative telemetry'): string =>
+    demo ? illustrative : production;
   const channels: Channel[] = data
     ? [
-        { code: 'CH-01', title: 'Deposited to date', rawValue: data.deposited, caption: demo ? 'Illustrative telemetry · USDT' : 'Ledger total · USDT', visual: 'spark', series: data.depositedSeries },
-        { code: 'CH-02', title: 'Withdrawn by members', rawValue: data.withdrawn, caption: demo ? 'Illustrative telemetry' : 'Settled withdrawals', visual: 'spark', series: data.withdrawnSeries },
-        { code: 'CH-03', title: 'Accounts', rawValue: data.accounts, caption: demo ? 'Illustrative telemetry' : 'Registered members', visual: 'spark', series: data.accountsSeries },
-        { code: 'CH-04', title: 'Payouts made', rawValue: data.payouts, caption: demo ? 'Illustrative telemetry' : 'Credited payouts', visual: 'bars', series: data.payoutsSeries },
+        { code: 'CH-01', title: 'Deposited to date', rawValue: data.deposited, caption: demo ? 'Illustrative telemetry · USDT' : aimex ? 'Paid in by members · USDT' : 'Ledger total · USDT', visual: 'spark', series: data.depositedSeries },
+        { code: 'CH-02', title: 'Withdrawn by members', rawValue: data.withdrawn, caption: captionFor(aimex ? 'Paid out to wallets' : 'Settled withdrawals'), visual: 'spark', series: data.withdrawnSeries },
+        { code: 'CH-03', title: 'Accounts', rawValue: data.accounts, caption: captionFor('Registered members'), visual: 'spark', series: data.accountsSeries },
+        { code: 'CH-04', title: 'Payouts made', rawValue: data.payouts, caption: captionFor('Credited payouts'), visual: 'bars', series: data.payoutsSeries },
         { code: 'CH-05', title: 'Days in operation', rawValue: data.daysOperating, caption: launched ? `Running since ${launched}` : 'Operational uptime', visual: 'timeline', series: [] },
       ]
     : [];
@@ -169,6 +172,11 @@ export function TelemetrySection({ data }: { data: ProtocolTelemetry | null }) {
               DEMO DATA
             </span>
           )}
+          {aimex && (
+            <span className="font-mono text-[10px] tracking-[0.22em] text-[#596579]">
+              SOURCE · AIMEX
+            </span>
+          )}
         </div>
         <h2 className="mt-3 text-[38px] font-bold leading-[1.02] tracking-tight text-white sm:text-[44px]">
           <span className="block">Live readings</span>
@@ -177,9 +185,11 @@ export function TelemetrySection({ data }: { data: ProtocolTelemetry | null }) {
         <p className="mt-4 max-w-2xl text-[17px] leading-relaxed text-mist/80">
           {demo
             ? 'Illustrative telemetry — live ledger values appear when production activity is recorded.'
-            : data
-              ? 'Pulled from the Axiora ledger every time this page loads.'
-              : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
+            : aimex
+              ? 'Live readings served from the configured homepage source.'
+              : data
+                ? 'Pulled from the Axiora ledger every time this page loads.'
+                : 'No published figures yet — channels hold an awaiting-live-data state instead of invented numbers.'}
         </p>
       </Reveal>
       <div ref={ref} className="mt-14 grid grid-cols-2 gap-3 md:mt-16 lg:gap-4">
