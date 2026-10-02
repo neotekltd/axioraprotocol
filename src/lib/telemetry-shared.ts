@@ -17,13 +17,16 @@ export interface ProtocolTelemetry {
   mode: TelemetryMode;
 }
 
-// Deterministic illustrative values for UI previews. Stable across renders
-// (no Math.random anywhere); clearly fake-scale, never presented as real.
-export const DEMO_TELEMETRY: Omit<ProtocolTelemetry, 'mode'> = {
-  deposited: 184720,
-  withdrawn: 91340,
-  accounts: 1284,
-  payouts: 3764,
+// Homepage reference snapshot: displayed (not ledger) figures for the
+// current presentation. `deposited` is the requested reference value; the
+// rest are coherent illustrative companions. NEVER presented as real ledger
+// totals — the UI always badges this mode DEMO DATA, and no value here is
+// ever written to the financial ledger.
+const REFERENCE_SNAPSHOT: Omit<ProtocolTelemetry, 'mode'> = {
+  deposited: 7696,
+  withdrawn: 2410,
+  accounts: 132,
+  payouts: 418,
   daysOperating: 42,
   depositedSeries: demoSeries(11, 3),
   withdrawnSeries: demoSeries(29, 2),
@@ -31,6 +34,9 @@ export const DEMO_TELEMETRY: Omit<ProtocolTelemetry, 'mode'> = {
   payoutsSeries: demoSeries(63, 4),
   launchDate: null,
 };
+
+// Legacy alias kept for continuity; TELEMETRY_SOURCE is the canonical switch.
+export const DEMO_TELEMETRY: Omit<ProtocolTelemetry, 'mode'> = REFERENCE_SNAPSHOT;
 
 // Deterministic pseudo-series: seeded integer walk, stable across renders.
 export function demoSeries(seed: number, stride: number): number[] {
@@ -45,6 +51,11 @@ export function demoSeries(seed: number, stride: number): number[] {
 }
 
 export function telemetryMode(): TelemetryMode {
+  // Canonical switch: TELEMETRY_SOURCE=reference shows the labeled homepage
+  // reference snapshot; =axiora (or unset) reads the real ledger.
+  // AXIORA_TELEMETRY_MODE=demo is a legacy alias for reference mode.
+  if (process.env.TELEMETRY_SOURCE === 'reference') return 'demo';
+  if (process.env.TELEMETRY_SOURCE === 'axiora') return 'production';
   return process.env.AXIORA_TELEMETRY_MODE === 'demo' ? 'demo' : 'production';
 }
 

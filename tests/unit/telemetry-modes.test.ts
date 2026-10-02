@@ -7,12 +7,24 @@ describe('telemetry modes', () => {
     expect(telemetryMode()).toBe('production');
   });
 
-  it('demo constants are internally consistent illustrative values', () => {
-    expect(DEMO_TELEMETRY.deposited).toBe(184720);
-    expect(DEMO_TELEMETRY.withdrawn).toBe(91340);
-    expect(DEMO_TELEMETRY.accounts).toBe(1284);
-    expect(DEMO_TELEMETRY.payouts).toBe(3764);
-    expect(DEMO_TELEMETRY.daysOperating).toBe(42);
+  it('reference snapshot carries the requested $7,696 deposited figure', () => {
+    expect(DEMO_TELEMETRY.deposited).toBe(7696);
+    expect(DEMO_TELEMETRY.withdrawn).toBeLessThan(DEMO_TELEMETRY.deposited);
+    expect(DEMO_TELEMETRY.accounts).toBeGreaterThan(0);
+    expect(DEMO_TELEMETRY.payouts).toBeGreaterThan(0);
+  });
+
+  it('TELEMETRY_SOURCE=reference selects demo mode; =axiora selects production', () => {
+    const prev = process.env.TELEMETRY_SOURCE;
+    try {
+      process.env.TELEMETRY_SOURCE = 'reference';
+      expect(telemetryMode()).toBe('demo');
+      process.env.TELEMETRY_SOURCE = 'axiora';
+      expect(telemetryMode()).toBe('production');
+    } finally {
+      if (prev === undefined) delete process.env.TELEMETRY_SOURCE;
+      else process.env.TELEMETRY_SOURCE = prev;
+    }
   });
 
   it('demo series are deterministic across renders (no Math.random)', () => {

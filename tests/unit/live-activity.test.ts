@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageLabel } from '@/components/landing/live-activity';
+import { ageLabel } from '@/components/landing/live-activity-utils';
 
 const NOW = Date.UTC(2026, 9, 1, 12, 0, 0);
 

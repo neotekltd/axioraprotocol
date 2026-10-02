@@ -5,6 +5,8 @@
 // here for display only. Mutations live in actions.ts.
 
 import { createClient } from '@/lib/supabase/server';
+import { activityMode, demoActivityFeed } from '@/lib/activity-shared';
+import type { FeedRow, HomepageFeed } from '@/lib/activity-shared';
 
 export interface SessionUser {
   id: string;
@@ -655,4 +657,27 @@ export async function getHomepageActivity(): Promise<HomepageActivity> {
   } catch {
     return empty;
   }
+}
+
+// Homepage feed resolver: demo mode returns the deterministic reference
+// dataset (no database reads, no writes); real mode maps confirmed ledger
+// rows into display rows. Modes never mix.
+export async function getHomepageFeed(): Promise<HomepageFeed> {
+  if (activityMode() === 'demo') return demoActivityFeed();
+  const activity = await getHomepageActivity();
+  const mapRow = (r: ActivityRow, i: number, incoming: boolean): FeedRow => ({
+    key: `${r.occurredAt}-${r.txShort ?? i}-${i}`,
+    age: '',
+    occurredAt: r.occurredAt,
+    asset: r.asset,
+    middle: r.txShort ?? '—',
+    action: incoming ? 'Deposit confirmed' : 'Withdrawal sent',
+    amount: r.amount,
+    incoming,
+  });
+  return {
+    mode: 'real',
+    incoming: activity.incoming.map((r, i) => mapRow(r, i, true)),
+    outgoing: activity.outgoing.map((r, i) => mapRow(r, i, false)),
+  };
 }

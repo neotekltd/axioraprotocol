@@ -5,5 +5,5 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": ".open-next/worker.js",
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "vars": { "APP_ENV": "demo", "AXIORA_BRAND": "Axiora Protocol" }
+  "vars": { "APP_ENV": "demo", "AXIORA_BRAND": "Axiora Protocol", "TELEMETRY_SOURCE": "reference", "HOME_ACTIVITY_MODE": "demo" }
 }
