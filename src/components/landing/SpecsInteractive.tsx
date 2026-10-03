@@ -9,7 +9,7 @@ import { Reveal } from '@/components/Reveal';
 import { TechEyebrow } from '@/components/landing/background';
 
 const SPECS: [string, string, string, string][] = [
-  ['01', 'Fixed schedule', 'Every module runs a fixed 30, 60 or 90-day term with payout at maturity. No open-ended positions.', 'TERMS · 30/60/90D'],
+  ['01', 'Fixed schedule', 'Every module runs a fixed 3, 7 or 14-day term with payouts every 6 hours. No open-ended positions.', 'TERMS · 3/7/14D'],
   ['02', 'Automatic withdrawals', 'Withdrawal requests record instantly with a balance hold and track state to completion.', 'REQUEST · TRACKED'],
   ['03', 'Principal returned', 'Deployed principal reserves for the term and returns at maturity per ledger records.', 'MATURITY · SETTLED'],
   ['04', 'Everything on record', 'Deployments, payouts, withdrawals and referrals write immutable ledger rows with full history.', 'LEDGER · RLS'],

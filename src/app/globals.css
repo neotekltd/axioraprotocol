@@ -390,10 +390,12 @@ body {
   .signal-x, .signal-y, .ping-soft::before, .auth-graph-drift { animation: none; }
   .card-sweep:hover::after { animation: none; }
   .boot-line.go { animation: none; transform: scaleX(1); }
-  .robot-hover, .robot-head, .robot-eye, .robot-core, .robot-glow-dot,
+  .robot-hover, .robot-head, .robot-eye, .robot-eye-halo, .robot-core, .robot-glow-dot,
   .orbit-spin-a, .orbit-spin-b, .orbit-spin-c, .node-drift, .node-spin,
   .robot-particle, .beam-shimmer, .beam-mote, .greet-float, .orbit-pill-a,
-  .orbit-pill-b, .robot-projector { animation: none !important; }
+  .orbit-pill-b, .robot-projector, .robot-scene-in { animation: none !important; }
+  .robot-scene-in { opacity: 1; }
+  .sim-draw { animation: none !important; }
   .mod-go .mod-rise, .mod-go .mod-chip, .mod-go .mod-rail-seg, .mod-go .mod-rail-sweep,
   .mod-telemetry span, .mod-sig span,
   .ax-fab-btn, .ax-fab-ripple { animation: none !important; }
@@ -416,6 +418,20 @@ body {
   width: 100%;
   overflow: hidden;
   isolation: isolate;
+}
+/* Immersive scene variant: borderless, artwork bleeds to the section. */
+.robot-scene {
+  padding: 8px 4px 10px;
+  background:
+    radial-gradient(ellipse 70% 34% at 50% 26%, rgba(47, 214, 255, 0.05), transparent 70%);
+}
+.robot-scene-in {
+  opacity: 0;
+  animation: robot-scene-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes robot-scene-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 .robot-px { will-change: transform; }
 .robot-px-back { transform: translate3d(calc(var(--rx) * 8px), calc(var(--ry) * 8px), 0); }
@@ -443,12 +459,21 @@ body {
 }
 
 @keyframes robot-eye {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.82; }
-  52% { opacity: 0.55; }
-  54% { opacity: 0.9; }
+  0%, 90%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 0.88; transform: scaleY(1); }
+  93% { opacity: 0.6; transform: scaleY(0.12); }
+  96% { opacity: 0.95; transform: scaleY(1); }
 }
-.robot-eye { animation: robot-eye 4.2s ease-in-out infinite; }
+.robot-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: robot-eye 4.6s ease-in-out infinite;
+}
+@keyframes robot-eye-halo {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 0.26; }
+}
+.robot-eye-halo { animation: robot-eye-halo 4.6s ease-in-out infinite; }
 
 @keyframes robot-core {
   0%, 100% { opacity: 0.85; transform: scale(1); }
@@ -525,6 +550,29 @@ body {
 }
 .orbit-pill-a { animation: orbit-pill 22s linear infinite; }
 .orbit-pill-b { animation: orbit-pill 30s linear infinite reverse; }
+
+/* ---------- robot scene: stat cards + ticker ---------- */
+.robot-stat { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
+.robot-ticker {
+  scroll-behavior: smooth;
+  mask-image: linear-gradient(90deg, transparent, black 24px, black calc(100% - 24px), transparent);
+}
+.robot-datanode { will-change: transform; }
+
+/* ---------- homepage simulator ---------- */
+.sim-root { isolation: isolate; }
+.sim-amount {
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.55), 0 0 0 rgba(47, 214, 255, 0);
+}
+.sim-amount:focus-within {
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.55), 0 0 24px rgba(47, 214, 255, 0.1);
+}
+.sim-row { transition: border-color var(--dur-2) var(--ease), background-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease); }
+@keyframes sim-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.sim-draw { animation: sim-draw 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 /* ---------- telemetry micro-graphics ---------- */
 @keyframes tele-draw {

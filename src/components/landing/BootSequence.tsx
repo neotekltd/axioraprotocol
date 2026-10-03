@@ -8,7 +8,7 @@ import { useInViewOnce } from '@/components/landing/motion';
 const STEPS = [
   ['01', 'Create your account', 'Register with email and password, then enter the 6-digit verification code.'],
   ['02', 'Fund it in crypto', 'Deposit from an external wallet. Assets convert to USDT on arrival.'],
-  ['03', 'Choose your module', 'Pick a 30, 60 or 90-day term. The server quotes binding figures before you confirm.'],
+  ['03', 'Choose your module', 'Pick a 3, 7 or 14-day module. The server quotes binding figures before you confirm.'],
   ['04', 'Collect on schedule', 'Earnings settle to your ledger at maturity. Withdraw available balance in the daily window.'],
 ];
 

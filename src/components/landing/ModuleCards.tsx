@@ -93,6 +93,7 @@ function specRows(plan: PlanDef, q: PlanQuote | null): SpecRow[] {
     { label: 'Rate', value: `${formatPct(plan.ratePerCredit * 100)} per payout`, tone: 'cyan' },
     { label: 'Cycle', value: `Every ${plan.cycleHours} hours`, tone: 'amber' },
     { label: 'Payouts', value: `${plan.creditsPerDay} per day`, tone: 'amber' },
+    { label: 'Term', value: `${plan.payoutsPerTerm} payouts · ${plan.termDays} days`, tone: 'muted' },
     {
       label: 'Est. daily',
       value: q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : 'Calculation unavailable',

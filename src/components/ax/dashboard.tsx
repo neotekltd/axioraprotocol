@@ -37,7 +37,7 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
     <AxCard variant="hero" className="rounded-[18px] p-5 sm:p-6">
       <div aria-hidden="true" className="pointer-events-none absolute right-3 top-3 w-[104px] opacity-90 sm:w-[124px]">
         <div className="robot-hover">
-          <RobotIllustration cycleHours={PLANS[0].cycleHours} payoutsPerDay={PLANS[0].creditsPerDay} />
+          <RobotIllustration cycleHours={PLANS[0].cycleHours} />
         </div>
       </div>
       <div
