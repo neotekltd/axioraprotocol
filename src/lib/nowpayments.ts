@@ -16,29 +16,30 @@
 // `confirmed` is recorded and shown, never credited. `partially_paid`,
 // over/under-payment and wrong-asset cases go to manual review.
 
+import { runtimeEnv } from '@/lib/runtime-env';
+
 const PROD_BASE = 'https://api.nowpayments.io';
 
 export function providerBaseUrl(): string {
-  // Static access on purpose (see lib/env.ts). Sandbox override lives in
-  // NOWPAYMENTS_API_BASE; unset means production.
-  const override = process.env.NOWPAYMENTS_API_BASE;
+  // Sandbox override lives in NOWPAYMENTS_API_BASE; unset means production.
+  const override = runtimeEnv('NOWPAYMENTS_API_BASE');
   return (override && override.trim()) || PROD_BASE;
 }
 
 function apiKey(): string {
-  const key = process.env.NOWPAYMENTS_API_KEY;
+  const key = runtimeEnv('NOWPAYMENTS_API_KEY');
   if (!key) throw new Error('Missing NOWPAYMENTS_API_KEY.');
   return key;
 }
 
 export function ipnSecret(): string {
-  const secret = process.env.NOWPAYMENTS_IPN_SECRET;
+  const secret = runtimeEnv('NOWPAYMENTS_IPN_SECRET');
   if (!secret) throw new Error('Missing NOWPAYMENTS_IPN_SECRET.');
   return secret;
 }
 
 export function providerEnabled(): boolean {
-  return !!process.env.NOWPAYMENTS_API_KEY;
+  return !!runtimeEnv('NOWPAYMENTS_API_KEY');
 }
 
 // Axiora asset id -> exact NOWPayments pay_currency (verified live via

@@ -17,6 +17,16 @@ export function launchTimestampMs(): number {
   return Number.isFinite(parsed) ? (parsed as number) : FALLBACK_LAUNCH_MS;
 }
 
+// Fixed UTC stamp for public display, e.g. "2026-10-04 09:29:17 UTC".
+export function formatLaunchUtc(launchMs: number): string {
+  const d = new Date(launchMs);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())} ` +
+    `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`
+  );
+}
+
 // Elapsed duration formatter: unbounded hours (24:00:00, not 00:00:00),
 // clamped at zero — never negative, NaN or Infinity.
 export function formatElapsed(launchMs: number, nowMs: number): string {

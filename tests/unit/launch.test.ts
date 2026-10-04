@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatElapsed, launchTimestampMs } from '@/lib/launch';
+import { formatElapsed, formatLaunchUtc, launchTimestampMs } from '@/lib/launch';
 
 describe('formatElapsed', () => {
   const T0 = Date.parse('2026-10-04T09:29:17Z');
@@ -28,5 +28,9 @@ describe('formatElapsed', () => {
 describe('launchTimestampMs', () => {
   it('parses the configured UTC timestamp', () => {
     expect(launchTimestampMs()).toBe(Date.parse('2026-10-04T09:29:17Z'));
+  });
+
+  it('formats the public UTC stamp', () => {
+    expect(formatLaunchUtc(Date.parse('2026-10-04T09:29:17Z'))).toBe('2026-10-04 09:29:17 UTC');
   });
 });

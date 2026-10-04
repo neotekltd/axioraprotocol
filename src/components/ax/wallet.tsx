@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, Check, Copy, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ClientPortal } from '@/components/Portal';
 
 export function WalletTabs({ active }: { active: 'deposit' | 'withdraw' | 'history' }) {
   const tabs = [
@@ -181,8 +182,10 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
   overlayTop?: number;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!open) return;
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const t = setTimeout(() => closeRef.current?.focus(), 80);
@@ -194,29 +197,31 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
       clearTimeout(t);
+      // Restore focus to the control that opened the sheet.
+      if (openerRef.current && document.contains(openerRef.current)) openerRef.current.focus();
     };
   }, [open, onClose]);
   if (!open) return null;
+  // Portaled above the entire app shell: page roots carry a persistent
+  // transform (entrance animation fill), which otherwise traps this fixed
+  // layer in a nested stacking context beneath the bottom nav.
   return (
-    <div className="pointer-events-none fixed inset-0 z-[70]" role="presentation">
+    <ClientPortal>
+      <div className="pointer-events-none fixed inset-0 z-[70]" role="presentation">
       <div
         className={cn('ax-sheet-overlay pointer-events-auto absolute inset-0 bg-black/70', overlayClassName)}
         style={overlayTop !== undefined ? { top: overlayTop } : undefined}
         onClick={onClose}
         aria-hidden="true"
       />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 sm:inset-0 sm:grid sm:place-items-center sm:p-6"
-        style={{ top: '8%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
-      >
+      <div className="pointer-events-none absolute inset-0 flex flex-col justify-end p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:justify-center sm:p-6">
         <div
           role="dialog"
           aria-modal="true"
           aria-label={labelledBy}
-          className="ax-sheet pointer-events-auto w-full overflow-hidden rounded-t-[24px] border border-[#2A394D] bg-[#0C1119] sm:rounded-[24px]"
-          style={{ margin: '0 auto', maxWidth: 520, maxHeight: '80dvh', display: 'flex', flexDirection: 'column' }}
+          className="ax-sheet pointer-events-auto mx-auto flex w-full min-h-0 max-w-[520px] flex-col overflow-hidden rounded-[24px] border border-[#2A394D] bg-[#0C1119]"
         >
-          <div className="flex items-center justify-between gap-3 border-b border-[#202A3A] px-5 py-4">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#202A3A] px-5 py-4">
             <div className="flex min-w-0 items-center gap-3">
               {icon}
               <div className="truncate text-[16px] font-bold text-white">{title}</div>
@@ -231,9 +236,16 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
               <X size={20} />
             </button>
           </div>
-          <div className="thin-scroll min-h-0 overflow-y-auto px-5 py-5">{children}</div>
+          <div
+            data-sheet-body
+            className="thin-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5 pb-[calc(24px+env(safe-area-inset-bottom))] pt-5"
+            style={{ overscrollBehaviorY: 'contain', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+          >
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ClientPortal>
   );
 }

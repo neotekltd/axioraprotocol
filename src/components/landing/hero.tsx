@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { TechEyebrow } from '@/components/landing/background';
 import { HeroRobotStage } from '@/components/landing/robot/HeroRobotStage';
+import { LaunchStamp } from '@/components/landing/launch-stamp';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 
 const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
@@ -37,6 +38,7 @@ export function HeroAutopilot() {
               How it works
             </Link>
           </div>
+          <LaunchStamp />
         </div>
         <div className="hero-in relative mx-auto mt-8 max-w-[720px]" style={{ animationDelay: '950ms' }}>
           <HeroRobotStage />
