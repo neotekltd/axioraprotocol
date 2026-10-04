@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Check, Copy, Mail, MessageCircle, Send } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { PageHeader } from '@/components/data';
-import { PROTOCOL_CONFIG } from '@/lib/config';
+import { AXIORA_TELEGRAM_URL, PROTOCOL_CONFIG } from '@/lib/config';
 import { BANNERS, bannerEmbed } from '@/lib/banners';
 import { formatUSD } from '@/lib/finance';
 import type { ReferralRow } from '@/lib/queries';
@@ -69,10 +69,10 @@ function shareLinks(link: string) {
   const u = encodeURIComponent(link);
   const t = encodeURIComponent(SHARE_TEXT);
   return [
-    { label: 'WhatsApp', href: `https://wa.me/?text=${t}%20${u}`, Icon: MessageCircle },
-    { label: 'Telegram', href: `https://t.me/share/url?url=${u}&text=${t}`, Icon: Send },
-    { label: 'X', href: `https://x.com/intent/tweet?url=${u}&text=${t}`, Icon: null },
-    { label: 'Email', href: `mailto:?subject=${encodeURIComponent('Join me on Axiora Protocol')}&body=${t}%20${u}`, Icon: Mail },
+    { label: 'WhatsApp', href: `https://wa.me/?text=${t}%20${u}`, Icon: MessageCircle, ariaLabel: 'Share on WhatsApp' },
+    { label: 'Telegram', href: AXIORA_TELEGRAM_URL, Icon: Send, ariaLabel: 'Open Axiora on Telegram' },
+    { label: 'X', href: `https://x.com/intent/tweet?url=${u}&text=${t}`, Icon: null, ariaLabel: 'Share on X' },
+    { label: 'Email', href: `mailto:?subject=${encodeURIComponent('Join me on Axiora Protocol')}&body=${t}%20${u}`, Icon: Mail, ariaLabel: 'Share by email' },
   ];
 }
 
@@ -202,13 +202,13 @@ export function ReferralsView({ link, code, referrals, earned }: {
           )}
           {link && (
             <div className="mt-3 flex flex-wrap gap-2" aria-label="Share your link">
-              {shareLinks(link).map(({ label, href, Icon }) => (
+              {shareLinks(link).map(({ label, href, Icon, ariaLabel }) => (
                 <a
                   key={label}
                   href={href}
                   target={href.startsWith('mailto:') ? undefined : '_blank'}
                   rel="noopener noreferrer"
-                  aria-label={`Share on ${label}`}
+                  aria-label={ariaLabel}
                   className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#2A394D] bg-[#111722] px-4 text-[13px] font-semibold text-white transition hover:border-[rgba(47,214,255,0.5)] active:scale-[0.97]"
                 >
                   {Icon ? <Icon size={15} aria-hidden="true" /> : <span aria-hidden="true" className="font-mono text-[13px] font-bold">𝕏</span>}

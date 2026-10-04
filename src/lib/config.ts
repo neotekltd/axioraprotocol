@@ -12,6 +12,11 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
   'https://axioraprotocol.com';
 
+// Canonical Axiora Telegram destination (public username @axioraprotocol).
+// Every Telegram contact button across the app must use this constant —
+// never a different username, share URL, or placeholder.
+export const AXIORA_TELEGRAM_URL = 'https://t.me/axioraprotocol';
+
 export const PROTOCOL_CONFIG = {
   brand: 'Axiora',
   minDeployment: 10,
