@@ -25,7 +25,10 @@ function userMessage(code: string | undefined): string {
   if (code === 'PROVIDER_DISABLED' || code === 'SERVICE_UNAVAILABLE' || code === 'INTENT_STORE_FAILED') {
     return 'Deposits are temporarily unavailable. Please try again shortly.';
   }
-  if (code === 'ASSET_NOT_SUPPORTED' || code === 'VALIDATION_ERROR') {
+  if (code === 'PROVIDER_AUTH_FAILED' || code === 'PROVIDER_UNAVAILABLE') {
+    return 'Automatic deposits are temporarily unavailable.';
+  }
+  if (code === 'PROVIDER_REJECTED' || code === 'ASSET_NOT_SUPPORTED' || code === 'VALIDATION_ERROR') {
     return 'This asset/network is temporarily unavailable. Please choose another option.';
   }
   return "We couldn't create your deposit payment right now. Please try again.";
