@@ -12,6 +12,7 @@ import { ArrowLeft, Check, ChevronDown, QrCode, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/data';
 import { formatUSD } from '@/lib/plans';
 import { submitDepositTx } from '@/lib/actions';
+import { ProviderDeposit } from '@/components/ProviderDeposit';
 import type { WalletTxn } from '@/lib/queries';
 import type { DepositMethod } from '@/lib/deposits';
 import {
@@ -91,10 +92,11 @@ function Tracker({ hasCompleted }: { hasCompleted: boolean }) {
   );
 }
 
-export function DepositView({ methods, deposits, qr }: {
+export function DepositView({ methods, deposits, qr, providerAssets }: {
   methods: DepositMethod[];
   deposits: WalletTxn[];
   qr: Record<string, string>;
+  providerAssets?: string[];
 }) {
   const [idx, setIdx] = useState(0);
   const [amount, setAmount] = useState('100');
@@ -105,7 +107,10 @@ export function DepositView({ methods, deposits, qr }: {
   const [txHash, setTxHash] = useState('');
   const [txBusy, setTxBusy] = useState(false);
   const [txMsg, setTxMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [preferManual, setPreferManual] = useState(false);
   const m = methods[idx];
+  const providerSupported = !!m && (providerAssets ?? []).includes(m.id);
+  const showAuto = providerSupported && !preferManual;
 
   if (!m) {
     return (
@@ -156,6 +161,7 @@ export function DepositView({ methods, deposits, qr }: {
     setIdx(i);
     setChip(null);
     setCoinOpen(false);
+    setPreferManual(false);
   };
 
   const submitTx = async () => {
@@ -177,6 +183,22 @@ export function DepositView({ methods, deposits, qr }: {
         >
           <ArrowLeft size={16} aria-hidden="true" /> Change coin or amount
         </button>
+        {providerSupported && (
+          <div className="mt-4 grid grid-cols-2 gap-1 rounded-[14px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="tablist" aria-label="Deposit method">
+            <button
+              type="button" role="tab" aria-selected={showAuto} onClick={() => setPreferManual(false)}
+              className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
+            >
+              Automatic
+            </button>
+            <button
+              type="button" role="tab" aria-selected={!showAuto} onClick={() => setPreferManual(true)}
+              className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${!showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
+            >
+              Manual
+            </button>
+          </div>
+        )}
         <FlowCard className="mt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -188,6 +210,18 @@ export function DepositView({ methods, deposits, qr }: {
             </div>
             <StatusPill tone={hasCompleted ? 'green' : 'amber'}>{hasCompleted ? 'Credited' : 'Waiting'}</StatusPill>
           </div>
+          {showAuto ? (
+            <div className="mt-5">
+              <ProviderDeposit assetId={m.id} amount={num} networkLabel={`${m.network} (${m.standard})`} />
+              <div className="mt-6">
+                <Tracker hasCompleted={hasCompleted} />
+              </div>
+              <p className="mt-4 text-center text-[13px] text-[#78859A]">
+                After you send, the payment provider confirms it, then it is credited by itself.
+              </p>
+            </div>
+          ) : (
+          <>
           <button
             type="button"
             onClick={() => setQrOpen((v) => !v)}
@@ -271,6 +305,8 @@ export function DepositView({ methods, deposits, qr }: {
           <p className="mt-4 border-t border-[#202A3A] pt-4 text-center text-[13px] text-[#78859A]">
             No time limit · This page updates by itself.
           </p>
+          </>
+          )}
         </FlowCard>
         <p className="mt-4 text-center text-[13px] text-[#78859A]">
           Not credited? <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">Open a ticket</Link> with your transaction hash.

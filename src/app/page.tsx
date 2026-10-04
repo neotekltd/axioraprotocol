@@ -1,4 +1,5 @@
 import { HeroAutopilot, CoinsStrip } from '@/components/landing/hero';
+import { ProviderNote } from '@/components/landing/provider-note';
 import { PlanSyncProvider } from '@/components/landing/plan-sync';
 import { ModulesSection, SimulatorSection, SpecsSection } from '@/components/landing/modules';
 import { BootSequence } from '@/components/landing/BootSequence';
@@ -23,6 +24,7 @@ export default async function Home() {
       <div className="relative">
         <HeroAutopilot />
         <CoinsStrip />
+        <ProviderNote />
         <PlanSyncProvider>
           <ModulesSection />
           <SimulatorSection />

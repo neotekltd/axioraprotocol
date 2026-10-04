@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxButton, AxInput, FieldError, FieldSuccess } from '@/components/ax/controls';
 import { confirmDeposit, rejectDeposit, setWithdrawalStatus, updateNetwork, updateSetting } from '@/lib/admin-actions';
+import { approveWithdrawalPayout, syncPayoutStatus } from '@/lib/payout-actions';
 import type { AdminNetwork } from '@/lib/admin';
 
 function useAction<T extends unknown[], R extends { ok: boolean; message: string }>(fn: (...args: T) => Promise<R>) {
@@ -91,17 +92,25 @@ export function DepositActions({ id, status }: { id: string; status: string }) {
   );
 }
 
-export function WithdrawalActions({ id, status }: { id: string; status: string }) {
+export function WithdrawalActions({ id, status, providerEnabled }: { id: string; status: string; providerEnabled: boolean }) {
   const act = useAction(setWithdrawalStatus);
+  const payout = useAction(approveWithdrawalPayout);
+  const sync = useAction(syncPayoutStatus);
   const [txHash, setTxHash] = useState('');
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2.5">
         {status === 'pending' && (
           <>
-            <button type="button" disabled={act.busy} onClick={() => void act.run({ id, to: 'processing' })} className="min-h-[52px] flex-1 rounded-[14px] bg-[#2FD6FF] px-6 text-[14px] font-bold text-[#06121A] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50">
-              Approve
-            </button>
+            {providerEnabled ? (
+              <button type="button" disabled={payout.busy} onClick={() => void payout.run(id)} className="min-h-[52px] flex-1 rounded-[14px] bg-[#2FD6FF] px-6 text-[14px] font-bold text-[#06121A] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50">
+                Approve &amp; create payout
+              </button>
+            ) : (
+              <button type="button" disabled={act.busy} onClick={() => void act.run({ id, to: 'processing' })} className="min-h-[52px] flex-1 rounded-[14px] bg-[#2FD6FF] px-6 text-[14px] font-bold text-[#06121A] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50">
+                Approve
+              </button>
+            )}
             <button type="button" disabled={act.busy} onClick={() => void act.run({ id, to: 'cancelled' })} className="min-h-[52px] flex-1 rounded-[14px] border border-[rgba(240,107,120,0.4)] px-6 text-[14px] font-bold text-[#F06B78] transition hover:bg-[rgba(240,107,120,0.08)] active:scale-[0.99] disabled:opacity-50">
               Reject
             </button>
@@ -109,6 +118,11 @@ export function WithdrawalActions({ id, status }: { id: string; status: string }
         )}
         {status === 'processing' && (
           <>
+            {providerEnabled && (
+              <button type="button" disabled={sync.busy} onClick={() => void sync.run(id)} className="min-h-[52px] flex-1 rounded-[14px] border border-[rgba(47,214,255,0.5)] px-6 text-[14px] font-bold text-[#2FD6FF] transition hover:bg-[rgba(47,214,255,0.08)] active:scale-[0.99] disabled:opacity-50">
+                Sync provider status
+              </button>
+            )}
             <button type="button" disabled={act.busy} onClick={() => void act.run({ id, to: 'completed', txHash: txHash.trim() || undefined })} className="min-h-[52px] flex-1 rounded-[14px] bg-[#35D98B] px-6 text-[14px] font-bold text-[#06121A] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50">
               Mark sent
             </button>
@@ -124,9 +138,20 @@ export function WithdrawalActions({ id, status }: { id: string; status: string }
       {status === 'processing' && (
         <AxInput value={txHash} onChange={(e) => setTxHash(e.target.value)} placeholder="Broadcast TXID (optional)" autoComplete="off" spellCheck={false} className="font-mono" aria-label="Broadcast transaction hash" />
       )}
+      {providerEnabled && status === 'pending' && (
+        <p className="text-[12px] leading-relaxed text-[#78859A]">
+          Approval creates the NOWPayments payout immediately. Verify the batch in the NOWPayments dashboard (2FA), then use Sync provider status.
+        </p>
+      )}
       {act.result && (act.result.ok
         ? <FieldSuccess message={act.result.message} />
         : <FieldError message={act.result.message} />)}
+      {payout.result && (payout.result.ok
+        ? <FieldSuccess message={payout.result.message} />
+        : <FieldError message={payout.result.message} />)}
+      {sync.result && (sync.result.ok
+        ? <FieldSuccess message={sync.result.message} />
+        : <FieldError message={sync.result.message} />)}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PageHeader, SectionCard, EmptyState, StatusBadge } from '@/components/data';
 import { WithdrawalActions } from '@/components/admin/forms';
 import { getAdminWithdrawals } from '@/lib/admin';
+import { providerEnabled } from '@/lib/nowpayments';
 import { formatUSD } from '@/lib/finance';
 
 export const metadata = { title: 'Admin withdrawals' };
@@ -16,6 +17,7 @@ function short(h: string | null) {
 export default async function AdminWithdrawals({ searchParams }: { searchParams?: { status?: string } }) {
   const status = searchParams?.status ?? 'pending';
   const rows = await getAdminWithdrawals(status);
+  const provider = providerEnabled();
   return (
     <div>
       <PageHeader title="Withdrawals" sub="Approval is separate from broadcast. Mark sent only after the on-chain transaction exists." />
@@ -47,7 +49,7 @@ export default async function AdminWithdrawals({ searchParams }: { searchParams?
                 {w.txHash && <div className="break-all">TX {short(w.txHash)}</div>}
               </div>
               <div className="border-t border-[#202A3A]/60 p-5">
-                <WithdrawalActions id={w.id} status={w.status} />
+                <WithdrawalActions id={w.id} status={w.status} providerEnabled={provider} />
               </div>
             </SectionCard>
           ))}

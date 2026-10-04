@@ -7,16 +7,21 @@
 import QRCode from 'qrcode';
 import { getDepositMethods, isValidDepositAddress, type DepositMethod } from '@/lib/deposits';
 import { getTransactions, type WalletTxn } from '@/lib/queries';
+import { PROVIDER_CURRENCY, providerEnabled } from '@/lib/nowpayments';
 
 export interface DepositViewProps {
   methods: DepositMethod[];
   deposits: WalletTxn[];
   qr: Record<string, string>;
+  providerAssets: string[];
 }
 
 export async function getDepositViewProps(): Promise<DepositViewProps> {
   const [methods, txns] = await Promise.all([getDepositMethods(), getTransactions(20)]);
   const deposits = txns.filter((t) => t.type === 'deposit');
+  const providerAssets = providerEnabled()
+    ? methods.filter((m) => PROVIDER_CURRENCY[m.id]).map((m) => m.id)
+    : [];
   const qr: Record<string, string> = {};
   for (const m of methods) {
     if (isValidDepositAddress(m.id, m.depositAddress)) {
@@ -32,5 +37,5 @@ export async function getDepositViewProps(): Promise<DepositViewProps> {
       }
     }
   }
-  return { methods, deposits, qr };
+  return { methods, deposits, qr, providerAssets };
 }
