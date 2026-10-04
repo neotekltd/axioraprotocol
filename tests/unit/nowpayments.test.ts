@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   PROVIDER_CURRENCY,
+  NpError,
   axioraDepositLabel,
   buildOrderId,
   creditDecision,
   ledgerSymbolFor,
+  mapProviderError,
+  sanitizeProviderBody,
   signIpn,
   sortPayload,
 } from '@/lib/nowpayments';
@@ -85,6 +88,36 @@ describe('credit decision', () => {
       expect(d.outcome).toBe('terminal');
       expect(d.creditAmount).toBe(0);
     }
+  });
+});
+
+describe('provider error mapping (never mask upstream)', () => {
+  it('maps auth failures to 503 without leaking the body', () => {
+    for (const status of [401, 403]) {
+      const mapped = mapProviderError(new NpError(status, '{"message":"Invalid API key"}', '/v1/payment'));
+      expect(mapped.httpStatus).toBe(503);
+      expect(mapped.code).toBe('PROVIDER_AUTH_FAILED');
+    }
+  });
+
+  it('maps payload rejections to 422', () => {
+    for (const status of [400, 422, 404]) {
+      const mapped = mapProviderError(new NpError(status, '{"message":"Invalid pay_currency"}', '/v1/payment'));
+      expect(mapped.httpStatus).toBe(422);
+      expect(mapped.code).toBe('PROVIDER_REJECTED');
+    }
+  });
+
+  it('maps rate-limit/outage/transport to 503', () => {
+    for (const e of [new NpError(429, 'rate limit', '/v1/payment'), new NpError(500, 'oops', '/v1/payment'), new Error('down')]) {
+      const mapped = mapProviderError(e);
+      expect(mapped.httpStatus).toBe(503);
+    }
+  });
+
+  it('sanitizes provider bodies without secrets', () => {
+    expect(sanitizeProviderBody('{"code":"INVALID","message":"bad currency"}')).toContain('code=INVALID');
+    expect(sanitizeProviderBody('not json at all')).toContain('body=not json');
   });
 });
 

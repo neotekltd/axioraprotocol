@@ -9,6 +9,8 @@ import {
   getPaymentStatus,
   providerEnabled,
   axioraDepositLabel,
+  mapProviderError,
+  sanitizeProviderBody,
   NpError,
   type NpPayment,
 } from '@/lib/nowpayments';
@@ -31,25 +33,29 @@ function callbackUrl(): string {
   return `${SITE_URL.replace(/\/$/, '')}/api/payments/nowpayments/ipn`;
 }
 
-// Sanitized server log: HTTP status + provider code/message only.
-function logProviderFailure(op: string, e: unknown, orderId: string) {
+// Sanitized server log: provider + endpoint + HTTP status + safe code/message
+// + Axiora context (order, asset, amount). Never secrets, never the key.
+function logProviderFailure(
+  op: string,
+  e: unknown,
+  ctx: { orderId: string; assetId?: string; amount?: number }
+) {
+  const base = `order=${ctx.orderId}` +
+    (ctx.assetId ? ` asset=${ctx.assetId}` : '') +
+    (typeof ctx.amount === 'number' ? ` amount=${ctx.amount}` : '');
   if (e instanceof NpError) {
-    let code = '';
-    try {
-      const parsed = JSON.parse(e.body) as { code?: unknown; message?: unknown };
-      if (typeof parsed.code === 'string') code = ` code=${parsed.code}`;
-      else if (typeof parsed.message === 'string') code = ` message=${parsed.message.slice(0, 120)}`;
-    } catch {
-      code = ` body=${e.body.slice(0, 120)}`;
-    }
-    console.error(`[NOWPayments] ${op} failed order=${orderId} status=${e.status}${code}`);
+    const endpoint = e.endpoint || '/v1/payment';
+    console.error(
+      `[NOWPayments] ${op} failed provider=nowpayments endpoint=${endpoint} status=${e.status} ${sanitizeProviderBody(e.body)} ${base}`
+    );
   } else {
-    console.error(`[NOWPayments] ${op} failed order=${orderId} transport_error`);
+    console.error(`[NOWPayments] ${op} failed provider=nowpayments reason=transport_error ${base}`);
   }
 }
 
 export async function POST(req: Request) {
   if (!providerEnabled()) {
+    console.error('[NOWPayments] deposit blocked provider=nowpayments reason=missing NOWPAYMENTS_API_KEY');
     return NextResponse.json({ error: 'PROVIDER_DISABLED', code: 'PROVIDER_DISABLED' }, { status: 503 });
   }
   const supabase = createClient();
@@ -138,27 +144,43 @@ export async function POST(req: Request) {
 
   // 2) Provider payment. Currency codes are the API's own canonical
   // identifiers (verified live via GET /v1/currencies), lowercase as the
-  // API returns them — never a bare network-less code.
+  // API returns them — never a bare network-less code, never a display
+  // label like "BNB Smart Chain (BEP20)". Deposit auth is x-api-key ONLY.
+  const ipnUrl = callbackUrl();
+  if (ipnUrl.includes('localhost') || ipnUrl.includes('127.0.0.1')) {
+    console.error(`[NOWPayments] deposit blocked order=${orderId} reason=non_public_ipn_callback`);
+    return NextResponse.json({ error: 'PROVIDER_DISABLED', code: 'PROVIDER_DISABLED' }, { status: 503 });
+  }
   let payment: NpPayment;
   try {
     payment = await createDepositPayment({
       priceAmount: rounded,
-      priceCurrency: 'USD',
+      priceCurrency: 'usd',
       payCurrency,
       orderId,
       orderDescription: `Axiora deposit ${orderId}`,
-      ipnCallbackUrl: callbackUrl(),
+      ipnCallbackUrl: ipnUrl,
     });
   } catch (e) {
-    logProviderFailure('create payment', e, orderId);
+    logProviderFailure('create payment', e, { orderId, assetId, amount: rounded });
     await svc
       .from('wallet_transactions')
       .update({ meta: { asset_id: assetId, order_id: orderId, provider_status: 'provider_error' } })
       .eq('id', (intent as { id: string }).id);
-    const status = e instanceof NpError && e.status >= 400 && e.status < 500 ? 502 : 502;
+    const mapped = mapProviderError(e);
+    return NextResponse.json({ error: mapped.message, code: mapped.code }, { status: mapped.httpStatus });
+  }
+  if (!payment?.payment_id || !payment?.pay_address) {
+    console.error(
+      `[NOWPayments] create payment failed provider=nowpayments endpoint=/v1/payment status=200 reason=incomplete_response order=${orderId} asset=${assetId} amount=${rounded}`
+    );
+    await svc
+      .from('wallet_transactions')
+      .update({ meta: { asset_id: assetId, order_id: orderId, provider_status: 'provider_error' } })
+      .eq('id', (intent as { id: string }).id);
     return NextResponse.json(
-      { error: 'We could not create your deposit payment right now. Please try again.', code: 'PAYMENT_PROVIDER_ERROR' },
-      { status }
+      { error: 'Automatic deposits are temporarily unavailable. Please try again shortly.', code: 'PROVIDER_UNAVAILABLE' },
+      { status: 503 }
     );
   }
 

@@ -118,14 +118,83 @@ export interface NpPayout {
 export class NpError extends Error {
   status: number;
   body: string;
-  constructor(status: number, body: string) {
+  endpoint: string;
+  constructor(status: number, body: string, endpoint = '') {
     super(`NOWPayments request failed (HTTP ${status})`);
     this.status = status;
     this.body = body;
+    this.endpoint = endpoint;
   }
 }
 
+// Sanitized provider-body summary for server logs ONLY (never the key,
+// never secrets). Returns a short `code=…` / `message=…` fragment.
+export function sanitizeProviderBody(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { code?: unknown; message?: unknown; msg?: unknown };
+    if (typeof parsed.code === 'string') return `code=${parsed.code.slice(0, 80)}`;
+    const msg =
+      typeof parsed.message === 'string'
+        ? parsed.message
+        : typeof parsed.msg === 'string'
+          ? parsed.msg
+          : null;
+    if (msg) return `message=${msg.slice(0, 120)}`;
+  } catch {
+    // Not JSON — fall through to raw truncation.
+  }
+  const flat = body.replace(/\s+/g, ' ').trim();
+  return flat ? `body=${flat.slice(0, 120)}` : 'empty_body';
+}
+
+// Maps a provider failure to an Axiora HTTP response. Deposit creation
+// uses x-api-key ONLY — payout JWT auth must never leak into this path.
+export function mapProviderError(e: unknown): { httpStatus: number; code: string; message: string } {
+  if (e instanceof NpError) {
+    if (e.status === 401 || e.status === 403) {
+      return {
+        httpStatus: 503,
+        code: 'PROVIDER_AUTH_FAILED',
+        message: 'Automatic deposits are temporarily unavailable.',
+      };
+    }
+    if (e.status === 400 || e.status === 422) {
+      return {
+        httpStatus: 422,
+        code: 'PROVIDER_REJECTED',
+        message: 'This network is temporarily unavailable.',
+      };
+    }
+    if (e.status === 429 || e.status >= 500) {
+      return {
+        httpStatus: 503,
+        code: 'PROVIDER_UNAVAILABLE',
+        message: 'Automatic deposits are temporarily unavailable. Please try again shortly.',
+      };
+    }
+    if (e.status >= 400 && e.status < 500) {
+      return {
+        httpStatus: 422,
+        code: 'PROVIDER_REJECTED',
+        message: 'This network is temporarily unavailable.',
+      };
+    }
+    return {
+      httpStatus: 503,
+      code: 'PROVIDER_UNAVAILABLE',
+      message: 'Automatic deposits are temporarily unavailable. Please try again shortly.',
+    };
+  }
+  return {
+    httpStatus: 503,
+    code: 'PROVIDER_UNAVAILABLE',
+    message: 'Automatic deposits are temporarily unavailable. Please try again shortly.',
+  };
+}
+
 async function npFetch<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  // Deposit auth = x-api-key header ONLY. Payout JWT (Authorization Bearer)
+  // is a separate payout-only flow and must never be sent here.
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20000);
   try {
@@ -139,10 +208,53 @@ async function npFetch<T>(path: string, init?: { method?: string; body?: unknown
       signal: ctrl.signal,
     });
     const text = await res.text();
-    if (!res.ok) throw new NpError(res.status, text.slice(0, 500));
+    if (!res.ok) throw new NpError(res.status, text.slice(0, 500), path);
     return JSON.parse(text) as T;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+// --- Server-side diagnostics (never expose the key) --------------------------
+// Safe auth preflight: GET /v1/currencies isolates an API-key/config
+// problem from a payment-payload problem. Call before POST /v1/payment
+// when diagnosing, and STOP on auth failure.
+export async function listProviderCurrencies(): Promise<string[]> {
+  const data = await npFetch<{ currencies?: unknown } | string[]>('/v1/currencies');
+  if (Array.isArray(data)) return data.filter((c): c is string => typeof c === 'string');
+  if (data && typeof data === 'object' && Array.isArray((data as { currencies?: unknown }).currencies)) {
+    return ((data as { currencies: unknown[] }).currencies).filter((c): c is string => typeof c === 'string');
+  }
+  return [];
+}
+
+export async function listFullCurrencies(): Promise<unknown> {
+  return npFetch<unknown>('/v1/full-currencies');
+}
+
+export async function listMerchantCoins(): Promise<unknown> {
+  return npFetch<unknown>('/v1/merchant/coins');
+}
+
+export interface ProviderDiagnosis {
+  ok: boolean;
+  stage: 'currencies';
+  httpStatus: number;
+  detail: string;
+  count: number;
+}
+
+// Runs GET /v1/currencies with the configured key and returns a sanitized
+// summary (status + safe message + count). Never includes secrets.
+export async function diagnoseProvider(): Promise<ProviderDiagnosis> {
+  try {
+    const currencies = await listProviderCurrencies();
+    return { ok: true, stage: 'currencies', httpStatus: 200, detail: 'authenticated', count: currencies.length };
+  } catch (e) {
+    if (e instanceof NpError) {
+      return { ok: false, stage: 'currencies', httpStatus: e.status, detail: sanitizeProviderBody(e.body), count: 0 };
+    }
+    return { ok: false, stage: 'currencies', httpStatus: 0, detail: 'transport_error', count: 0 };
   }
 }
 
@@ -160,8 +272,9 @@ export function createDepositPayment(input: CreateDepositInput): Promise<NpPayme
     method: 'POST',
     body: {
       price_amount: input.priceAmount,
-      price_currency: input.priceCurrency,
-      pay_currency: input.payCurrency,
+      // NOWPayments canonical codes are lowercase (usd, btc, usdttrc20…).
+      price_currency: input.priceCurrency.toLowerCase(),
+      pay_currency: input.payCurrency.toLowerCase(),
       order_id: input.orderId,
       order_description: input.orderDescription,
       ipn_callback_url: input.ipnCallbackUrl,
