@@ -1,34 +1,19 @@
 'use client';
 
-// Authenticated app shell chrome: fixed top header (mark + Live pill with
-// real session-elapsed timer + notifications + avatar), fixed 5-item bottom
-// nav with safe-area padding, floating support button. Desktop swaps the
-// bottom nav for a sidebar rail (see AppShell).
+// Authenticated app shell chrome: fixed top header (mark + site-wide Live
+// pill counting from the fixed go-live moment + notifications + avatar),
+// fixed 5-item bottom nav with safe-area padding, floating support button.
+// Desktop swaps the bottom nav for a sidebar rail (see AppShell).
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { Bell, Home, LifeBuoy, Send, TrendingUp, Users, Wallet } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { AccountMenu } from '@/components/ax/account-menu';
+import { LiveCounter } from '@/components/LiveCounter';
 import { cn } from '@/lib/utils';
 
-function useSessionElapsed(active: boolean) {
-  const [secs, setSecs] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    const t0 = Date.now();
-    const id = setInterval(() => setSecs(Math.floor((Date.now() - t0) / 1000)), 1000);
-    return () => clearInterval(id);
-  }, [active]);
-  const h = String(Math.floor(secs / 3600)).padStart(2, '0');
-  const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
-  const s = String(secs % 60).padStart(2, '0');
-  return `${h}:${m}:${s}`;
-}
-
 export function AppHeader({ email, username, unread = 0 }: { email?: string | null; username?: string | null; unread?: number }) {
-  const elapsed = useSessionElapsed(true);
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-5 md:px-7">
@@ -42,10 +27,9 @@ export function AppHeader({ email, username, unread = 0 }: { email?: string | nu
             AXIORA<span className="text-[#2FD6FF]">.</span>
           </span>
         </Link>
-        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 min-[420px]:flex" role="status" aria-label="Session live">
+        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 min-[420px]:flex" role="status" aria-label="Axiora live">
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#35D98B]" aria-hidden="true" />
-          <span className="text-[13px] font-semibold text-[#AAB5C7]">Live</span>
-          <span className="font-mono text-[13px] text-[#78859A]" suppressHydrationWarning>{elapsed}</span>
+          <LiveCounter />
         </div>
         <div className="flex items-center gap-2.5">
           <Link
