@@ -45,7 +45,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'BAD_JSON' }, { status: 400 });
   }
 
-  const paymentId = str(payload.payment_id);
+  // payment_id is numeric in real NOWPayments callbacks — accept both.
+  const rawId: unknown = payload.payment_id;
+  const paymentId =
+    str(rawId) ?? (typeof rawId === 'number' && Number.isFinite(rawId) ? String(rawId) : null);
   const providerStatus = str(payload.payment_status);
   if (!paymentId || !providerStatus) {
     return NextResponse.json({ error: 'BAD_SHAPE' }, { status: 400 });
