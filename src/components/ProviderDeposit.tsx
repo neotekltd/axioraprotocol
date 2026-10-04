@@ -21,6 +21,16 @@ interface ProviderPayment {
   label: string;
 }
 
+function userMessage(code: string | undefined): string {
+  if (code === 'PROVIDER_DISABLED' || code === 'SERVICE_UNAVAILABLE' || code === 'INTENT_STORE_FAILED') {
+    return 'Deposits are temporarily unavailable. Please try again shortly.';
+  }
+  if (code === 'ASSET_NOT_SUPPORTED' || code === 'VALIDATION_ERROR') {
+    return 'This asset/network is temporarily unavailable. Please choose another option.';
+  }
+  return "We couldn't create your deposit payment right now. Please try again.";
+}
+
 type Tone = 'amber' | 'green' | 'cyan';
 
 function toneFor(status: string): Tone {
@@ -61,14 +71,12 @@ export function ProviderDeposit({ assetId, amount, networkLabel }: {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error === 'PROVIDER_UNAVAILABLE'
-          ? 'Payment provider is unreachable. Try again or use the manual route below.'
-          : 'Could not create the payment. Try again.');
+        setError(userMessage((data as { code?: string }).code ?? (data as { error?: string }).error));
         return;
       }
       setPayment(data.payment as ProviderPayment);
     } catch {
-      setError('Network error. Try again.');
+      setError('Deposits are temporarily unavailable. Please try again shortly.');
     } finally {
       setBusy(false);
     }
