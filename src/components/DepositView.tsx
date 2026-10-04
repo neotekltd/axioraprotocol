@@ -107,7 +107,7 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
   const [txHash, setTxHash] = useState('');
   const [txBusy, setTxBusy] = useState(false);
   const [txMsg, setTxMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [preferManual, setPreferManual] = useState(true);
+  const [preferManual, setPreferManual] = useState(false);
   const m = methods[idx];
   const providerSupported = !!m && (providerAssets ?? []).includes(m.id);
   const showAuto = providerSupported && !preferManual;
@@ -161,7 +161,7 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
     setIdx(i);
     setChip(null);
     setCoinOpen(false);
-    setPreferManual(true);
+    setPreferManual(false);
   };
 
   const submitTx = async () => {
@@ -186,16 +186,16 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
         {providerSupported && (
           <div className="mt-4 grid grid-cols-2 gap-1 rounded-[14px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="tablist" aria-label="Deposit method">
             <button
-              type="button" role="tab" aria-selected={!showAuto} onClick={() => setPreferManual(true)}
-              className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${!showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
-            >
-              Manual Deposit
-            </button>
-            <button
               type="button" role="tab" aria-selected={showAuto} onClick={() => setPreferManual(false)}
               className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
             >
               Automatic Deposit
+            </button>
+            <button
+              type="button" role="tab" aria-selected={!showAuto} onClick={() => setPreferManual(true)}
+              className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${!showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
+            >
+              Manual Deposit
             </button>
           </div>
         )}
