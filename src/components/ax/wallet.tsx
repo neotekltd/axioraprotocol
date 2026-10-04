@@ -207,7 +207,7 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
   // layer in a nested stacking context beneath the bottom nav.
   return (
     <ClientPortal>
-      <div className="pointer-events-none fixed inset-0 z-[70]" role="presentation">
+      <div data-sheet-root="" className="pointer-events-none fixed inset-0 z-[70]" role="presentation">
       <div
         className={cn('ax-sheet-overlay pointer-events-auto absolute inset-0 bg-black/70', overlayClassName)}
         style={overlayTop !== undefined ? { top: overlayTop } : undefined}

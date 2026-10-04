@@ -107,9 +107,20 @@ function SignOutRow() {
 export function AccountMenu({ email, username }: { email?: string | null; username?: string | null }) {
   const [open, setOpen] = useState(false);
   const [renderDesktop, setRenderDesktop] = useState(false);
+  // Mobile sheet mounts only below the lg breakpoint: BottomSheet portals
+  // itself to document.body, so the lg:hidden wrapper class cannot hide its
+  // content — without this gate, desktop gets a duplicate dialog plus a
+  // full-viewport overlay intercepting the anchored popover.
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const sync = () => setIsDesktop(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const sheetWrapRef = useRef<HTMLDivElement>(null);
 
   // Desktop popover exit animation handling.
   useEffect(() => {
@@ -126,15 +137,17 @@ export function AccountMenu({ email, username }: { email?: string | null; userna
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      const el = e.target as Node | null;
-      // The mobile sheet is portaled to body, so it needs its own ref —
-      // otherwise every tap inside the sheet counts as "outside" and kills
-      // the menu on pointerdown before click handlers run.
+      const el = e.target as Element | null;
+      // The mobile sheet lives in BottomSheet's own body portal (a different
+      // host node than this component's wrapper), so ref containment can
+      // never match it — every tap inside the sheet counted as "outside"
+      // and closed the menu on pointerdown before click handlers ran. Match
+      // by the sheet root marker instead.
+      if (el && typeof el.closest === 'function' && el.closest('[data-sheet-root]')) return;
       if (
         el &&
         (triggerRef.current?.contains(el) ||
-          panelRef.current?.contains(el) ||
-          sheetWrapRef.current?.contains(el))
+          panelRef.current?.contains(el))
       )
         return;
       setOpen(false);
@@ -190,21 +203,26 @@ export function AccountMenu({ email, username }: { email?: string | null; userna
       )}
 
       {/* Mobile bottom sheet — portaled to body so the header's
-          backdrop-filter cannot reparent its fixed positioning. */}
-      <ClientPortal>
-        <div ref={sheetWrapRef} className="lg:hidden">
-          <BottomSheet
-            open={open}
-            onClose={() => setOpen(false)}
-            labelledBy="Account menu"
-            overlayClassName="inset-x-0 bottom-0"
-            overlayTop={76}
-            title={<Identity username={username ?? null} email={email ?? null} />}
-          >
-            <MenuRows onNavigate={() => setOpen(false)} />
-          </BottomSheet>
-        </div>
-      </ClientPortal>
+          backdrop-filter cannot reparent its fixed positioning.
+          Mounted only below lg (see isDesktop): BottomSheet portals its
+          own content, so a CSS hiding class on this wrapper could never
+          hide the dialog/overlay from desktop. */}
+      {open && !isDesktop && (
+        <ClientPortal>
+          <div className="lg:hidden">
+            <BottomSheet
+              open={open}
+              onClose={() => setOpen(false)}
+              labelledBy="Account menu"
+              overlayClassName="inset-x-0 bottom-0"
+              overlayTop={76}
+              title={<Identity username={username ?? null} email={email ?? null} />}
+            >
+              <MenuRows onNavigate={() => setOpen(false)} />
+            </BottomSheet>
+          </div>
+        </ClientPortal>
+      )}
     </div>
   );
 }
