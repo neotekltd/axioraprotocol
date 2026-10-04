@@ -516,6 +516,37 @@ export async function getSupportTickets(): Promise<SupportTicket[]> {
   }
 }
 
+export interface TicketMessage {
+  id: string;
+  sender: 'user' | 'admin';
+  body: string;
+  createdAt: string;
+}
+
+// Non-internal conversation for one of the user's own tickets. RLS enforces
+// ownership; internal admin notes are never selected here.
+export async function getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('ticket_messages')
+      .select('id,sender,body,created_at')
+      .eq('ticket_id', ticketId)
+      .eq('internal', false)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map((m) => ({
+      id: String(m.id),
+      sender: m.sender === 'admin' ? 'admin' : 'user',
+      body: String(m.body ?? ''),
+      createdAt: String(m.created_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getWallets(): Promise<SavedWallet[]> {
   try {
     const supabase = createClient();

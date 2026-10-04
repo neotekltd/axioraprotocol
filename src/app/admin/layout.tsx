@@ -14,6 +14,7 @@ const NAV: [string, string][] = [
   ['Assets', '/admin/assets'],
   ['Deposits', '/admin/deposits'],
   ['Withdrawals', '/admin/withdrawals'],
+  ['Support', '/admin/support'],
   ['Users', '/admin/users'],
   ['Audit', '/admin/audit'],
   ['Settings', '/admin/settings'],

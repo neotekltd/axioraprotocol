@@ -6,6 +6,7 @@ import { AxButton, AxInput, AxSelect, AxTextarea, FieldError, FieldSuccess } fro
 import { FAQS } from '@/lib/mock';
 import { createSupportTicket } from '@/lib/actions';
 import type { SupportTicket } from '@/lib/queries';
+import { TicketThread } from '@/components/TicketThread';
 
 const CATEGORIES = ['general', 'deposit', 'withdrawal', 'plans', 'referrals', 'security', 'other'] as const;
 
@@ -85,9 +86,11 @@ export function SupportView({ tickets }: { tickets: SupportTicket[] }) {
                   </button>
                   <div className={`grid transition-all duration-300 ease-out ${expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                     <div className="overflow-hidden">
-                      <div className="border-t border-[#202A3A]/60 px-5 py-4">
-                        <p className="text-[14px] leading-relaxed text-[#AAB5C7]">{t.message}</p>
-                        <p className="mt-2 font-mono text-[11px] text-[#78859A]">STATUS: {st.label.toUpperCase()} — replies arrive by email.</p>
+                      <div className="border-t border-[#202A3A]/60">
+                        {expanded && (
+                          <TicketThread ticketId={t.id} opener={t.message} openerAt={t.createdAt} closed={t.status === 'closed'} />
+                        )}
+                        <p className="px-5 pb-4 font-mono text-[11px] text-[#78859A]">STATUS: {st.label.toUpperCase()} — replies arrive by email.</p>
                       </div>
                     </div>
                   </div>

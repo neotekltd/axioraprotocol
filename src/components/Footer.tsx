@@ -7,7 +7,8 @@ export function Footer() {
   const pathname = usePathname();
   // Authenticated /app area uses its own shell without the marketing footer.
   // Auth routes use the standalone AuthShell with its own footer.
-  if (pathname.startsWith('/app')) return null;
+  // /admin owns the dedicated admin shell.
+  if (pathname.startsWith('/app') || pathname.startsWith('/admin')) return null;
   if (['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'].includes(pathname)) return null;
   const col = 'text-[11px] font-semibold tracking-[0.2em] text-fog';
   const link = 'block text-[13px] text-mist/75 hover:text-pulse transition-colors';

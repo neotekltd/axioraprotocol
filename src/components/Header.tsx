@@ -92,7 +92,9 @@ export function Header() {
 
   // The authenticated /app area owns its own shell (sidebar + mobile drawer).
   // Auth routes use the standalone AuthShell with its own header/footer.
-  if (pathname.startsWith('/app')) return null;
+  // /admin owns the dedicated admin shell — the marketing header must never
+  // stack above it (that collision produced the duplicated mobile headers).
+  if (pathname.startsWith('/app') || pathname.startsWith('/admin')) return null;
   if (['/login', '/register', '/verify-email', '/forgot-password', '/reset-password'].includes(pathname)) return null;
   return (
     <>

@@ -11,6 +11,7 @@ import { Bell, Home, LifeBuoy, Send, TrendingUp, Users, Wallet } from 'lucide-re
 import { AxioraMark } from '@/components/AxioraLogo';
 import { AccountMenu } from '@/components/ax/account-menu';
 import { LiveCounter } from '@/components/LiveCounter';
+import { AXIORA_TELEGRAM_URL } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
 export function AppHeader({ email, username, unread = 0 }: { email?: string | null; username?: string | null; unread?: number }) {
@@ -84,16 +85,18 @@ export function MobileBottomNav() {
   );
 }
 
-// Global floating support widget: fixed to the viewport, above page
+// Global floating Telegram widget: fixed to the viewport, above page
 // content but below drawers/modals (z-40 vs public drawer z-60), offset
 // above the mobile bottom nav in-app, safe-area aware everywhere.
-// Destination is the existing in-app support route — no external
-// Telegram/username is invented anywhere in the project.
+// Destination is the canonical Axiora Telegram channel — in-app support
+// tickets remain reachable via the Support navigation entry.
 export function FloatingSupportButton() {
   return (
-    <Link
-      href="/app/support"
-      aria-label="Open Axiora support"
+    <a
+      href={AXIORA_TELEGRAM_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Open Axiora on Telegram"
       className="ax-fab fixed bottom-[calc(104px+env(safe-area-inset-bottom))] right-[14px] z-40 grid h-14 w-14 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FD6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:bottom-[calc(24px+env(safe-area-inset-bottom))] lg:right-[24px]"
     >
       <span aria-hidden="true" className="ax-fab-ring" />
@@ -101,15 +104,16 @@ export function FloatingSupportButton() {
       <span className="ax-fab-btn">
         <Send size={24} />
       </span>
-    </Link>
+    </a>
   );
 }
 
 // Public-site floating support: hidden inside /app (the app shell renders
-// its own). Links to the in-app support route (auth-gated for visitors).
+// its own) and /admin (dedicated admin shell). Links to the in-app support
+// route (auth-gated for visitors).
 export function PublicFloatingSupport() {
   const pathname = usePathname();
-  if (pathname.startsWith('/app')) return null;
+  if (pathname.startsWith('/app') || pathname.startsWith('/admin')) return null;
   return (
     <div className="[&_a]:!bottom-[calc(24px+env(safe-area-inset-bottom))]">
       <FloatingSupportButton />

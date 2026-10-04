@@ -42,13 +42,30 @@ export async function confirmDeposit(id: string): Promise<AdminResult> {
     const supabase = createClient();
     const { data: row } = await supabase
       .from('wallet_transactions')
-      .select('id,status,type,asset,amount,user_id')
+      .select('id,status,type,asset,amount,user_id,provider,meta')
       .eq('id', id)
       .maybeSingle();
-    const r = row as { id: string; status: string; type: string; asset: string; amount: string; user_id: string } | null;
+    const r = row as {
+      id: string; status: string; type: string; asset: string; amount: string; user_id: string;
+      provider: string | null; meta: Record<string, unknown> | null;
+    } | null;
     if (!r || r.type !== 'deposit') return { ok: false, message: 'Deposit not found.' };
     if (r.status === 'completed') return { ok: true, message: 'Already credited — no duplicate entry created.' };
     if (r.status !== 'pending') return { ok: false, message: `Only pending deposits can be confirmed (now ${r.status}).` };
+    // Automatic provider deposits credit themselves via verified IPN — a
+    // manual confirm would invent money movement the provider never
+    // reported. Only flagged exceptions (needs review) may be confirmed.
+    if (r.provider === 'nowpayments') {
+      const meta = r.meta ?? {};
+      const flagged = (meta as { needs_review?: unknown }).needs_review === true;
+      const pStatus = typeof (meta as { provider_status?: unknown }).provider_status === 'string'
+        ? (meta as { provider_status: string }).provider_status
+        : null;
+      const exception = flagged || (pStatus !== null && ['partially_paid', 'failed', 'expired', 'refunded'].includes(pStatus));
+      if (!exception) {
+        return { ok: false, message: 'Automatic provider deposit — it credits itself on provider confirmation. No manual action.' };
+      }
+    }
     const { error } = await supabase
       .from('wallet_transactions')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
@@ -192,6 +209,98 @@ export async function updateNetwork(form: Record<string, unknown>): Promise<Admi
       return { ok: false, message: 'Deposit address missing — network left disabled.' };
     }
     return { ok: false, message: 'Could not save the network.' };
+  }
+}
+
+const TicketReplySchema = z.object({
+  ticketId: z.string().uuid(),
+  body: z.string().trim().min(1).max(4000),
+  key: z.string().trim().min(8).max(64),
+  internal: z.boolean().optional().default(false),
+});
+
+// Admin reply (or internal note) on a support ticket. Idempotent per
+// (ticket, client key): double-clicks and retries converge to one message.
+// Message persistence and user notification are separated — a notification
+// failure never rolls back a stored reply.
+export async function replyToTicket(form: { ticketId: string; body: string; key: string; internal?: boolean }): Promise<AdminResult> {
+  const parsed = TicketReplySchema.safeParse({ ...form, internal: form.internal ?? false });
+  if (!parsed.success) return { ok: false, message: 'Reply must be 1–4000 characters.' };
+  const adminId = await requireAdminId();
+  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  const { ticketId, body, key, internal } = parsed.data;
+  try {
+    const supabase = createClient();
+    const { data: ticket } = await supabase
+      .from('support_tickets')
+      .select('id,status,user_id,subject')
+      .eq('id', ticketId)
+      .maybeSingle();
+    const t = ticket as { id: string; status: string; user_id: string | null; subject: string } | null;
+    if (!t) return { ok: false, message: 'Ticket not found.' };
+    const { data: existing } = await supabase
+      .from('ticket_messages')
+      .select('id')
+      .eq('ticket_id', ticketId)
+      .eq('idempotency_key', key)
+      .maybeSingle();
+    if (existing) return { ok: true, message: internal ? 'Note already saved.' : 'Reply already sent.' };
+    const { error } = await supabase.from('ticket_messages').insert({
+      ticket_id: ticketId,
+      sender: 'admin',
+      sender_id: adminId,
+      body,
+      internal,
+      idempotency_key: key,
+    });
+    if (error) throw error;
+    // Admin activity moves the ticket to answered (reopens closed ones);
+    // internal notes leave status untouched.
+    const patch: Record<string, string> = { updated_at: new Date().toISOString() };
+    if (!internal) patch.status = 'answered';
+    await supabase.from('support_tickets').update(patch).eq('id', ticketId);
+    await audit(supabase, adminId, internal ? 'TICKET_NOTE' : 'TICKET_REPLY', 'ticket', ticketId, { status: t.status });
+    if (!internal && t.user_id) {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: t.user_id,
+          type: 'support',
+          title: 'Support replied',
+          body: t.subject,
+        });
+      } catch {
+        // Notification is best-effort; the stored reply stands.
+      }
+    }
+    revalidatePath('/admin/support');
+    return { ok: true, message: internal ? 'Internal note saved.' : 'Reply sent.' };
+  } catch {
+    return { ok: false, message: 'Could not save the reply.' };
+  }
+}
+
+const TicketStatusSchema = z.object({
+  ticketId: z.string().uuid(),
+  to: z.enum(['open', 'answered', 'closed']),
+});
+
+export async function setTicketStatus(form: { ticketId: string; to: 'open' | 'answered' | 'closed' }): Promise<AdminResult> {
+  const parsed = TicketStatusSchema.safeParse(form);
+  if (!parsed.success) return { ok: false, message: 'Invalid status.' };
+  const adminId = await requireAdminId();
+  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  try {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('support_tickets')
+      .update({ status: parsed.data.to, updated_at: new Date().toISOString() })
+      .eq('id', parsed.data.ticketId);
+    if (error) throw error;
+    await audit(supabase, adminId, 'TICKET_STATUS', 'ticket', parsed.data.ticketId, { to: parsed.data.to });
+    revalidatePath('/admin/support');
+    return { ok: true, message: `Ticket ${parsed.data.to}.` };
+  } catch {
+    return { ok: false, message: 'Could not change the ticket status.' };
   }
 }
 

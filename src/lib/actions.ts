@@ -293,6 +293,93 @@ export async function createSupportTicket(form: { subject: string; message: stri
   }
 }
 
+const UserReplySchema = z.object({
+  ticketId: z.string().uuid(),
+  body: z.string().trim().min(1).max(4000),
+  key: z.string().trim().min(8).max(64),
+});
+
+// Authenticated user reply on their own ticket. A reply reopens the ticket
+// (open) so it returns to the admin queue. Idempotent per client key.
+export async function replyToSupportTicket(form: { ticketId: string; body: string; key: string }): Promise<ActionResult> {
+  const parsed = UserReplySchema.safeParse(form);
+  if (!parsed.success) return { ok: false, message: 'Reply must be 1–4000 characters.' };
+  const uid = await userId();
+  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  try {
+    const supabase = createClient();
+    const { data: ticket } = await supabase
+      .from('support_tickets')
+      .select('id,user_id')
+      .eq('id', parsed.data.ticketId)
+      .maybeSingle();
+    const t = ticket as { id: string; user_id: string | null } | null;
+    if (!t || t.user_id !== uid) return { ok: false, message: 'Ticket not found.' };
+    const { data: existing } = await supabase
+      .from('ticket_messages')
+      .select('id')
+      .eq('ticket_id', parsed.data.ticketId)
+      .eq('idempotency_key', parsed.data.key)
+      .maybeSingle();
+    if (existing) return { ok: true, message: 'Reply already sent.' };
+    const { error } = await supabase.from('ticket_messages').insert({
+      ticket_id: parsed.data.ticketId,
+      sender: 'user',
+      sender_id: uid,
+      body: parsed.data.body,
+      internal: false,
+      idempotency_key: parsed.data.key,
+    });
+    if (error) throw error;
+    await supabase
+      .from('support_tickets')
+      .update({ status: 'open', updated_at: new Date().toISOString() })
+      .eq('id', parsed.data.ticketId);
+    await notify(supabase, uid, 'support', 'Reply sent', 'Support will follow up shortly.');
+    revalidatePath('/app/support');
+    return { ok: true, message: 'Reply sent.' };
+  } catch {
+    return { ok: false, message: 'Could not send the reply.' };
+  }
+}
+
+export interface TicketMessage {
+  id: string;
+  sender: 'user' | 'admin';
+  body: string;
+  createdAt: string;
+}
+
+// Owned conversation read for the caller's own ticket (server action so the
+// browser never touches privileged reads; RLS + explicit ownership check).
+export async function getMyTicketMessages(ticketId: string): Promise<TicketMessage[]> {
+  const uid = await userId();
+  if (!uid) return [];
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ticketId)) return [];
+  try {
+    const supabase = createClient();
+    const { data: ticket } = await supabase.from('support_tickets').select('id,user_id').eq('id', ticketId).maybeSingle();
+    const t = ticket as { id: string; user_id: string | null } | null;
+    if (!t || t.user_id !== uid) return [];
+    const { data, error } = await supabase
+      .from('ticket_messages')
+      .select('id,sender,body,created_at')
+      .eq('ticket_id', ticketId)
+      .eq('internal', false)
+      .order('created_at', { ascending: true })
+      .limit(200);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map((m) => ({
+      id: String(m.id),
+      sender: m.sender === 'admin' ? 'admin' : 'user',
+      body: String(m.body ?? ''),
+      createdAt: String(m.created_at ?? ''),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 const TxSubmitSchema = z.object({
   assetId: z.string(),
   amount: z.coerce.number().positive().max(100000000),

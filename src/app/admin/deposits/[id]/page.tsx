@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PageHeader, SectionCard, StatusBadge } from '@/components/data';
 import { DepositActions } from '@/components/admin/forms';
-import { getAdminDeposits } from '@/lib/admin';
+import { depositNeedsReview, getAdminDeposits, isAutomaticDeposit, providerStatusOf } from '@/lib/admin';
 import { getDepositAddress } from '@/lib/deposits';
 import { formatUSD } from '@/lib/finance';
 
@@ -38,13 +38,30 @@ export default async function AdminDepositReview({ params }: { params: { id: str
   const assetId = typeof d.meta.asset_id === 'string' ? d.meta.asset_id : null;
   const expectedNow = assetId ? getDepositAddress(assetId) : '';
   const recipientMatch = expectedNow !== '' && d.address !== null && d.address.trim() === expectedNow;
+  const automatic = isAutomaticDeposit(d.provider);
+  const pStatus = providerStatusOf(d.meta);
+  const needsReview = depositNeedsReview(d.meta, pStatus);
+  const metaStr = (k: string) => {
+    const v = d.meta[k];
+    if (typeof v === 'string' && v.length > 0) return v;
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+    return null;
+  };
+  const paymentId = d.providerRef;
   return (
     <div>
       <Link href="/admin/deposits?status=pending" className="text-[14px] text-[#AAB5C7] hover:text-white">← Deposit queue</Link>
       <div className="mt-2">
         <PageHeader title={`Deposit ${d.id.slice(0, 8)}`} sub="Verify on the correct explorer before confirming." />
       </div>
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-bold tracking-[0.12em] ${
+          automatic
+            ? 'border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] text-[#2FD6FF]'
+            : 'border-[rgba(242,191,74,0.4)] bg-[rgba(242,191,74,0.08)] text-[#F2BF4A]'
+        }`}>
+          {automatic ? 'AUTOMATIC · NOWPAYMENTS' : 'MANUAL · TXID REVIEW'}
+        </span>
         <StatusBadge status={d.status} />
         <span className="font-mono text-[13px] text-[#78859A]">{d.createdAt.slice(0, 16).replace('T', ' ')}</span>
       </div>
@@ -67,6 +84,18 @@ export default async function AdminDepositReview({ params }: { params: { id: str
           )}
         </div>
       </SectionCard>
+      {automatic && (
+        <SectionCard title="Provider · NOWPayments">
+          <Row k="Rail" v="AUTOMATIC — credits itself on verified provider confirmation" />
+          {paymentId && <Row k="Payment ID" v={paymentId} mono />}
+          {typeof d.meta.order_id === 'string' && d.meta.order_id.length > 0 && <Row k="Order ID" v={d.meta.order_id} mono />}
+          {pStatus && <Row k="Provider status" v={pStatus} mono />}
+          {metaStr('pay_currency') && <Row k="Pay currency" v={String(metaStr('pay_currency')).toUpperCase()} mono />}
+          {metaStr('pay_amount') && <Row k="Pay amount" v={metaStr('pay_amount') as string} mono />}
+          {needsReview && <Row k="Attention" v="Flagged for review — see reason in ledger meta" />}
+          {!needsReview && d.status === 'pending' && <Row k="Attention" v="In flight — no admin action. It credits on finished." />}
+        </SectionCard>
+      )}
       <SectionCard title="Blockchain verification">
         <div className="px-5 py-4 text-[13px] leading-relaxed text-[#AAB5C7]">
           Check on the explorer: transaction exists, correct network, recipient is the configured deposit
@@ -85,7 +114,7 @@ export default async function AdminDepositReview({ params }: { params: { id: str
       </SectionCard>
       <SectionCard title="Admin action">
         <div className="p-5">
-          <DepositActions id={d.id} status={d.status} />
+          <DepositActions id={d.id} status={d.status} provider={d.provider} needsReview={needsReview} />
         </div>
       </SectionCard>
     </div>

@@ -27,13 +27,26 @@ function useAction<T extends unknown[], R extends { ok: boolean; message: string
   return { busy, result, run };
 }
 
-export function DepositActions({ id, status }: { id: string; status: string }) {
+export function DepositActions({ id, status, provider, needsReview }: {
+  id: string; status: string; provider?: string | null; needsReview?: boolean;
+}) {
   const confirm = useAction(confirmDeposit);
   const reject = useAction(rejectDeposit);
   const [reason, setReason] = useState('');
   const [arming, setArming] = useState<'confirm' | 'reject' | null>(null);
   if (status !== 'pending') {
     return <p className="text-[13px] text-[#78859A]">This deposit is {status} — no further action available.</p>;
+  }
+  // Normal automatic provider deposits credit themselves on verified IPN:
+  // no admin approve button. Flagged exceptions keep the review actions
+  // (the server re-validates before crediting).
+  if (provider === 'nowpayments' && !needsReview) {
+    return (
+      <p className="text-[13px] leading-relaxed text-[#78859A]">
+        Automatic NOWPayments deposit — it credits itself when the provider confirms payment.
+        No admin approval. If the provider reports a problem, it appears under Needs attention.
+      </p>
+    );
   }
   return (
     <div className="space-y-3">
