@@ -10,9 +10,46 @@ import { TechEyebrow } from '@/components/landing/background';
 import { HeroRobotStage } from '@/components/landing/robot/HeroRobotStage';
 import { LaunchStamp } from '@/components/landing/launch-stamp';
 import { PROTOCOL_CONFIG } from '@/lib/config';
+import { PLANS } from '@/lib/plans';
 import { getDict } from '@/lib/i18n-server';
+import type { Dictionary } from '@/lib/i18n-dict';
 
 const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
+
+// Directional arrow for primary CTAs (decorative icon, never mirrored —
+ // both locales are LTR).
+export function CtaArrow() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-4 w-4">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+// Terminal-style boot log with REAL Axiora facts (plan count, payout
+// cycle from the canonical plan config). Axiora-original copy, staggered
+// entrance matching the hero choreography. Decorative only.
+function BootLog({ t }: { t: Dictionary }) {
+  const cycle = PLANS[0]?.cycleHours ?? 6;
+  const lines = [
+    t.land.bootLedger,
+    t.land.bootPlans.replace('{n}', String(PLANS.length)),
+    t.land.bootCycle.replace('{h}', String(cycle)),
+  ];
+  return (
+    <div className="hero-in mx-auto mt-6 max-w-xs text-left font-mono text-[11px] leading-relaxed text-fog" aria-hidden="true" style={{ animationDelay: '900ms' }}>
+      {lines.map((l) => (
+        <p key={l}>
+          <span className="text-pulse">›</span> {l} <b className="text-[#35D98B]">ok</b>
+        </p>
+      ))}
+      <p>
+        <span className="text-pulse">›</span> {t.land.bootReady}
+        <span className="ax-caret" />
+      </p>
+    </div>
+  );
+}
 
 export function HeroAutopilot() {
   const t = getDict();
@@ -32,13 +69,15 @@ export function HeroAutopilot() {
             {t.land.heroSub}
           </p>
           <div className="hero-in mt-7 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: '800ms' }}>
-            <Link href="/register" className="rounded-md bg-pulse px-5 py-2.5 text-[13px] font-bold text-black shadow-glow transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070B]">
+            <Link href="/register" className="flex items-center gap-2 rounded-md bg-pulse px-5 py-2.5 text-[13px] font-bold text-black shadow-glow transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070B]">
               {t.header.activateAccount}
+              <CtaArrow />
             </Link>
             <Link href="/how-it-works" className="rounded-md border border-line px-5 py-2.5 text-[13px] text-mist transition hover:border-pulse/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070B]">
               {t.header.drawer.howItWorks}
             </Link>
           </div>
+          <BootLog t={t} />
           <LaunchStamp />
         </div>
         <div className="hero-in relative mx-auto mt-8 max-w-[720px]" style={{ animationDelay: '950ms' }}>

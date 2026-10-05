@@ -29,6 +29,20 @@ export function WalletSummaryRow({ icon, title, subtitle, amount, tone = 'neutra
   );
 }
 
+// Hero figure with de-emphasized decimals (reference rhythm: integer
+// commands, cents whisper). Masking already applied by the caller.
+function HeroAmount({ value, hidden }: { value: string; hidden: boolean }) {
+  if (hidden) return <>{value}</>;
+  const dot = value.lastIndexOf('.');
+  if (dot < 0) return <>{value}</>;
+  return (
+    <>
+      {value.slice(0, dot)}
+      <span className="text-[0.55em] font-bold text-[#AAB5C7]">{value.slice(dot)}</span>
+    </>
+  );
+}
+
 export function BalanceHeroCard({ total, available, earning, invested, hasDeposits }: {
   total: number; available: number; earning: number; invested: number; hasDeposits: boolean;
 }) {
@@ -60,7 +74,7 @@ export function BalanceHeroCard({ total, available, earning, invested, hasDeposi
           </button>
         </div>
         <div className="mt-1 max-w-[70%] font-mono text-[40px] font-bold leading-none tracking-tight text-white sm:text-[44px]" aria-live="polite">
-          {mask(formatUSD(total))}
+          <HeroAmount value={mask(formatUSD(total))} hidden={hidden} />
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <Link href="/app/deposit" className="flex min-h-[52px] items-center justify-center gap-2 rounded-[12px] bg-[#2FD6FF] text-[14px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99]">

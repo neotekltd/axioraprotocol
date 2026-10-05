@@ -9,6 +9,7 @@ import { TechEyebrow } from '@/components/landing/background';
 import { useInViewOnce } from '@/components/landing/motion';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 import { useT } from '@/components/LanguageProvider';
+import { CtaArrow } from '@/components/landing/hero';
 import { PLANS, formatUSD } from '@/lib/plans';
 
 export function ReferralNetworkSection() {
@@ -102,7 +103,7 @@ export function FinalCta() {
             <h2 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">{t.land.ctaT}</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-fog">{t.land.ctaS}</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <Link href="/register" className="rounded-lg bg-pulse px-7 py-3 text-sm font-bold text-black shadow-glow transition hover:-translate-y-0.5 hover:brightness-110">{t.header.activateAccount}</Link>
+              <Link href="/register" className="flex items-center gap-2 rounded-lg bg-pulse px-7 py-3 text-sm font-bold text-black shadow-glow transition hover:-translate-y-0.5 hover:brightness-110">{t.header.activateAccount}<CtaArrow /></Link>
               <Link href="#modules" className="rounded-lg border border-line px-7 py-3 text-sm transition hover:border-pulse/50 hover:text-white">{t.land.viewModules}</Link>
             </div>
           </div>
