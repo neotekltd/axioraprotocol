@@ -13,18 +13,9 @@ import { PROTOCOL_CONFIG } from '@/lib/config';
 import { PLANS } from '@/lib/plans';
 import { getDict } from '@/lib/i18n-server';
 import type { Dictionary } from '@/lib/i18n-dict';
+import { CtaArrow } from '@/components/CtaArrow';
 
 const MODELS = ['CLAUDE', 'GPT', 'FABLE', 'ASTRA'];
-
-// Directional arrow for primary CTAs (decorative icon, never mirrored —
- // both locales are LTR).
-export function CtaArrow() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-4 w-4">
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
-  );
-}
 
 // Terminal-style boot log with REAL Axiora facts (plan count, payout
 // cycle from the canonical plan config). Axiora-original copy, staggered

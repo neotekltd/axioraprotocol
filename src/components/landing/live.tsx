@@ -9,7 +9,7 @@ import { TechEyebrow } from '@/components/landing/background';
 import { useInViewOnce } from '@/components/landing/motion';
 import { PROTOCOL_CONFIG } from '@/lib/config';
 import { useT } from '@/components/LanguageProvider';
-import { CtaArrow } from '@/components/landing/hero';
+import { CtaArrow } from '@/components/CtaArrow';
 import { PLANS, formatUSD } from '@/lib/plans';
 
 export function ReferralNetworkSection() {
