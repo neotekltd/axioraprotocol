@@ -14,6 +14,7 @@ import {
   NpError,
   type NpPayment,
 } from '@/lib/nowpayments';
+import { syncAutomaticDepositByRef, fetchRowByPaymentRef } from '@/lib/provider-sync';
 import { SITE_URL } from '@/lib/config';
 import { ASSET_IDS } from '@/lib/deposits';
 
@@ -234,25 +235,27 @@ export async function GET(req: Request) {
     .maybeSingle();
   if (!row) return NextResponse.json({ error: 'NOT_FOUND', code: 'NOT_FOUND' }, { status: 404 });
 
-  // Throttled server-side refresh (≥60s) so reopening a pending payment
-  // shows authoritative state without hammering the provider.
+  // Throttled server-side sync (≥60s): the row is reconciled against the
+  // provider (transitions + idempotent credit), not just meta-refreshed, so
+  // a finished payment credits even when its IPN never arrived. Provider
+  // hiccups serve the stored record instead of failing.
   const meta = (row.meta as Record<string, unknown>) ?? {};
   const last = typeof meta.last_provider_check === 'string' ? Date.parse(meta.last_provider_check) : 0;
+  let providerStatus = typeof meta.provider_status === 'string' ? meta.provider_status : 'waiting';
+  let ledgerStatus: string = typeof row.status === 'string' ? row.status : 'pending';
   if (providerEnabled() && row.status === 'pending' && Date.now() - last > 60000) {
     try {
-      const fresh = await getPaymentStatus(paymentId);
-      await svc
-        .from('wallet_transactions')
-        .update({
-          meta: { ...meta, provider_status: fresh.payment_status, last_provider_check: new Date().toISOString() },
-        })
-        .eq('id', row.id);
-      meta.provider_status = fresh.payment_status;
+      const synced = await syncAutomaticDepositByRef(paymentId);
+      if (synced.providerStatus) providerStatus = synced.providerStatus;
+      if (synced.result === 'credited' || synced.result === 'already_credited') {
+        ledgerStatus = 'completed';
+      } else if (synced.result === 'terminal') {
+        ledgerStatus = providerStatus === 'expired' ? 'expired' : 'failed';
+      }
     } catch {
       // Provider hiccup: serve the stored record instead of failing.
     }
   }
-  const providerStatus = typeof meta.provider_status === 'string' ? meta.provider_status : 'waiting';
   return NextResponse.json({
     payment: {
       paymentId,
@@ -264,7 +267,7 @@ export async function GET(req: Request) {
       payCurrency: meta.pay_currency ?? null,
       status: providerStatus,
       label: axioraDepositLabel(providerStatus),
-      ledgerStatus: row.status,
+      ledgerStatus,
       txHash: row.tx_hash,
       createdAt: row.created_at,
       completedAt: row.completed_at,

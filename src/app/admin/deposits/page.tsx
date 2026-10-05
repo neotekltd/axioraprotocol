@@ -7,7 +7,7 @@ import { stWord } from '@/lib/i18n-dict';
 
 export const metadata = { title: 'Admin deposits' };
 
-const TABS = ['pending', 'completed', 'rejected', 'all'] as const;
+const TABS = ['pending', 'completed', 'expired', 'rejected', 'all'] as const;
 
 function short(h: string | null) {
   if (!h) return '—';
@@ -45,7 +45,7 @@ export default async function AdminDeposits({ searchParams }: { searchParams?: {
   return (
     <div>
       <PageHeader title={t.admin.deposits.title} sub={t.admin.deposits.autoNote} />
-      <div className="mt-6 grid grid-cols-4 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="navigation" aria-label={t.admin.deposits.filterStatus}>
+      <div className="mt-6 grid grid-cols-5 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="navigation" aria-label={t.admin.deposits.filterStatus}>
         {TABS.map((s) => (
           <Link
             key={s}
@@ -83,7 +83,9 @@ export default async function AdminDeposits({ searchParams }: { searchParams?: {
                       <TypeBadge provider={d.provider} autoLbl={t.admin.deposits.typeAutomatic} manualLbl={t.admin.deposits.typeManual} />
                       <StatusBadge status={d.status} label={stWord(t, d.status)} />
                       {isAutomaticDeposit(d.provider) && providerStatusOf(d.meta) && (
-                        <span className="font-mono text-[11px] text-[#78859A]">{stWord(t, providerStatusOf(d.meta) as string)}</span>
+                        <span className="rounded-full border border-[#2A394D] bg-[#111722] px-2 py-0.5 font-mono text-[10px] font-bold tracking-[0.12em] text-[#AAB5C7]">
+                          {stWord(t, providerStatusOf(d.meta) as string).toUpperCase()}
+                        </span>
                       )}
                     </div>
                     <div dir="ltr" className="mt-1 truncate text-left font-mono text-[12px] text-[#78859A]">

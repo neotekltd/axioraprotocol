@@ -912,6 +912,7 @@ export const en = {
     agoD: '{n} d ago',
     agoNone: 'none yet',
     agoUnknown: 'unknown',
+    syncError: 'Provider sync failed — showing last known states',
   },
   rev: {
     backQueue: 'Deposit queue',
@@ -2607,6 +2608,7 @@ export const es: Dictionary = {
     agoD: 'hace {n} d',
     agoNone: 'nada aún',
     agoUnknown: 'desconocido',
+    syncError: 'Falló la sincronización — últimos estados conocidos',
   },
   rev: {
     backQueue: 'Cola de depósitos',

@@ -7,6 +7,7 @@ import { getSessionUser } from '@/lib/queries';
 import { isSoleAdminEmail } from '@/lib/admin-email';
 import { providerEnabled } from '@/lib/nowpayments';
 import { runtimeEnv } from '@/lib/runtime-env';
+import { reconcileStaleAutomatics } from '@/lib/provider-sync';
 
 // Single-admin gate: the ONLY administrator is the sole admin email,
 // verified server-side from the authenticated session on every call.
@@ -43,6 +44,9 @@ export interface AdminMetrics {
   providerApiConfigured: boolean;
   providerIpnConfigured: boolean;
   providerLastActivity: string | null;
+  // Provider reconciliation health: null when the last sync round was clean
+  // (or nothing needed syncing), otherwise a safe code (never secrets).
+  providerSyncError: string | null;
   dbOk: boolean;
 }
 
@@ -69,9 +73,19 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
     pendingWithdrawalsTotal: 0, activeInvested: 0, pendingManual: 0, pendingManualTotal: 0,
     autoPending: 0, autoFinished: 0, needsAttention: 0,
     providerApiConfigured: false, providerIpnConfigured: false, providerLastActivity: null,
+    providerSyncError: null,
     dbOk: false,
   };
   try {
+    // Reconcile BEFORE counting so "in flight" reflects provider truth, not
+    // stale pending rows. Bounded + throttled; failures never break metrics.
+    let syncError: string | null = null;
+    try {
+      const report = await reconcileStaleAutomatics();
+      syncError = report.syncError;
+    } catch {
+      syncError = 'reconcile_failed';
+    }
     const supabase = createClient();
     const num = (v: unknown) => (typeof v === 'string' ? Number(v) : typeof v === 'number' ? v : 0);
     const [{ count: users }, { data: dep }, { data: wd }, { data: inv }, { count: autoFinished }, { data: lastAct }] = await Promise.all([
@@ -118,6 +132,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
       providerApiConfigured: (() => { try { return providerEnabled(); } catch { return false; } })(),
       providerIpnConfigured: (() => { try { return !!runtimeEnv('NOWPAYMENTS_IPN_SECRET'); } catch { return false; } })(),
       providerLastActivity: lastRows.length > 0 ? String(lastRows[0].created_at ?? '') || null : null,
+      providerSyncError: syncError,
       dbOk: true,
     };
   } catch {
@@ -224,6 +239,14 @@ export type DepositKind = 'all' | 'manual' | 'automatic' | 'review';
 
 export async function getAdminDeposits(status: string | null, kind: DepositKind = 'all'): Promise<AdminTxn[]> {
   try {
+    // Reconcile BEFORE listing so terminal provider states (expired/failed/
+    // finished) are reflected instead of stale pending rows. Bounded +
+    // throttled; failures never break the listing.
+    try {
+      await reconcileStaleAutomatics();
+    } catch {
+      // Fall through to the stored rows.
+    }
     const supabase = createClient();
     let q = supabase
       .from('wallet_transactions')

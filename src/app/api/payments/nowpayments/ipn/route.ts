@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { verifyIpnSignature, creditDecision } from '@/lib/nowpayments';
+import { verifyIpnSignature } from '@/lib/nowpayments';
+import { applyProviderState, fetchRowByPaymentRef } from '@/lib/provider-sync';
 
 // Public NOWPayments IPN endpoint:
 //   https://axioraprotocol.com/api/payments/nowpayments/ipn
@@ -55,12 +56,7 @@ export async function POST(req: Request) {
   }
 
   const svc = createServiceClient();
-  const { data: row } = await svc
-    .from('wallet_transactions')
-    .select('id, user_id, asset, amount, status, network, meta')
-    .eq('provider', 'nowpayments')
-    .eq('provider_ref', paymentId)
-    .maybeSingle();
+  const row = await fetchRowByPaymentRef(svc, paymentId);
 
   // Unknown payment: acknowledge without action (stops provider retries;
   // operator can reconcile from the provider dashboard).
@@ -69,7 +65,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ result: 'ignored_unknown_payment' });
   }
 
-  const meta = (row.meta as Record<string, unknown>) ?? {};
+  const meta = row.meta ?? {};
   const orderId = str(payload.order_id);
   const storedOrder = typeof meta.order_id === 'string' ? meta.order_id : null;
   if (storedOrder && orderId && storedOrder !== orderId) {
@@ -82,58 +78,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ result: 'recorded_order_mismatch' });
   }
 
-  const expected = Number(row.amount);
-  const decision = creditDecision({
-    providerStatus,
-    expected: Number.isFinite(expected) ? expected : 0,
-    actuallyPaidCrypto: num(payload.actually_paid),
-    outcomeAmount: num(payload.outcome_amount),
-    outcomeCurrency: str(payload.outcome_currency),
-  });
   // Note: deposit callbacks carry no user-facing blockchain hash
   // (purchase_id is an internal provider reference, not a TXID), so the
   // ledger tx_hash stays empty — provider state is authoritative here.
-  const { data, error } = await svc.rpc('apply_provider_credit', {
-    p_provider: 'nowpayments',
-    p_payment_id: paymentId,
-    p_order_id: orderId ?? storedOrder ?? '',
-    p_user_id: row.user_id,
-    p_asset: row.asset,
-    p_network: row.network ?? '',
-    p_pay_address: str(payload.pay_address) ?? '',
-    p_expected: Number.isFinite(expected) ? expected : 0,
-    p_credit_amount: decision.creditAmount,
-    p_mark_completed: decision.outcome === 'credit',
-    p_provider_status: providerStatus,
-    p_tx_hash: '',
-    p_payload: payload as Record<string, unknown>,
+  // Shared with the reconciliation fallback: identical outcomes for the
+  // same provider state, idempotent on retries.
+  const applied = await applyProviderState(svc, row, {
+    status: providerStatus,
+    payAddress: str(payload.pay_address),
+    payCurrency: null,
+    actuallyPaidCrypto: num(payload.actually_paid),
+    outcomeAmount: num(payload.outcome_amount),
+    outcomeCurrency: str(payload.outcome_currency),
+    orderId: orderId ?? storedOrder,
   });
-  if (error) {
-    console.error(`[ipn] credit apply failed payment=${paymentId} code=${error.code}`);
+  if (applied.result === 'error') {
+    console.error(`[ipn] apply failed payment=${paymentId} reason=${applied.error ?? 'unknown'}`);
     return NextResponse.json({ error: 'APPLY_FAILED' }, { status: 500 });
   }
-
-  if (data === 'credited') {
-    console.info(`[ipn] credited payment=${paymentId} amount=${decision.creditAmount}`);
+  if (applied.result === 'credited') {
+    console.info(`[ipn] credited payment=${paymentId}`);
   }
-
-  // Terminal provider states close a still-pending ledger row as failed;
-  // review states flag it without touching the balance.
-  if (decision.outcome === 'terminal') {
-    await svc
-      .from('wallet_transactions')
-      .update({ status: 'failed' })
-      .eq('id', row.id)
-      .eq('status', 'pending');
-  } else if (decision.outcome === 'review') {
-    await svc
-      .from('wallet_transactions')
-      .update({ meta: { ...meta, needs_review: true, review_reason: decision.reason } })
-      .eq('id', row.id)
-      .eq('status', 'pending');
-  }
-
-  return NextResponse.json({ result: data ?? decision.outcome });
+  return NextResponse.json({ result: applied.result });
 }
 
 export async function GET() {

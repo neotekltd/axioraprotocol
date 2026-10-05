@@ -41,6 +41,9 @@ export default async function AdminDashboard() {
           <li className="flex items-center gap-1.5"><Dot ok={m.providerApiConfigured} warn={!m.providerApiConfigured} /> {t.ops.payApi} {m.providerApiConfigured ? t.ops.keyOk : t.ops.keyNo}</li>
           <li className="flex items-center gap-1.5"><Dot ok={m.providerIpnConfigured} warn={!m.providerIpnConfigured} /> {t.ops.ipn} {m.providerIpnConfigured ? t.ops.secretOk : t.ops.secretNo}</li>
           <li className="flex items-center gap-1.5"><Dot ok /> {t.ops.payoutsManual}</li>
+          {m.providerSyncError && (
+            <li className="flex items-center gap-1.5 text-[#F2BF4A]"><Dot ok={false} warn /> {t.ops.syncError}</li>
+          )}
         </ul>
       </div>
 
