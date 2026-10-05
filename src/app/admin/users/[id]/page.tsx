@@ -4,12 +4,15 @@ import { PageHeader, SectionCard, StatusBadge } from '@/components/data';
 import { getAdminUsers } from '@/lib/admin';
 import { createClient } from '@/lib/supabase/server';
 import { formatUSD } from '@/lib/finance';
+import { getDict } from '@/lib/i18n-server';
+import { stWord } from '@/lib/i18n-dict';
 
 export const metadata = { title: 'Admin user detail' };
 
 const num = (v: unknown) => (typeof v === 'string' ? Number(v) : typeof v === 'number' ? v : 0);
 
 export default async function AdminUserDetail({ params }: { params: { id: string } }) {
+  const t = getDict();
   const found = await getAdminUsers('');
   const user = found.find((u) => u.id === params.id);
   if (!user) {
@@ -33,42 +36,42 @@ export default async function AdminUserDetail({ params }: { params: { id: string
 
   return (
     <div>
-      <Link href="/admin/users" className="text-[14px] text-[#AAB5C7] hover:text-white">← Users</Link>
+      <Link href="/admin/users" className="text-[14px] text-[#AAB5C7] hover:text-white">← {t.ax.backUsers}</Link>
       <div className="mt-2">
-        <PageHeader title={user?.email ?? params.id.slice(0, 8)} sub={user ? `@${user.username ?? '—'} · code ${user.referralCode} · since ${user.createdAt.slice(0, 10)}` : undefined} />
+        <PageHeader title={user?.email ?? params.id.slice(0, 8)} sub={user ? `@${user.username ?? '—'} · ${t.ax.codeSince.replace('{c}', user.referralCode).replace('{d}', user.createdAt.slice(0, 10))}` : undefined} />
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <SectionCard title="Wallets">
+        <SectionCard title={t.ax.walletsSec}>
           {(((wallets.data ?? []) as Record<string, unknown>[]).length === 0) ? (
-            <p className="px-5 py-4 text-[13px] text-[#78859A]">No saved addresses.</p>
+            <p className="px-5 py-4 text-[13px] text-[#78859A]">{t.ax.noAddrSaved}</p>
           ) : (
             <ul className="divide-y divide-[#202A3A]/70">
               {((wallets.data ?? []) as Record<string, unknown>[]).map((w) => (
                 <li key={String(w.id)} className="px-5 py-3 font-mono text-[12px] text-[#AAB5C7]">
                   <span className="text-white">{String(w.asset)}/{String(w.network)}</span>
-                  <span className="block break-all">{String(w.address)}</span>
+                  <span dir="ltr" className="block break-all text-left">{String(w.address)}</span>
                 </li>
               ))}
             </ul>
           )}
         </SectionCard>
-        <SectionCard title={`Active invested · ${formatUSD(depSum)}`}>
+        <SectionCard title={`${t.ax.activeInvSec} · ${formatUSD(depSum)}`}>
           {(((deps.data ?? []) as Record<string, unknown>[]).length === 0) ? (
-            <p className="px-5 py-4 text-[13px] text-[#78859A]">No deployments.</p>
+            <p className="px-5 py-4 text-[13px] text-[#78859A]">{t.ax.noDeps}</p>
           ) : (
             <ul className="divide-y divide-[#202A3A]/70">
               {((deps.data ?? []) as Record<string, unknown>[]).map((d) => (
                 <li key={String(d.id)} className="flex items-center justify-between gap-2 px-5 py-3 text-[13px]">
                   <span className="font-mono text-white">{formatUSD(num(d.amount))} · {String(d.plan ?? '')}</span>
-                  <StatusBadge status={String(d.status ?? '')} />
+                  <StatusBadge status={String(d.status ?? '')} label={stWord(t, String(d.status ?? ''))} />
                 </li>
               ))}
             </ul>
           )}
         </SectionCard>
-        <SectionCard title={`Referrals · ${((refs.data ?? []) as unknown[]).length}`}>
+        <SectionCard title={`${t.ax.refSec} · ${((refs.data ?? []) as unknown[]).length}`}>
           {(((refs.data ?? []) as Record<string, unknown>[]).length === 0) ? (
-            <p className="px-5 py-4 text-[13px] text-[#78859A]">No referrals.</p>
+            <p className="px-5 py-4 text-[13px] text-[#78859A]">{t.ax.noRefs}</p>
           ) : (
             <ul className="divide-y divide-[#202A3A]/70">
               {((refs.data ?? []) as Record<string, unknown>[]).slice(0, 10).map((r) => (
@@ -80,17 +83,17 @@ export default async function AdminUserDetail({ params }: { params: { id: string
           )}
         </SectionCard>
       </div>
-      <SectionCard title={`Transactions · ${txRows.length}`}>
+      <SectionCard title={`${t.ax.txSec} · ${txRows.length}`}>
         {txRows.length === 0 ? (
-          <p className="px-5 py-4 text-[13px] text-[#78859A]">No transactions.</p>
+          <p className="px-5 py-4 text-[13px] text-[#78859A]">{t.ax.noTx}</p>
         ) : (
           <ul className="divide-y divide-[#202A3A]/70">
-            {txRows.map((t) => (
-              <li key={String(t.id)} className="flex items-center justify-between gap-3 px-5 py-3 text-[13px]">
-                <span className="font-mono capitalize text-white">{String(t.type)} {String(t.asset)}</span>
+            {txRows.map((row) => (
+              <li key={String(row.id)} className="flex items-center justify-between gap-3 px-5 py-3 text-[13px]">
+                <span className="font-mono capitalize text-white">{String(row.type)} {String(row.asset)}</span>
                 <span className="flex items-center gap-2">
-                  <span className="font-mono text-white">{formatUSD(num(t.amount))}</span>
-                  <StatusBadge status={String(t.status ?? '')} />
+                  <span className="font-mono text-white">{formatUSD(num(row.amount))}</span>
+                  <StatusBadge status={String(row.status ?? '')} label={stWord(t, String(row.status ?? ''))} />
                 </span>
               </li>
             ))}

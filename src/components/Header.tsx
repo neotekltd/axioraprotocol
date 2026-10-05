@@ -4,31 +4,44 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { useT } from '@/components/LanguageProvider';
 import { createClient } from '@/lib/supabase/client';
 
-const NAV = [
-  { href: '/protocol', label: 'Protocol' },
-  { href: '/how-it-works', label: 'How It Works' },
-  { href: '/technology', label: 'Technology' },
-  { href: '/calculator', label: 'Calculator' },
-  { href: '/referral-program', label: 'Referrals' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/faq', label: 'FAQ' },
-];
+const NAV_KEYS = [
+  'protocol',
+  'howItWorks',
+  'technology',
+  'calculator',
+  'referrals',
+  'blog',
+  'faq',
+] as const;
+
+const NAV_HREFS: Record<(typeof NAV_KEYS)[number], string> = {
+  protocol: '/protocol',
+  howItWorks: '/how-it-works',
+  technology: '/technology',
+  calculator: '/calculator',
+  referrals: '/referral-program',
+  blog: '/blog',
+  faq: '/faq',
+};
 
 // Drawer destinations preserve the reference numbering/presentation with
 // Axiora's real routes (anchors work from any page via /#...).
-const DRAWER_NAV = [
-  { n: '01', href: '/#modules', label: 'Plans' },
-  { n: '02', href: '/how-it-works', label: 'How it works' },
-  { n: '03', href: '/technology', label: 'Features' },
-  { n: '04', href: '/statistics', label: 'Live stats' },
-  { n: '05', href: '/referral-program', label: 'Referrals' },
-  { n: '06', href: '/faq', label: 'FAQ' },
-];
+const DRAWER_ITEMS = [
+  { n: '01', href: '/#modules', key: 'plans' },
+  { n: '02', href: '/how-it-works', key: 'howItWorks' },
+  { n: '03', href: '/technology', key: 'features' },
+  { n: '04', href: '/statistics', key: 'liveStats' },
+  { n: '05', href: '/referral-program', key: 'referrals' },
+  { n: '06', href: '/faq', key: 'faq' },
+] as const;
 
 export function Header() {
   const pathname = usePathname();
+  const t = useT();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [renderDrawer, setRenderDrawer] = useState(false);
@@ -107,14 +120,12 @@ export function Header() {
         <div className="border-b border-line/50 px-4 font-mono text-[11px] md:px-8" aria-hidden="true">
           <div className="mx-auto flex h-[44px] max-w-page items-center justify-between text-fog">
             <span className="flex items-center gap-1.5 tracking-[0.18em] text-[#35D98B]">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#35D98B]" /> SYSTEM ONLINE
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#35D98B]" /> {t.header.systemOnline}
             </span>
             <Link href="/app/support" className="tracking-[0.18em] transition hover:text-white">
-              SUPPORT CHAT
+              {t.header.supportChat}
             </Link>
-            <span className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 tracking-[0.12em]">
-              <span className="text-[13px]">EN</span> <span className="text-[9px]">▾</span>
-            </span>
+            <LanguageSelector compact />
           </div>
         </div>
         {/* Row 2 — main nav */}
@@ -127,24 +138,24 @@ export function Header() {
             </span>
           </Link>
           <nav className="hidden items-center gap-7 lg:flex">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href} className="text-[13px] text-mist/80 hover:text-pulse transition-colors">
-                {n.label}
+            {NAV_KEYS.map((key) => (
+              <Link key={NAV_HREFS[key]} href={NAV_HREFS[key]} className="text-[13px] text-mist/80 hover:text-pulse transition-colors">
+                {t.header.nav[key]}
               </Link>
             ))}
           </nav>
           <div className="hidden items-center gap-2.5 lg:flex">
             {authed ? (
               <Link href="/app/dashboard" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
-                Dashboard
+                {t.header.dashboard}
               </Link>
             ) : (
               <>
                 <Link href="/login" className="rounded-md px-3.5 py-2 text-[13px] text-mist hover:text-pulse border border-line hover:border-pulse/40 transition-colors">
-                  Sign In
+                  {t.header.signIn}
                 </Link>
                 <Link href="/register" className="rounded-md bg-pulse px-4 py-2 text-[13px] font-bold text-black hover:brightness-110 shadow-glow transition">
-                  Get Started
+                  {t.header.getStarted}
                 </Link>
               </>
             )}
@@ -155,12 +166,12 @@ export function Header() {
               href={authed ? '/app/dashboard' : '/register'}
               className="flex h-[46px] shrink-0 items-center whitespace-nowrap rounded-[12px] bg-pulse px-3.5 text-[13px] font-bold text-black shadow-glow transition hover:brightness-110 min-[400px]:px-4"
             >
-              {authed ? 'Dashboard' : 'Activate account'}
+              {authed ? t.header.dashboard : t.header.activateAccount}
             </Link>
             <button
               ref={openerRef}
               onClick={() => setOpen(true)}
-              aria-label="Open navigation"
+              aria-label={t.header.openNav}
               aria-expanded={open}
               className="grid h-12 w-12 shrink-0 place-items-center rounded-[12px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white"
             >
@@ -184,27 +195,27 @@ export function Header() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Site navigation"
+            aria-label={t.header.siteNav}
             className={`absolute bottom-0 right-0 top-0 flex h-[100dvh] w-[clamp(300px,87vw,420px)] flex-col border-l border-[rgba(100,150,180,0.15)] bg-[#090D14] transition-transform duration-[400ms] ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
           >
             <div className="tech-dots pointer-events-none absolute inset-0 opacity-30" aria-hidden="true" />
             <div className="relative flex items-center justify-between px-[36px] pb-2 pt-6">
               <span className="flex items-center gap-2.5 font-mono text-[12px] tracking-[0.25em] text-fog">
                 <span className="h-2 w-2 rounded-full bg-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]" aria-hidden="true" />
-                NAVIGATION
+                {t.header.navigation}
               </span>
               <button
                 ref={closeRef}
                 onClick={close}
-                aria-label="Close navigation"
+                aria-label={t.header.closeNav}
                 className="grid h-12 w-12 place-items-center rounded-[12px] border border-line bg-void text-mist transition hover:border-pulse/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse active:scale-95"
               >
                 <X size={22} />
               </button>
             </div>
-            <nav aria-label="Mobile" className="relative flex-1 overflow-y-auto px-[36px] pb-6 pt-[32px]">
+            <nav aria-label={t.header.mobileNav} className="relative flex-1 overflow-y-auto px-[36px] pb-6 pt-[32px]">
               <ul>
-                {DRAWER_NAV.map((n, i) => (
+                {DRAWER_ITEMS.map((n, i) => (
                   <li
                     key={n.n}
                     className={`border-b border-[rgba(120,140,165,0.12)] transition-all duration-300 ${open ? 'translate-x-0 opacity-100' : 'translate-x-6 opacity-0'}`}
@@ -217,7 +228,7 @@ export function Header() {
                     >
                       <span className="w-10 shrink-0 font-mono text-[14px] text-pulse transition group-hover:brightness-125" aria-hidden="true">{n.n}</span>
                       <span className="text-[20px] font-bold tracking-tight text-white transition-transform duration-200 group-hover:translate-x-[2px]">
-                        {n.label}
+                        {t.header.drawer[n.key]}
                       </span>
                     </Link>
                   </li>
@@ -231,7 +242,7 @@ export function Header() {
                   onClick={close}
                   className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110 active:scale-[0.99]"
                 >
-                  Dashboard
+                  {t.header.dashboard}
                 </Link>
               ) : (
                 <>
@@ -240,14 +251,14 @@ export function Header() {
                     onClick={close}
                     className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] border border-line bg-[#111722] text-[16px] font-bold text-white transition hover:border-pulse/50 active:scale-[0.99]"
                   >
-                    Sign in
+                    {t.header.signInAction}
                   </Link>
                   <Link
                     href="/register"
                     onClick={close}
                     className="flex min-h-[56px] w-full items-center justify-center rounded-[14px] bg-pulse text-[16px] font-bold text-black shadow-glow transition hover:brightness-110 active:scale-[0.99]"
                   >
-                    Activate account
+                    {t.header.activateAccount}
                   </Link>
                 </>
               )}

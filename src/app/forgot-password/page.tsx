@@ -1,4 +1,5 @@
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = {
   title: 'Forgot password',
@@ -7,11 +8,12 @@ export const metadata = {
 };
 
 export default function ForgotPage() {
+  const t = getDict();
   return (
     <div className="mx-auto max-w-md px-4 pt-12 pb-20">
       <div className="glass rounded-3xl p-8">
-        <h1 className="text-2xl font-bold">Reset password</h1>
-        <p className="mt-1 text-xs text-fog">Enter your account email to receive a reset link.</p>
+        <h1 className="text-2xl font-bold">{t.auth.forgotTitle}</h1>
+        <p className="mt-1 text-xs text-fog">{t.auth.forgotSub}</p>
         <ForgotPasswordForm />
       </div>
     </div>

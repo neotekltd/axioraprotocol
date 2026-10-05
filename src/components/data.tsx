@@ -63,12 +63,14 @@ const BADGE_STYLES: Record<string, string> = {
   rejected: 'border-[rgba(240,107,120,0.4)] bg-[rgba(240,107,120,0.08)] text-[#F06B78]',
 };
 
-export function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status, label }: { status: string; label?: string }) {
+  // Style is keyed by the RAW technical status (never translated); the
+  // visible label is localized by the caller via stWord().
   const key = status.toLowerCase();
   const style = BADGE_STYLES[key] ?? 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]';
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${style}`}>
-      {status}
+      {label ?? status}
     </span>
   );
 }

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxButton, FieldError, FieldSuccess } from '@/components/ax/controls';
 import { getMyTicketMessages, replyToSupportTicket, type TicketMessage } from '@/lib/actions';
+import { useT } from '@/components/LanguageProvider';
 
 function mountKey(): string {
   try {
@@ -23,6 +24,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const t = useT();
   const keyRef = useRef<string | null>(null);
   if (keyRef.current === null) keyRef.current = mountKey();
   const router = useRouter();
@@ -53,7 +55,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
         router.refresh();
       }
     } catch {
-      setResult({ ok: false, text: 'Could not send. Your text is kept — try again.' });
+      setResult({ ok: false, text: t.acts.replySendFail });
     } finally {
       setBusy(false);
     }
@@ -64,7 +66,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
       <ol className="space-y-2.5">
         <li className="rounded-[12px] border border-[#2A394D] bg-[#111722] p-3.5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-mono text-[10px] font-bold tracking-[0.12em] text-[#AAB5C7]">YOU · OPENER</span>
+            <span className="font-mono text-[10px] font-bold tracking-[0.12em] text-[#AAB5C7]">{t.support.youOpener}</span>
             <span className="font-mono text-[11px] text-[#78859A]">{openerAt.slice(0, 16).replace('T', ' ')}</span>
           </div>
           <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-white">{opener}</p>
@@ -78,7 +80,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
           >
             <div className="flex items-baseline justify-between gap-2">
               <span className={`font-mono text-[10px] font-bold tracking-[0.12em] ${m.sender === 'admin' ? 'text-[#2FD6FF]' : 'text-[#AAB5C7]'}`}>
-                {m.sender === 'admin' ? 'SUPPORT' : 'YOU'}
+                {m.sender === 'admin' ? t.support.supportLbl : t.support.youLbl}
               </span>
               <span className="font-mono text-[11px] text-[#78859A]">{m.createdAt.slice(0, 16).replace('T', ' ')}</span>
             </div>
@@ -87,10 +89,10 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
         ))}
       </ol>
       {closed ? (
-        <p className="mt-3 text-[13px] text-[#78859A]">This ticket is resolved. Reply below to reopen it.</p>
+        <p className="mt-3 text-[13px] text-[#78859A]">{t.support.resolvedReopen}</p>
       ) : null}
       <label htmlFor={`reply-${ticketId}`} className="mb-2 mt-4 block text-[13px] font-semibold text-white">
-        {closed ? 'Reply and reopen' : 'Reply'}
+        {closed ? t.support.replyReopen : t.support.replyLbl}
       </label>
       <textarea
         id={`reply-${ticketId}`}
@@ -99,7 +101,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
         rows={3}
         maxLength={4000}
         disabled={busy}
-        placeholder="Write a reply…"
+        placeholder={t.support.replyPh}
         className="w-full rounded-[12px] border border-[#2A394D] bg-[#080B12] px-4 py-3 text-[14px] leading-relaxed text-white outline-none transition placeholder:text-[#596579] focus:border-[#2FD6FF] disabled:opacity-60"
       />
       {result && (
@@ -109,7 +111,7 @@ export function TicketThread({ ticketId, opener, openerAt, closed }: {
       )}
       <div className="mt-3 max-w-xs">
         <AxButton disabled={busy || body.trim().length === 0} onClick={() => void send()}>
-          {busy ? 'Sending…' : 'Send reply'}
+          {busy ? t.support.sending : t.support.sendReply}
         </AxButton>
       </div>
     </div>

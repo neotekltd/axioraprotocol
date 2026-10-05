@@ -7,27 +7,25 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Reveal } from '@/components/Reveal';
 import { TechEyebrow } from '@/components/landing/background';
+import { useT } from '@/components/LanguageProvider';
 
-const SPECS: [string, string, string, string][] = [
-  ['01', 'Fixed schedule', 'Every module runs a fixed 3, 7 or 14-day term with payouts every 6 hours. No open-ended positions.', 'TERMS · 3/7/14D'],
-  ['02', 'Automatic withdrawals', 'Withdrawal requests record instantly with a balance hold and track state to completion.', 'REQUEST · TRACKED'],
-  ['03', 'Principal returned', 'Deployed principal reserves for the term and returns at maturity per ledger records.', 'MATURITY · SETTLED'],
-  ['04', 'Everything on record', 'Deployments, payouts, withdrawals and referrals write immutable ledger rows with full history.', 'LEDGER · RLS'],
-];
+const NUMS = ['01', '02', '03', '04'];
 
 const ORBITALS = [
   { x: 200, y: 69 }, { x: 296, y: 150 }, { x: 200, y: 231 }, { x: 104, y: 150 },
 ];
 
 export function SpecsInteractive() {
+  const t = useT();
   const [active, setActive] = useState<number | null>(null);
+  const SPECS = t.specs.map((s, i) => [NUMS[i], s.t, s.b, s.m] as const);
   return (
-    <section className="border-b border-white/5 bg-void/60" aria-label="Specifications">
+    <section className="border-b border-white/5 bg-void/60" aria-label={t.spec.specAria}>
       <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[0.95fr_1.05fr]">
         <Reveal>
           <div className="rounded-2xl border border-line bg-panel/70 p-6 sm:p-8">
-            <div className="font-mono text-[10px] tracking-[0.25em] text-fog">AXIORA CORE · CONSENSUS FABRIC</div>
-            <svg viewBox="0 0 400 300" className="mt-4 w-full" role="img" aria-label="Axiora consensus system diagram">
+            <div className="font-mono text-[10px] tracking-[0.25em] text-fog">{t.spec.coreLbl}</div>
+            <svg viewBox="0 0 400 300" className="mt-4 w-full" role="img" aria-label={t.spec.sysDiagram}>
               {[130, 96, 62].map((r, i) => (
                 <ellipse
                   key={r} cx="200" cy="150" rx={r} ry={r * 0.62}
@@ -49,14 +47,14 @@ export function SpecsInteractive() {
               <rect x="178" y="128" width="44" height="44" rx="10" fill="rgba(34,211,238,0.1)" stroke="#22D3EE" />
               <circle cx="200" cy="150" r="7" fill="#22D3EE" className="ping-soft" />
             </svg>
-            <p className="mt-4 text-xs leading-relaxed text-fog">Original Axiora system render. Four agents, one gate, zero manual execution paths.</p>
+            <p className="mt-4 text-xs leading-relaxed text-fog">{t.spec.renderNote}</p>
           </div>
         </Reveal>
         <div>
           <Reveal>
-            <TechEyebrow index="04" label="SPECIFICATIONS" />
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Built to run without you watching.</h2>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-mist/75">Only shipped, implemented behavior is listed. Axiora provides the capital, accounting and settlement layer for strategies operated by external execution infrastructure.</p>
+            <TechEyebrow index="04" label={t.spec.specAria.toUpperCase()} />
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">{t.spec.specT}</h2>
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-mist/75">{t.spec.specS}</p>
           </Reveal>
           <div className="mt-6 space-y-2.5">
             {SPECS.map(([n, t, b, m], i) => (
@@ -80,7 +78,7 @@ export function SpecsInteractive() {
             ))}
           </div>
           <Reveal delay={120}>
-            <p className="mt-4 text-xs text-fog">Full honest accounting of implemented vs. planned controls lives on the <Link href="/security" className="text-pulse">Security page</Link>.</p>
+            <p className="mt-4 text-xs text-fog">{t.spec.specFull} <Link href="/security" className="text-pulse">{t.spec.secPage}</Link>.</p>
           </Reveal>
         </div>
       </div>

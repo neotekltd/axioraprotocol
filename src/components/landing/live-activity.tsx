@@ -15,6 +15,7 @@ import { formatUSD } from '@/lib/finance';
 import { ageLabel } from '@/components/landing/live-activity-utils';
 import { coinIconSrc, type FeedRow, type HomepageFeed } from '@/lib/activity-shared';
 import type { HomepageActivity } from '@/lib/queries';
+import { useT } from '@/components/LanguageProvider';
 
 function useNow(intervalMs = 60000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -40,8 +41,12 @@ function AssetMark({ asset }: { asset: string }) {
 }
 
 function ActivityRowView({ r, index, go }: { r: FeedRow; index: number; go: boolean }) {
+  const t = useT();
   const now = useNow();
   const shown = r.occurredAt ? ageLabel(r.occurredAt, now) : r.age;
+  // Feed action labels originate server-side in English canonical form;
+  // map the two known kinds, pass anything else through untouched.
+  const action = r.action === 'Deposit confirmed' ? t.land.depConf : r.action === 'Withdrawal sent' ? t.land.wdSent : r.action;
   return (
     <li
       style={{ transitionDelay: go ? `${index * 55}ms` : undefined }}
@@ -58,19 +63,20 @@ function ActivityRowView({ r, index, go }: { r: FeedRow; index: number; go: bool
         <span className={`block font-mono text-[13px] font-bold tabular-nums ${r.incoming ? 'text-[#35D98B]' : 'text-white'}`}>
           {r.incoming ? '+' : '−'}{formatUSD(Math.abs(r.amount))}
         </span>
-        <span className="block text-[11px] text-[#78859A]">{r.action}</span>
+        <span className="block text-[11px] text-[#78859A]">{action}</span>
       </span>
       <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.incoming ? 'bg-[#2FD6FF] shadow-[0_0_8px_rgba(47,214,255,0.7)]' : 'bg-[#35D98B] shadow-[0_0_8px_rgba(53,217,139,0.7)]'}`} />
     </li>
   );
 }
 
-function Panel({ title, sub, rows, incoming, go }: {
+function Panel({ title, sub, rows, incoming, go, emptyMsg }: {
   title: string;
   sub: string;
   rows: FeedRow[];
   incoming: boolean;
   go: boolean;
+  emptyMsg: string;
 }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-[20px] border border-[#202A3A] bg-[#0C1119]">
@@ -83,7 +89,7 @@ function Panel({ title, sub, rows, incoming, go }: {
       <p className="px-5 pt-3 text-[12px] text-[#78859A]">{sub}</p>
       {rows.length === 0 ? (
         <p className="px-5 py-6 text-center text-[13px] text-[#78859A]">
-          {incoming ? 'No confirmed deposits yet.' : 'No completed withdrawals yet.'}
+          {emptyMsg}
         </p>
       ) : (
         <ul className="mt-1 pb-1">
@@ -97,6 +103,7 @@ function Panel({ title, sub, rows, incoming, go }: {
 }
 
 export function LiveActivity({ initial }: { initial: HomepageFeed }) {
+  const t = useT();
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.15);
   const [data, setData] = useState(initial);
   const [live, setLive] = useState(true);
@@ -120,7 +127,7 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
             occurredAt: r.occurredAt,
             asset: r.asset,
             middle: r.txShort ?? '—',
-            action: incoming ? 'Deposit confirmed' : 'Withdrawal sent',
+            action: incoming ? t.land.depConf : t.land.wdSent,
             amount: r.amount,
             incoming,
           });
@@ -143,10 +150,10 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
     };
   }, [staticFeed]);
   return (
-    <section className="mx-auto max-w-[1200px] px-5 pb-20 md:px-8 md:pb-28" aria-label="Live ledger activity">
+    <section className="mx-auto max-w-[1200px] px-5 pb-20 md:px-8 md:pb-28" aria-label={t.land.actAria}>
       <Reveal>
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-[#AAB5C7]">Money moving right now</h2>
+          <h2 className="font-mono text-[12px] font-bold uppercase tracking-[0.25em] text-[#AAB5C7]">{t.land.moneyNow}</h2>
           {demo ? (
             <span className="rounded-md border border-[rgba(242,191,74,0.5)] bg-[rgba(242,191,74,0.08)] px-2.5 py-1 font-mono text-[11px] font-bold tracking-[0.18em] text-[#F2BF4A]">
               DEMO ACTIVITY
@@ -154,7 +161,7 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
           ) : (
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold ${live ? 'border-[rgba(53,217,139,0.4)] text-[#35D98B]' : 'border-[rgba(242,191,74,0.4)] text-[#F2BF4A]'}`} role="status">
               <span className={`h-1.5 w-1.5 rounded-full ${live ? 'animate-pulse bg-[#35D98B]' : 'bg-[#F2BF4A]'}`} aria-hidden="true" />
-              {live ? 'LIVE' : 'SYNCING'}
+              {live ? t.land.liveWord : 'SYNCING'}
             </span>
           )}
           {aimex && (
@@ -165,18 +172,18 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
         </div>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[#78859A]">
           {demo
-            ? 'Reference activity for illustration — live ledger records appear once confirmed deposits exist.'
+            ? t.land.demoRef
             : aimex
-              ? 'Sourced activity served from the configured homepage feed.'
-              : 'Latest confirmed deposits and completed withdrawals from the Axiora ledger. Nothing here is simulated.'}
+              ? t.land.srcFeed
+              : t.land.ledgerReal}
         </p>
       </Reveal>
       <div ref={ref} className="mt-6 grid gap-4 md:grid-cols-2">
         <Reveal delay={0} className="min-w-0">
-          <Panel title="INCOMING.LOG" sub={demo ? 'Reference deposits' : aimex ? 'Sourced feed' : 'Confirmed deposits'} rows={data.incoming} incoming go={inView} />
+          <Panel title={t.land.inLog} sub={demo ? t.land.refDep : aimex ? t.land.srcFeed2 : t.land.confDep} rows={data.incoming} incoming go={inView} emptyMsg={t.land.noDep} />
         </Reveal>
         <Reveal delay={100} className="min-w-0">
-          <Panel title="OUTGOING.LOG" sub={demo ? 'Reference withdrawals' : aimex ? 'Sourced feed' : 'Completed withdrawals'} rows={data.outgoing} incoming={false} go={inView} />
+          <Panel title={t.land.outLog} sub={demo ? t.land.refWd : aimex ? t.land.srcFeed2 : t.land.compWd} rows={data.outgoing} incoming={false} go={inView} emptyMsg={t.land.noWd} />
         </Reveal>
       </div>
     </section>

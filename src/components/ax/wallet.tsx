@@ -9,15 +9,17 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, Check, Copy, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ClientPortal } from '@/components/Portal';
+import { useT } from '@/components/LanguageProvider';
 
 export function WalletTabs({ active }: { active: 'deposit' | 'withdraw' | 'history' }) {
+  const t = useT();
   const tabs = [
-    { key: 'deposit', label: 'Deposit', href: '/app/deposit' },
-    { key: 'withdraw', label: 'Withdraw', href: '/app/withdraw' },
-    { key: 'history', label: 'History', href: '/app/transactions' },
+    { key: 'deposit', label: t.wallet.depositTab, href: '/app/deposit' },
+    { key: 'withdraw', label: t.withdraw.title, href: '/app/withdraw' },
+    { key: 'history', label: t.tabs.history, href: '/app/transactions' },
   ] as const;
   return (
-    <nav aria-label="Wallet" className="grid grid-cols-3 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5">
+    <nav aria-label={t.tabs.walletNav} className="grid grid-cols-3 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5">
       {tabs.map((t) => (
         <Link
           key={t.key}
@@ -55,8 +57,9 @@ export function FlowLabel({ children, right }: { children: React.ReactNode; righ
 }
 
 export function QuickChips({ options, active, onPick }: { options: string[]; active: string | null; onPick: (v: string) => void }) {
+  const t = useT();
   return (
-    <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Quick amounts">
+    <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t.tabs.quickAmounts}>
       {options.map((o) => (
         <button
           key={o}
@@ -138,6 +141,7 @@ export function StatusPill({ tone, children }: { tone: 'amber' | 'green' | 'cyan
 }
 
 export function CopyButton({ text, label, primary = false }: { text: string; label: string; primary?: boolean }) {
+  const t = useT();
   const [done, setDone] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
@@ -166,7 +170,7 @@ export function CopyButton({ text, label, primary = false }: { text: string; lab
       )}
     >
       {done ? <Check size={17} aria-hidden="true" /> : <Copy size={17} aria-hidden="true" />}
-      {done ? 'Copied' : label}
+      {done ? t.common.copied : label}
     </button>
   );
 }
@@ -181,6 +185,7 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
   overlayClassName?: string;
   overlayTop?: number;
 }) {
+  const t = useT();
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -230,7 +235,7 @@ export function BottomSheet({ open, onClose, title, icon, children, labelledBy, 
               ref={closeRef}
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t.tabs.closeDlg}
               className="grid h-11 w-11 shrink-0 place-items-center rounded-[12px] border border-[#2A394D] text-[#AAB5C7] transition hover:border-[rgba(47,214,255,0.5)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FD6FF]"
             >
               <X size={20} />

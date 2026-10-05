@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { markNotificationRead, markAllNotificationsRead } from '@/lib/actions';
 import type { Notification } from '@/lib/queries';
+import { useT } from '@/components/LanguageProvider';
 
 const TYPE_DOT: Record<string, string> = {
   deposit: 'bg-[#2FD6FF]', withdrawal: 'bg-[#F2BF4A]', deployment: 'bg-[#2FD6FF]',
@@ -11,6 +12,7 @@ const TYPE_DOT: Record<string, string> = {
 };
 
 export function NotificationsView({ initial, unread }: { initial: Notification[]; unread: number }) {
+  const t = useT();
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [count, setCount] = useState(unread);
@@ -33,8 +35,8 @@ export function NotificationsView({ initial, unread }: { initial: Notification[]
   if (items.length === 0) {
     return (
       <div className="mt-6 rounded-[20px] border border-[#202A3A] bg-[#0D111A] p-8 text-center sm:p-10">
-        <div className="font-bold text-white">You are all caught up</div>
-        <p className="mx-auto mt-1 max-w-sm text-[14px] text-[#AAB5C7]">Deposit, withdrawal, deployment, profit, referral and security events will appear here.</p>
+        <div className="font-bold text-white">{t.nt.caughtUp}</div>
+        <p className="mx-auto mt-1 max-w-sm text-[14px] text-[#AAB5C7]">{t.nt.caughtSub}</p>
       </div>
     );
   }
@@ -42,9 +44,9 @@ export function NotificationsView({ initial, unread }: { initial: Notification[]
   return (
     <div>
       <div className="mt-6 flex items-center justify-between">
-        <span className="rounded-full bg-[rgba(47,214,255,0.12)] px-2.5 py-1 font-mono text-[11px] text-[#2FD6FF]" aria-live="polite">{count} unread</span>
+        <span className="rounded-full bg-[rgba(47,214,255,0.12)] px-2.5 py-1 font-mono text-[11px] text-[#2FD6FF]" aria-live="polite">{t.nt.unreadN.replace('{n}', String(count))}</span>
         {count > 0 && (
-          <button onClick={readAll} className="rounded-[12px] border border-[#2A394D] px-4 py-2 text-[13px] text-white hover:border-[rgba(47,214,255,0.5)]">Mark all read</button>
+          <button onClick={readAll} className="rounded-[12px] border border-[#2A394D] px-4 py-2 text-[13px] text-white hover:border-[rgba(47,214,255,0.5)]">{t.notifications.markRead}</button>
         )}
       </div>
       <ul className="mt-4 space-y-3">

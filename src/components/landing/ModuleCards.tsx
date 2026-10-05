@@ -13,6 +13,8 @@ import { Reveal } from '@/components/Reveal';
 import { PLANS, quotePlan, examplePlanAmount, formatUSD, formatPct, type PlanDef, type PlanQuote } from '@/lib/plans';
 import { useInViewOnce } from '@/components/landing/motion';
 import { usePlanSync } from '@/components/landing/plan-sync';
+import { useT } from '@/components/LanguageProvider';
+import type { Dictionary } from '@/lib/i18n-dict';
 
 const TELEMETRY_SEGS = 12;
 
@@ -87,19 +89,21 @@ const TONE: Record<SpecRow['tone'], string> = {
   muted: 'text-mist',
 };
 
-function specRows(plan: PlanDef, q: PlanQuote | null): SpecRow[] {
+function specRows(plan: PlanDef, q: PlanQuote | null, d: Dictionary): SpecRow[] {
+  const t = d.land;
+  const v = d.inv;
   return [
-    { label: 'Invest', value: `$${plan.min.toLocaleString()} – $${plan.max.toLocaleString()}`, tone: 'cyan' },
-    { label: 'Rate', value: `${formatPct(plan.ratePerCredit * 100)} per payout`, tone: 'cyan' },
-    { label: 'Cycle', value: `Every ${plan.cycleHours} hours`, tone: 'amber' },
-    { label: 'Payouts', value: `${plan.creditsPerDay} per day`, tone: 'amber' },
-    { label: 'Term', value: `${plan.payoutsPerTerm} payouts · ${plan.termDays} days`, tone: 'muted' },
+    { label: v.planInvest, value: `$${plan.min.toLocaleString()} – $${plan.max.toLocaleString()}`, tone: 'cyan' },
+    { label: v.planRate, value: v.perPayout.replace('{p}', formatPct(plan.ratePerCredit * 100)), tone: 'cyan' },
+    { label: v.planCycle, value: v.everyHX.replace('{h}', String(plan.cycleHours)), tone: 'amber' },
+    { label: v.payoutsL, value: v.perDayX.replace('{n}', String(plan.creditsPerDay)), tone: 'amber' },
+    { label: v.termL, value: t.termVD.replace('{p}', String(plan.payoutsPerTerm)).replace('{d}', String(plan.termDays)), tone: 'muted' },
     {
-      label: 'Est. daily',
-      value: q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : 'Calculation unavailable',
+      label: t.estDaily,
+      value: q ? `+${formatUSD(q.dailyTotal)} @ ${formatUSD(examplePlanAmount(plan), { decimals: 0 })}` : t.calcNA,
       tone: 'cyan',
     },
-    { label: 'Principal', value: 'Returned at maturity', tone: 'green' },
+    { label: v.principalL, value: t.principalBack, tone: 'green' },
   ];
 }
 
@@ -118,6 +122,7 @@ function PlanModuleCard({ plan, index, go, active, onSelect }: {
   } catch {
     q = null;
   }
+  const t = useT();
   const cardRef = useRef<HTMLButtonElement>(null);
   const onPointer = (e: React.PointerEvent<HTMLButtonElement>) => {
     const el = e.currentTarget;
@@ -125,15 +130,16 @@ function PlanModuleCard({ plan, index, go, active, onSelect }: {
     el.style.setProperty('--mouse-x', `${e.clientX - r.left}px`);
     el.style.setProperty('--mouse-y', `${e.clientY - r.top}px`);
   };
-  const rows = specRows(plan, q);
+  const rows = specRows(plan, q, t);
   const dailyPct = formatPct(plan.ratePerCredit * plan.creditsPerDay * 100);
 
   return (
-    <button
+      <button
       ref={cardRef}
       onClick={onSelect}
       onPointerMove={onPointer}
       aria-pressed={active}
+      aria-label={t.inv.selectPlan.replace('{name}', plan.name)}
       className={`mod-card card-sweep group relative block h-full w-full overflow-visible rounded-2xl border bg-gradient-to-b from-[#0D1420] to-[#080C14] p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pulse sm:p-6 ${
         active ? 'border-pulse/70 shadow-glow' : 'border-line'
       }`}
@@ -169,13 +175,13 @@ function PlanModuleCard({ plan, index, go, active, onSelect }: {
       {/* rate */}
       <div className={`relative mt-4 ${go ? 'mod-rise' : 'opacity-0'}`} style={{ animationDelay: `${120 + index * 60}ms` }}>
         <span className="font-mono text-[2.6rem] font-bold leading-none tracking-tight text-white">{dailyPct}</span>
-        <span className="ml-2 align-middle font-mono text-[11px] tracking-[0.2em] text-fog">A DAY</span>
-        <p className="mt-1.5 text-[13px] text-fog">Paid every {plan.cycleHours} hours · {plan.creditsPerDay} credits a day</p>
+        <span className="ml-2 align-middle font-mono text-[11px] tracking-[0.2em] text-fog">{t.land.aDayUp}</span>
+        <p className="mt-1.5 text-[13px] text-fog">{t.land.paidEvery2.replace('{h}', String(plan.cycleHours)).replace('{n}', String(plan.creditsPerDay))}</p>
       </div>
       {/* daily credit rail */}
       <div className={`relative mt-4 ${go ? 'mod-rise' : 'opacity-0'}`} style={{ animationDelay: `${200 + index * 60}ms` }}>
         <CycleRail segments={plan.creditsPerDay} go={go} />
-        <p className="mt-1.5 font-mono text-[10px] tracking-[0.18em] text-fog">DAILY CREDIT CYCLE</p>
+        <p className="mt-1.5 font-mono text-[10px] tracking-[0.18em] text-fog">{t.land.dailyCycle}</p>
       </div>
       {/* spec rows */}
       <dl className="relative mt-3 space-y-0 text-[13px]">
@@ -198,7 +204,7 @@ function PlanModuleCard({ plan, index, go, active, onSelect }: {
             : 'border-[#2A394D] bg-[#111722] text-white hover:border-[rgba(47,214,255,0.55)]'
         }`}
       >
-        {active ? 'Selected' : `Select — ${plan.name}`}
+        {active ? t.land.selectedB : t.land.selectX.replace('{name}', plan.name)}
         <span aria-hidden="true" className="mod-cta-arrow font-mono">→</span>
       </span>
     </button>
@@ -221,10 +227,11 @@ export function ModuleCards() {
 }
 
 export function ModuleCta() {
+  const t = useT();
   return (
     <div className="mt-6 text-center">
-      <Link href="/register" className="text-sm text-pulse hover:brightness-110">Create an account to activate a module →</Link>
-      <p className="mt-2 text-xs text-fog">Estimates only. Confirmation re-quotes server-side. No yield is guaranteed.</p>
+      <Link href="/register" className="text-sm text-pulse hover:brightness-110">{t.land.ctaCreate} →</Link>
+      <p className="mt-2 text-xs text-fog">{t.land.estNote2}</p>
     </div>
   );
 }

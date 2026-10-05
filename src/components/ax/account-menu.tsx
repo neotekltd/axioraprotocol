@@ -5,9 +5,9 @@
 // anchored popover. Real session data only (username/email from the
 // Supabase session — never hardcoded, never internal IDs).
 // Routes reuse existing pages: Profile -> /app/profile,
-// Password -> /app/security. Language has no selector in this build
-// (single-locale product), so it renders as a static current-locale row
-// rather than a dead link. Sign out uses the real Supabase signOut.
+// Password -> /app/security. Language row hosts the real
+// English/Español selector (in-place switch, route + session preserved).
+// Sign out uses the real Supabase signOut.
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,9 @@ import { ChevronRight, Globe, Lock, LogOut, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BottomSheet } from '@/components/ax/wallet';
 import { ClientPortal } from '@/components/Portal';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { useLanguage, useT } from '@/components/LanguageProvider';
+import { localeLabel } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function initialsOf(username: string | null, email: string | null): string {
@@ -26,6 +29,7 @@ function initialsOf(username: string | null, email: string | null): string {
 }
 
 function Identity({ username, email, size = 'md' }: { username: string | null; email: string | null; size?: 'md' | 'sm' }) {
+  const t = useT();
   const box = size === 'md' ? 'h-[54px] w-[54px] text-[17px]' : 'h-10 w-10 text-[15px]';
   return (
     <div className="flex min-w-0 items-center gap-3">
@@ -36,7 +40,7 @@ function Identity({ username, email, size = 'md' }: { username: string | null; e
         {initialsOf(username, email)}
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[16px] font-bold text-white">{username ?? email ?? 'Account'}</span>
+        <span className="block truncate text-[16px] font-bold text-white">{username ?? email ?? t.account.label}</span>
         <span className="block truncate text-[12px] text-[#78859A]">
           {username ? `@${username}` : ''}{username && email ? ' · ' : ''}{email ?? ''}
         </span>
@@ -48,13 +52,15 @@ function Identity({ username, email, size = 'md' }: { username: string | null; e
 function MenuRows({ onNavigate }: { onNavigate: () => void }) {
   // Close is deferred past the click event: closing synchronously unmounts
   // the Next.js Link mid-click and swallows the navigation.
+  const t = useT();
+  const { locale } = useLanguage();
   const later = () => setTimeout(onNavigate, 60);
   const rows = [
-    { href: '/app/profile', Icon: User, label: 'Profile', chevron: true },
-    { href: '/app/security', Icon: Lock, label: 'Password', chevron: true },
+    { href: '/app/profile', Icon: User, label: t.account.profile, chevron: true },
+    { href: '/app/security', Icon: Lock, label: t.account.password, chevron: true },
   ];
   return (
-    <div role="menu" aria-label="Account">
+    <div role="menu" aria-label={t.account.menuLabel}>
       {rows.map(({ href, Icon, label }, i) => (
         <Link
           key={href}
@@ -69,11 +75,10 @@ function MenuRows({ onNavigate }: { onNavigate: () => void }) {
           <ChevronRight size={16} className="shrink-0 text-[#596579]" aria-hidden="true" />
         </Link>
       ))}
-      <div role="menuitem" aria-disabled="true" className="flex min-h-[54px] cursor-default items-center gap-3 rounded-[12px] px-2 text-[15px] font-semibold text-white" aria-label="Language: English">
+      <div role="group" aria-label={t.account.language} className="flex min-h-[54px] items-center gap-3 rounded-[12px] px-2 text-[15px] font-semibold text-white">
         <Globe size={20} className="shrink-0 text-[#AAB5C7]" aria-hidden="true" />
-        <span className="flex-1">Language</span>
-        <span className="text-[13px] font-normal text-[#78859A]">English</span>
-        <ChevronRight size={16} className="shrink-0 text-[#323f52]" aria-hidden="true" />
+        <span className="flex-1">{t.account.language} · <span lang={locale} className="font-normal text-[#78859A]">{localeLabel(locale)}</span></span>
+        <LanguageSelector compact />
       </div>
       <div aria-hidden="true" className="my-1 h-px bg-[#202A3A]/80" />
       <SignOutRow />
@@ -83,6 +88,7 @@ function MenuRows({ onNavigate }: { onNavigate: () => void }) {
 
 function SignOutRow() {
   const [busy, setBusy] = useState(false);
+  const t = useT();
   const router = useRouter();
   const out = async () => {
     setBusy(true);
@@ -99,12 +105,13 @@ function SignOutRow() {
       className="flex min-h-[54px] w-full items-center gap-3 rounded-[12px] px-2 text-left text-[15px] font-semibold text-[#AAB5C7] transition hover:bg-[rgba(240,107,120,0.07)] hover:text-white active:scale-[0.99] disabled:opacity-60 motion-reduce:transition-none"
     >
       <LogOut size={20} className="shrink-0" aria-hidden="true" />
-      <span className="flex-1">{busy ? 'Signing out…' : 'Sign out'}</span>
+      <span className="flex-1">{busy ? t.account.signingOut : t.account.signOut}</span>
     </button>
   );
 }
 
 export function AccountMenu({ email, username }: { email?: string | null; username?: string | null }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [renderDesktop, setRenderDesktop] = useState(false);
   // Mobile sheet mounts only below the lg breakpoint: BottomSheet portals
@@ -174,7 +181,7 @@ export function AccountMenu({ email, username }: { email?: string | null; userna
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={open ? 'Close account menu' : 'Open account menu'}
+        aria-label={open ? t.account.closeMenu : t.account.openMenu}
         className={cn(
           'grid h-10 w-10 place-items-center rounded-[12px] border text-[15px] font-bold transition',
           open
@@ -213,7 +220,7 @@ export function AccountMenu({ email, username }: { email?: string | null; userna
             <BottomSheet
               open={open}
               onClose={() => setOpen(false)}
-              labelledBy="Account menu"
+              labelledBy={t.account.menuLabel}
               overlayClassName="inset-x-0 bottom-0"
               overlayTop={76}
               title={<Identity username={username ?? null} email={email ?? null} />}

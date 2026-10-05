@@ -3,6 +3,7 @@
 // and the verification page — never duplicated per screen.
 import { logAuthError } from '@/lib/auth-errors';
 import { normalizeAuthEmail } from '@/lib/auth-identifiers';
+import type { Dictionary } from '@/lib/i18n-dict';
 
 export type ResendResult =
   | { ok: true }
@@ -53,7 +54,12 @@ export async function resendSignupVerification(
   }
 }
 
-export function resendUserMessage(code: 'RATE_LIMIT' | 'FAILED' | 'CONFIG'): string {
+export function resendUserMessage(code: 'RATE_LIMIT' | 'FAILED' | 'CONFIG', t?: Dictionary['auth']): string {
+  if (t) {
+    if (code === 'RATE_LIMIT') return t.rateLimit;
+    if (code === 'CONFIG') return t.configError;
+    return t.resendEmailFailed;
+  }
   if (code === 'RATE_LIMIT') return 'Too many attempts. Wait a moment and try again.';
   if (code === 'CONFIG') return 'Authentication is misconfigured. Please try again later.';
   return 'Could not send the verification email right now. Wait a moment and try again.';

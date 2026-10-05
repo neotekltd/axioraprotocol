@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/components/LanguageProvider';
 
 const LENGTH = 6;
 
@@ -15,6 +16,7 @@ export function OtpInput({
   disabled?: boolean;
   invalid?: boolean;
 }) {
+  const t = useT();
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const [active, setActive] = useState(0);
   const digits = value.padEnd(LENGTH, '').slice(0, LENGTH).split('');
@@ -28,7 +30,7 @@ export function OtpInput({
   };
 
   return (
-    <div className="flex justify-center gap-2 sm:gap-2.5" role="group" aria-label="6-digit verification code">
+    <div dir="ltr" className="flex justify-center gap-2 sm:gap-2.5" role="group" aria-label={t.auth.verifyCodeGroup}>
       {Array.from({ length: LENGTH }, (_, i) => (
         <input
           key={i}
@@ -40,7 +42,7 @@ export function OtpInput({
           pattern="[0-9]*"
           maxLength={1}
           disabled={disabled}
-          aria-label={`Digit ${i + 1}`}
+          aria-label={t.auth.digit.replace('{n}', String(i + 1))}
           value={digits[i] ?? ''}
           onFocus={() => setActive(i)}
           onChange={(e) => {

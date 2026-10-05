@@ -15,6 +15,8 @@ import { AXIORA_TELEGRAM_URL, PROTOCOL_CONFIG } from '@/lib/config';
 import { BANNERS, bannerEmbed } from '@/lib/banners';
 import { formatUSD } from '@/lib/finance';
 import type { ReferralRow } from '@/lib/queries';
+import { useT } from '@/components/LanguageProvider';
+import type { Dictionary } from '@/lib/i18n-dict';
 import { cn } from '@/lib/utils';
 
 type CopyState = 'idle' | 'done' | 'failed';
@@ -41,13 +43,14 @@ function useCopied(): [CopyState, (text: string) => void] {
 }
 
 function CopyPill({ text, label }: { text: string; label: string }) {
+  const t = useT();
   const [state, copy] = useCopied();
   return (
     <button
       type="button"
       onClick={() => void copy(text)}
       aria-live="polite"
-      aria-label={state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : label}
+      aria-label={state === 'done' ? t.common.copied : state === 'failed' ? t.ref.copyFailed : label}
       className={cn(
         'flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-[12px] px-4 text-[13px] font-bold transition active:scale-[0.97]',
         state === 'done'
@@ -58,21 +61,21 @@ function CopyPill({ text, label }: { text: string; label: string }) {
       )}
     >
       {state === 'done' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-      {state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : label}
+      {state === 'done' ? t.common.copied : state === 'failed' ? t.ref.copyFailed : label}
     </button>
   );
 }
 
-const SHARE_TEXT = 'Join me on Axiora Protocol — structured plan modules with daily settlement.';
-
-function shareLinks(link: string) {
+function shareLinks(link: string, t: Dictionary['ref']) {
+  // The URL itself is never translated or altered — only the human message
+  // around it is localized, then percent-encoded for every channel.
   const u = encodeURIComponent(link);
-  const t = encodeURIComponent(SHARE_TEXT);
+  const msg = encodeURIComponent(t.shareText);
   return [
-    { label: 'WhatsApp', href: `https://wa.me/?text=${t}%20${u}`, Icon: MessageCircle, ariaLabel: 'Share on WhatsApp' },
-    { label: 'Telegram', href: AXIORA_TELEGRAM_URL, Icon: Send, ariaLabel: 'Open Axiora on Telegram' },
-    { label: 'X', href: `https://x.com/intent/tweet?url=${u}&text=${t}`, Icon: null, ariaLabel: 'Share on X' },
-    { label: 'Email', href: `mailto:?subject=${encodeURIComponent('Join me on Axiora Protocol')}&body=${t}%20${u}`, Icon: Mail, ariaLabel: 'Share by email' },
+    { label: 'WhatsApp', href: `https://wa.me/?text=${msg}%20${u}`, Icon: MessageCircle, ariaLabel: t.shareWhatsapp },
+    { label: 'Telegram', href: AXIORA_TELEGRAM_URL, Icon: Send, ariaLabel: t.shareTelegram },
+    { label: 'X', href: `https://x.com/intent/tweet?url=${u}&text=${msg}`, Icon: null, ariaLabel: t.shareX },
+    { label: 'Email', href: `mailto:?subject=${encodeURIComponent(t.shareSubject)}&body=${msg}%20${u}`, Icon: Mail, ariaLabel: t.shareEmail },
   ];
 }
 
@@ -81,22 +84,26 @@ function LevelCard({ level, members, index }: {
   members: ReferralRow[];
   index: number;
 }) {
+  const t = useT();
   const shown = members.slice(0, 5);
   const extra = members.length - shown.length;
   // Descriptions derive from the authoritative level config — never
   // hardcoded percentages from another product's page.
   const desc =
     level.level === 1
-      ? 'When someone signs up with your link or code, they land here.'
-      : `When someone your level ${level.level - 1} invite joins, they land here and pay you ${level.instantPct}% of their deposits · ${level.dailySharePct}% of their earnings.`;
+      ? t.ref.levelDesc1
+      : t.ref.levelDescN
+          .replace('{prev}', String(level.level - 1))
+          .replace('{p}', String(level.instantPct))
+          .replace('{s}', String(level.dailySharePct));
   return (
     <Reveal delay={index * 80}>
       <section
-        aria-label={`Referral level ${level.level}`}
+        aria-label={t.ref.levelGroup.replace('{n}', String(level.level))}
         className="rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 transition duration-200 hover:-translate-y-[3px] hover:border-[rgba(47,214,255,0.4)] sm:p-6"
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-[17px] font-bold text-white">Level {level.level}</h2>
+          <h2 className="text-[17px] font-bold text-white">{t.referrals.level.replace('{n}', String(level.level))}</h2>
           <span
             className={cn(
               'rounded-full border px-3 py-1.5 font-mono text-[11px] font-semibold',
@@ -105,11 +112,11 @@ function LevelCard({ level, members, index }: {
                 : 'border-[#2A394D] bg-[#111722] text-[#AAB5C7]'
             )}
           >
-            {level.instantPct}% of deposits · {level.dailySharePct}% of earnings
+            {level.instantPct}% {t.ref.ofDeposits} · {level.dailySharePct}% {t.ref.ofEarnings}
           </span>
         </div>
         {members.length === 0 ? (
-          <p className="mt-3 text-[14px] text-[#AAB5C7]">Nobody yet</p>
+          <p className="mt-3 text-[14px] text-[#AAB5C7]">{t.ref.nobody}</p>
         ) : (
           <ul className="mt-3 divide-y divide-[#202A3A]/70">
             {shown.map((m) => (
@@ -118,16 +125,16 @@ function LevelCard({ level, members, index }: {
                   <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-full border border-[#2A394D] bg-[#151B27] font-mono text-[12px] font-bold text-[#2FD6FF]">
                     {String(m.level).padStart(2, '0')}
                   </span>
-                  <span className="text-white">Member</span>
+                  <span className="text-white">{t.ref.memberWord}</span>
                 </span>
-                <span className="font-mono text-[12px] text-[#78859A]">joined {m.createdAt.slice(0, 10)}</span>
+                <span className="font-mono text-[12px] text-[#78859A]">{t.ref.joined.replace('{d}', m.createdAt.slice(0, 10))}</span>
               </li>
             ))}
           </ul>
         )}
         {extra > 0 && (
           <p className="mt-1 text-[13px] text-[#78859A]">
-            +{extra} more · <Link href="/app/referrals/network" className="font-semibold text-[#2FD6FF]">Open network</Link>
+            {t.ref.moreN.replace('{n}', String(extra))} · <Link href="/app/referrals/network" className="font-semibold text-[#2FD6FF]">{t.ref.openNetwork}</Link>
           </p>
         )}
         <p className="mt-3 text-[13px] leading-relaxed text-[#78859A]">{desc}</p>
@@ -137,6 +144,7 @@ function LevelCard({ level, members, index }: {
 }
 
 function BannerCard({ bannerId, link }: { bannerId: (typeof BANNERS)[number]; link: string | null }) {
+  const t = useT();
   const [state, copy] = useCopied();
   const code = link ? bannerEmbed(bannerId, link) : '';
   return (
@@ -144,7 +152,7 @@ function BannerCard({ bannerId, link }: { bannerId: (typeof BANNERS)[number]; li
       <div className="tech-dots flex items-center justify-center bg-[#070B13] p-6">
         <Image
           src={bannerId.file}
-          alt={`${bannerId.title} preview`}
+          alt={`${bannerId.title} ${t.ref.previewSuffix}`}
           width={bannerId.width}
           height={bannerId.height}
           className="h-auto w-full max-w-[420px] rounded-[8px]"
@@ -162,7 +170,7 @@ function BannerCard({ bannerId, link }: { bannerId: (typeof BANNERS)[number]; li
           className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.55)] active:scale-[0.99] disabled:opacity-50"
         >
           {state === 'done' ? <Check size={16} className="text-[#35D98B]" aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-          {state === 'done' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Copy code'}
+          {state === 'done' ? t.common.copied : state === 'failed' ? t.ref.copyFailed : t.ref.copyCode}
         </button>
       </div>
     </div>
@@ -175,34 +183,35 @@ export function ReferralsView({ link, code, referrals, earned }: {
   referrals: ReferralRow[];
   earned: number;
 }) {
+  const t = useT();
   const team = referrals.length;
   return (
     <div className="ax-enter mx-auto w-full max-w-[680px]">
       <PageHeader
-        title="Referrals"
-        sub="Share your link. Each time someone you invited deposits or earns from a plan, a commission lands in your Earning wallet."
+        title={t.referrals.title}
+        sub={t.ref.pageSub}
       />
       <Reveal>
-        <section aria-label="Your referral link" className="mt-6 rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
-          <h2 className="text-[15px] font-bold text-white">Your referral link</h2>
+        <section aria-label={t.referrals.yourLink} className="mt-6 rounded-2xl border border-[#202A3A] bg-[#0C1119] p-5 sm:p-6">
+          <h2 className="text-[15px] font-bold text-white">{t.referrals.yourLink}</h2>
           {link ? (
             <div className="mt-3 flex gap-2">
-              <div className="min-w-0 flex-1 truncate rounded-[12px] border border-[#2A394D] bg-[#080B12] px-4 py-3.5 font-mono text-[13px] text-white" title={link}>
+              <div className="min-w-0 flex-1 truncate rounded-[12px] border border-[#2A394D] bg-[#080B12] px-4 py-3.5 font-mono text-[13px] text-white" title={link} dir="ltr">
                 {link}
               </div>
-              <CopyPill text={link} label="Copy link" />
+              <CopyPill text={link} label={t.dashboard.copyLink} />
             </div>
           ) : (
-            <p className="mt-3 text-[14px] text-[#AAB5C7]">Your referral link is unavailable for this account.</p>
+            <p className="mt-3 text-[14px] text-[#AAB5C7]">{t.ref.linkUnavailable}</p>
           )}
           {code && (
             <p className="mt-3 text-[13px] leading-relaxed text-[#78859A]">
-              Or give them your code <span className="font-mono font-bold text-white">{code}</span> — they can type it when they sign up.
+              {t.ref.codePrefix} <span className="font-mono font-bold text-white">{code}</span> {t.ref.codeSuffix}
             </p>
           )}
           {link && (
-            <div className="mt-3 flex flex-wrap gap-2" aria-label="Share your link">
-              {shareLinks(link).map(({ label, href, Icon, ariaLabel }) => (
+            <div className="mt-3 flex flex-wrap gap-2" aria-label={t.ref.shareGroup}>
+              {shareLinks(link, t.ref).map(({ label, href, Icon, ariaLabel }) => (
                 <a
                   key={label}
                   href={href}
@@ -219,14 +228,14 @@ export function ReferralsView({ link, code, referrals, earned }: {
           )}
           <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[#202A3A] pt-5">
             <div>
-              <div className="text-[13px] text-[#78859A]">Your earned</div>
+              <div className="text-[13px] text-[#78859A]">{t.ref.yourEarned}</div>
               <div className="mt-1 font-mono text-[22px] font-bold text-white">{formatUSD(earned)}</div>
-              <div className="mt-1 text-[12px] text-[#78859A]">Paid into your Earning wallet</div>
+              <div className="mt-1 text-[12px] text-[#78859A]">{t.ref.paidInto}</div>
             </div>
             <div>
-              <div className="text-[13px] text-[#78859A]">Your team</div>
+              <div className="text-[13px] text-[#78859A]">{t.ref.yourTeam}</div>
               <div className="mt-1 font-mono text-[22px] font-bold text-white">{team}</div>
-              <div className="mt-1 text-[12px] text-[#78859A]">{team === 0 ? 'Nobody yet' : `${team} member${team === 1 ? '' : 's'}`}</div>
+              <div className="mt-1 text-[12px] text-[#78859A]">{team === 0 ? t.ref.nobody : `${team} ${team === 1 ? t.ref.memberWord : t.ref.membersWord}`}</div>
             </div>
           </div>
         </section>
@@ -237,9 +246,9 @@ export function ReferralsView({ link, code, referrals, earned }: {
         ))}
       </div>
       <p className="mt-5 text-[13px] leading-relaxed text-[#78859A]">
-        A commission is paid the moment it is earned, with no minimum.{' '}
+        {t.ref.commissionNote}{' '}
         <Link href="/app/referrals/earnings" className="font-semibold text-[#2FD6FF] hover:brightness-110">
-          See every commission in your history
+          {t.ref.seeHistory}
         </Link>
       </p>
       <Reveal>
@@ -251,10 +260,10 @@ export function ReferralsView({ link, code, referrals, earned }: {
               <rect x="9.8" y="8" width="2.4" height="8" rx="1.2" fill="#2FD6FF" opacity="0.7" />
               <rect x="13.6" y="5" width="2.4" height="11" rx="1.2" fill="#2FD6FF" />
             </svg>
-            <h2 className="text-[15px] font-bold text-white">Banners with your link</h2>
+            <h2 className="text-[15px] font-bold text-white">{t.ref.bannersTitle}</h2>
           </div>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[#78859A]">
-            Each one already carries your referral link. Copy its code into a website, a blog or a forum signature.
+            {t.ref.bannersSub}
           </p>
         </section>
       </Reveal>
@@ -264,7 +273,7 @@ export function ReferralsView({ link, code, referrals, earned }: {
         ))}
       </div>
       {!link && (
-        <p className="mt-3 text-[13px] text-[#78859A]">Banner embed codes need your referral link, which is unavailable for this account.</p>
+        <p className="mt-3 text-[13px] text-[#78859A]">{t.ref.bannersNeed}</p>
       )}
     </div>
   );

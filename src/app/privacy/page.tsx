@@ -1,4 +1,5 @@
 import { PageHero, Prose, CTASection } from '@/components/public';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = {
   title: 'Privacy Policy',
@@ -11,40 +12,30 @@ function H({ children }: { children: string }) {
 }
 
 export default function PrivacyPage() {
+  const t = getDict();
   return (
     <div>
       <PageHero
-        eyebrow="LEGAL"
-        title="Privacy Policy"
-        lede="What this demo collects and why. Production deployments must finalize retention periods, cookie usage, analytics and jurisdiction-specific rights with counsel."
+        eyebrow={t.pub.privEyebrow}
+        title={t.pub.privTitle}
+        lede={t.pub.privLede}
       />
       <div className="py-12">
         <Prose>
-          <H>Information collected</H>
-          <p><strong className="text-white">Account information:</strong> your email address, display name you choose, referral code and referral relationships, created for operating your account.</p>
-          <p><strong className="text-white">Authentication:</strong> Supabase Auth manages credentials and session tokens. Axiora code never stores, logs or displays your password.</p>
-          <p><strong className="text-white">Wallet information:</strong> destination addresses you save and transaction records (amounts, assets, networks, hashes) required to operate deposits, withdrawals and deployments.</p>
-          <p><strong className="text-white">Usage information:</strong> support tickets you open and notification events tied to your account activity.</p>
-          <H>Cookies</H>
-          <p>Authentication uses HTTP-only session cookies required for sign-in. No advertising cookies are set by this demo. A production cookie policy must be published before launch.</p>
-          <H>Third parties</H>
-          <p>Account and data hosting is provided by Supabase (database, authentication) and Cloudflare (hosting); email delivery uses Resend once configured. Each processes data under its own terms to provide the service.</p>
-          <H>Security</H>
-          <p>Private tables are gated by owner-scoped row-level security, sessions travel in HTTP-only cookies, and privileged credentials never ship to the browser. See the Security page for the exact implemented controls.</p>
-          <H>Retention</H>
-          <p>Account and ledger records are retained while your account exists and as required for auditability. A production retention schedule must be defined before launch.</p>
-          <H>User rights</H>
-          <p>You may update your display name in Profile, and request export or deletion of your account data via a support ticket. Deletion of ledger rows may be limited where audit obligations apply.</p>
-          <H>Contact</H>
-          <p>Privacy questions go through the in-app support ticket flow. No dedicated privacy contact address has been established for this demo.</p>
+          {t.pub.privH.map((h, i) => (
+            <div key={h}>
+              <H>{h}</H>
+              <p>{t.pub.privP[i]}</p>
+            </div>
+          ))}
         </Prose>
       </div>
       <CTASection
-        title="Your data stays yours"
-        body="Owner-scoped access on every private table. Read the Security page for details."
-        primaryLabel="Security"
+        title={t.pub.privCtaT}
+        body={t.pub.privCtaB}
+        primaryLabel={t.footer.links.security}
         primaryHref="/security"
-        secondaryLabel="Get Started"
+        secondaryLabel={t.header.getStarted}
         secondaryHref="/register"
       />
     </div>

@@ -5,13 +5,23 @@ import { SectionCard, TableWrap, EmptyState } from '@/components/data';
 import { Tabs } from '@/components/ui';
 import { formatUSD } from '@/lib/finance';
 import type { WalletTxn } from '@/lib/queries';
+import { useT } from '@/components/LanguageProvider';
+import { stWord } from '@/lib/i18n-dict';
 
-const TYPES = ['All', 'Deposit', 'Withdrawal', 'Deployment', 'Profit', 'Referral', 'Fee'] as const;
-const STATUSES = ['All', 'Completed', 'Pending', 'Processing', 'Failed', 'Cancelled'] as const;
+const TYPE_IDS = ['All', 'Deposit', 'Withdrawal', 'Deployment', 'Profit', 'Referral', 'Fee'] as const;
+const STATUS_IDS = ['All', 'Completed', 'Pending', 'Processing', 'Failed', 'Cancelled'] as const;
 
 export function TransactionsView({ initial }: { initial: WalletTxn[] }) {
-  const [type, setType] = useState<(typeof TYPES)[number]>('All');
-  const [status, setStatus] = useState<(typeof STATUSES)[number]>('All');
+  const t = useT();
+  const TYPE_OPTS = TYPE_IDS.map((id) => ({
+    id,
+    label: id === 'All' ? t.common.all : id === 'Deposit' ? t.support.catDeposit : id === 'Withdrawal' ? t.support.catWithdrawal : id === 'Deployment' ? t.tx.tyDeployment : id === 'Profit' ? t.tx.tyProfit : id === 'Referral' ? t.tx.tyReferral : t.tx.tyFee,
+  }));
+  const STATUS_OPTS = STATUS_IDS.map((id) => ({ id, label: id === 'All' ? t.common.all : stWord(t, id) }));
+  const labelOf = (opts: { id: string; label: string }[], id: string) => opts.find((o) => o.id === id)?.label ?? id;
+  const idOf = (opts: { id: string; label: string }[], label: string) => opts.find((o) => o.label === label)?.id ?? 'All';
+  const [type, setType] = useState<string>('All');
+  const [status, setStatus] = useState<string>('All');
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -28,40 +38,40 @@ export function TransactionsView({ initial }: { initial: WalletTxn[] }) {
   return (
     <div>
       <div className="mt-6 space-y-3">
-        <Tabs options={TYPES} value={type} onChange={setType} />
+        <Tabs options={TYPE_OPTS.map((o) => o.label)} value={labelOf(TYPE_OPTS, type)} onChange={(lbl) => setType(idOf(TYPE_OPTS, lbl))} />
         <div className="flex flex-wrap gap-3">
-          <label className="text-xs text-fog">Status
-            <select value={status} onChange={(e) => setStatus(e.target.value as (typeof STATUSES)[number])} className="ml-2 rounded-lg border border-line bg-void px-3 py-1.5 text-xs text-white outline-none">
-              {STATUSES.map((s) => <option key={s}>{s}</option>)}
+          <label className="text-xs text-fog">{t.tx.statusF}
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="ml-2 rounded-lg border border-line bg-void px-3 py-1.5 text-xs text-white outline-none">
+              {STATUS_OPTS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
             </select>
           </label>
-          <label className="text-xs text-fog">Search
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ID, hash or address" className="ml-2 rounded-lg border border-line bg-void px-3 py-1.5 text-xs text-white outline-none placeholder:text-fog/60" />
+          <label className="text-xs text-fog">{t.tx.searchF}
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.tx.searchPh} dir="ltr" className="ml-2 rounded-lg border border-line bg-void px-3 py-1.5 text-xs text-white outline-none placeholder:text-fog/60" />
           </label>
         </div>
       </div>
       {rows.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            title={initial.length === 0 ? 'No transactions yet' : 'No matches'}
-            body={initial.length === 0 ? 'Deposits, withdrawals, deployments, profit, referral rewards and fees will be listed here once recorded.' : 'Try a different filter or search term.'}
+            title={initial.length === 0 ? t.tx.noTx : t.tx.noMatch}
+            body={initial.length === 0 ? t.tx.noTxB : t.tx.tryOther}
           />
         </div>
       ) : (
         <>
-          <SectionCard title={`${rows.length} transaction${rows.length === 1 ? '' : 's'}`}>
+          <SectionCard title={rows.length === 1 ? t.tx.txn1.replace('{n}', '1') : t.tx.txnsN.replace('{n}', String(rows.length))}>
             <TableWrap>
               <table className="w-full min-w-[720px] text-sm">
-                <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">DATE</th><th className="p-4">TYPE</th><th className="p-4 text-right">AMOUNT</th><th className="p-4">ASSET</th><th className="p-4 text-right">STATUS</th><th className="p-4 text-right">HASH / ADDRESS</th></tr></thead>
+                <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">{t.tx.cDate}</th><th className="p-4">{t.tx.cType}</th><th className="p-4 text-right">{t.tx.cAmount}</th><th className="p-4">{t.tx.cAsset}</th><th className="p-4 text-right">{t.tx.cStatus}</th><th className="p-4 text-right">{t.tx.cHash}</th></tr></thead>
                 <tbody>
-                  {rows.map((t) => (
-                    <tr key={t.id} className="border-t border-line">
-                      <td className="p-4 text-fog">{t.createdAt.slice(0, 10)}</td>
-                      <td className="p-4 capitalize">{t.type}</td>
-                      <td className="p-4 text-right font-mono">{formatUSD(t.amount)}</td>
-                      <td className="p-4">{t.asset}</td>
-                      <td className="p-4 text-right text-fog">{t.status}</td>
-                      <td className="max-w-[180px] truncate p-4 text-right font-mono text-xs text-fog">{t.txHash ? `${t.txHash.slice(0, 12)}…` : t.address ? `${t.address.slice(0, 12)}…` : '—'}</td>
+                  {rows.map((row) => (
+                    <tr key={row.id} className="border-t border-line">
+                      <td className="p-4 text-fog">{row.createdAt.slice(0, 10)}</td>
+                      <td className="p-4 capitalize">{TYPE_OPTS.find((o) => o.id.toLowerCase() === row.type.toLowerCase())?.label ?? row.type}</td>
+                      <td className="p-4 text-right font-mono">{formatUSD(row.amount)}</td>
+                      <td className="p-4">{row.asset}</td>
+                      <td className="p-4 text-right text-fog">{stWord(t, row.status)}</td>
+                      <td dir="ltr" className="max-w-[180px] truncate p-4 text-right font-mono text-xs text-fog">{row.txHash ? `${row.txHash.slice(0, 12)}…` : row.address ? `${row.address.slice(0, 12)}…` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -70,24 +80,24 @@ export function TransactionsView({ initial }: { initial: WalletTxn[] }) {
           </SectionCard>
           {/* Mobile cards (tap to expand details) */}
           <div className="mt-4 space-y-3 md:hidden">
-            {rows.map((t) => {
-              const open = expanded === t.id;
+            {rows.map((row) => {
+              const open = expanded === row.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setExpanded(open ? null : t.id)}
+                  key={row.id}
+                  onClick={() => setExpanded(open ? null : row.id)}
                   aria-expanded={open}
                   className={`block w-full rounded-[20px] border bg-[#0D111A] p-4 text-left text-sm transition ${open ? 'border-[rgba(47,214,255,0.5)]' : 'border-[#202A3A]'}`}
                 >
-                  <div className="flex justify-between"><span className="font-semibold capitalize text-white">{t.type}</span><span className="font-mono text-white">{formatUSD(t.amount)} {t.asset}</span></div>
-                  <div className="mt-1 flex justify-between text-xs text-[#78859A]"><span>{t.createdAt.slice(0, 10)}</span><span>{t.status}</span></div>
+                  <div className="flex justify-between"><span className="font-semibold capitalize text-white">{TYPE_OPTS.find((o) => o.id.toLowerCase() === row.type.toLowerCase())?.label ?? row.type}</span><span className="font-mono text-white">{formatUSD(row.amount)} {row.asset}</span></div>
+                  <div className="mt-1 flex justify-between text-xs text-[#78859A]"><span>{row.createdAt.slice(0, 10)}</span><span>{stWord(t, row.status)}</span></div>
                   <div className={`grid transition-all duration-300 ease-out ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                     <div className="overflow-hidden">
-                      <div className="space-y-1 border-t border-[#202A3A]/70 pt-2 font-mono text-[11px] text-[#78859A]">
-                        <div>ID: {t.id.slice(0, 13)}…</div>
-                        {t.txHash && <div>HASH: {t.txHash}</div>}
-                        {t.address && <div>ADDR: {t.address.slice(0, 20)}…</div>}
-                        {t.network && <div>NET: {t.network}</div>}
+                      <div dir="ltr" className="space-y-1 border-t border-[#202A3A]/70 pt-2 text-left font-mono text-[11px] text-[#78859A]">
+                        <div>ID: {row.id.slice(0, 13)}…</div>
+                        {row.txHash && <div>HASH: {row.txHash}</div>}
+                        {row.address && <div>ADDR: {row.address.slice(0, 20)}…</div>}
+                        {row.network && <div>NET: {row.network}</div>}
                       </div>
                     </div>
                   </div>

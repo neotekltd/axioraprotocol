@@ -7,6 +7,7 @@
 
 import { useRef, useState } from 'react';
 import { PageHeader } from '@/components/data';
+import { useT } from '@/components/LanguageProvider';
 import { ChoosePlanSection } from '@/components/invest/PlanCards';
 import { InvestPanel } from '@/components/invest/InvestPanel';
 import { InvestmentsView } from '@/components/invest/InvestmentsView';
@@ -16,18 +17,6 @@ import type { ActivePlan, Deployment, ProtocolStats } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
 type TabKey = 'plans' | 'investments' | 'statistics';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'plans', label: 'Plans' },
-  { key: 'investments', label: 'My investments' },
-  { key: 'statistics', label: 'Statistics' },
-];
-
-const HEADERS: Record<TabKey, { title: string; sub: string }> = {
-  plans: { title: 'Start a plan', sub: 'Pick a plan, then choose how much to invest.' },
-  investments: { title: 'My investments', sub: 'Each plan as one line: every payout so far, and how much of your money is back.' },
-  statistics: { title: 'Statistics', sub: 'Operator-published protocol figures — separate from your balances.' },
-};
 
 export function InvestHub({
   available,
@@ -42,9 +31,20 @@ export function InvestHub({
   deployments: Deployment[];
   stats: ProtocolStats | null;
 }) {
+  const t = useT();
   const [tab, setTab] = useState<TabKey>('plans');
   const [selected, setSelected] = useState<PlanKey | null>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const TABS: { key: TabKey; label: string }[] = [
+    { key: 'plans', label: t.inv.tabPlans },
+    { key: 'investments', label: t.inv.tabInv },
+    { key: 'statistics', label: t.inv.tabStats },
+  ];
+  const HEADERS: Record<TabKey, { title: string; sub: string }> = {
+    plans: { title: t.inv.hPlansT, sub: t.inv.hPlansS },
+    investments: { title: t.inv.hInvT, sub: t.inv.hInvS },
+    statistics: { title: t.inv.hStatsT, sub: t.inv.hStatsS },
+  };
   const header = HEADERS[tab];
 
   const onTabKeyDown = (e: React.KeyboardEvent, i: number) => {
@@ -68,7 +68,7 @@ export function InvestHub({
 
       <div
         role="tablist"
-        aria-label="Invest sections"
+        aria-label={t.inv.tablistAria}
         className="mt-6 grid grid-cols-3 gap-1 rounded-2xl border border-[#202A3A] bg-[#0A0E16] p-1.5"
       >
         {TABS.map((t, i) => (

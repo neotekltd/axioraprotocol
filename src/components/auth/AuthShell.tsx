@@ -3,38 +3,39 @@ import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { TechGridBackground } from '@/components/ax/primitives';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { getDict } from '@/lib/i18n-server';
 
-// AIMEX-composition auth shell: compact logo header (left) + language pill
-// + back-to-site (right), upper-middle ~500px card slot, decorative network
-// line, minimal legal footer. Branding and routes are Axiora's own.
+// AIMEX-composition auth shell: compact logo header + real language
+// selector + back-to-site, upper-middle ~500px card slot, decorative
+// network line, minimal legal footer. Branding and routes are Axiora's own.
 export function AuthShell({ children }: { children: ReactNode }) {
+  const t = getDict();
   return (
     <div className="relative min-h-screen bg-[#080B12]">
       <TechGridBackground />
       <header className="relative mx-auto flex max-w-[1200px] items-center justify-between px-5 pt-7 md:px-10">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Axiora home">
+        <Link href="/" className="flex items-center gap-2.5" aria-label={t.authShell.home}>
           <AxioraMark size={34} />
           <span className="text-[15px] font-extrabold tracking-tight text-white">
             AXIORA<span className="text-[#2FD6FF]">.</span>
           </span>
         </Link>
         <div className="flex items-center gap-2.5">
-          <span className="flex h-[42px] items-center gap-2 rounded-full border border-[#2A394D] bg-[#0D111A]/80 px-4 text-[13px] text-[#AAB5C7]" role="note" aria-label="Language: English">
-            <span aria-hidden="true" className="font-mono text-[11px]">EN</span> English <span aria-hidden="true" className="text-[#596579]">▾</span>
-          </span>
+          <LanguageSelector />
           <Link href="/" className="flex h-[42px] items-center gap-1.5 rounded-full border border-[#2A394D] bg-[#0D111A]/80 px-4 text-[13px] text-[#AAB5C7] transition hover:border-[rgba(47,214,255,0.5)] hover:text-white">
-            <ArrowLeft size={14} aria-hidden="true" /> Back to site
+            <ArrowLeft size={14} aria-hidden="true" /> {t.authShell.backToSite}
           </Link>
         </div>
       </header>
       <main className="relative mx-auto w-full max-w-[500px] px-5 pb-16 pt-10 md:pt-14">{children}</main>
       <AuthGraphLine />
       <footer className="relative pb-8 pt-4 text-center">
-        <p className="text-[12px] text-[#596579]">© 2026 Axiora Protocol. Investment carries risk of loss.</p>
+        <p className="text-[12px] text-[#596579]">{t.authShell.risk}</p>
         <p className="mt-1.5 text-[12px]">
-          <Link href="/terms" className="text-[#78859A] hover:text-white">Terms of Service</Link>
+          <Link href="/terms" className="text-[#78859A] hover:text-white">{t.authShell.terms}</Link>
           <span className="mx-2 text-[#2A394D]" aria-hidden="true">·</span>
-          <Link href="/privacy" className="text-[#78859A] hover:text-white">Privacy Policy</Link>
+          <Link href="/privacy" className="text-[#78859A] hover:text-white">{t.authShell.privacy}</Link>
         </p>
       </footer>
     </div>

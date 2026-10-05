@@ -2,9 +2,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AxioraLogo } from '@/components/AxioraLogo';
+import { useT } from '@/components/LanguageProvider';
 
 export function Footer() {
   const pathname = usePathname();
+  const t = useT();
   // Authenticated /app area uses its own shell without the marketing footer.
   // Auth routes use the standalone AuthShell with its own footer.
   // /admin owns the dedicated admin shell.
@@ -17,52 +19,51 @@ export function Footer() {
       <div className="mx-auto grid max-w-[1200px] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr]">
         <div>
           <AxioraLogo width={150} />
-          <div className="mt-2 font-mono text-[10px] tracking-[0.25em] text-fog">AUTONOMOUS CAPITAL</div>
+          <div className="mt-2 font-mono text-[10px] tracking-[0.25em] text-fog">{t.footer.tagline}</div>
           <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-fog">
-            Multi-agent consensus trading interface. Original implementation; not affiliated
-            with any other protocol. On-chain deposit processing is not yet activated — see the Deposit page for current status.
+            {t.footer.about}
           </p>
         </div>
-        <nav aria-label="Protocol">
-          <div className={col}>PROTOCOL</div>
+        <nav aria-label={t.footer.protocol}>
+          <div className={col}>{t.footer.protocol}</div>
           <div className="mt-3 space-y-2">
-            <Link className={link} href="/protocol">Protocol</Link>
-            <Link className={link} href="/how-it-works">How it works</Link>
-            <Link className={link} href="/technology">Technology</Link>
-            <Link className={link} href="/about">About</Link>
+            <Link className={link} href="/protocol">{t.footer.links.protocol}</Link>
+            <Link className={link} href="/how-it-works">{t.footer.links.howItWorks}</Link>
+            <Link className={link} href="/technology">{t.footer.links.technology}</Link>
+            <Link className={link} href="/about">{t.footer.links.about}</Link>
           </div>
         </nav>
-        <nav aria-label="Product">
-          <div className={col}>PRODUCT</div>
+        <nav aria-label={t.footer.product}>
+          <div className={col}>{t.footer.product}</div>
           <div className="mt-3 space-y-2">
-            <Link className={link} href="/calculator">Calculator</Link>
-            <Link className={link} href="/referral-program">Referrals</Link>
-            <Link className={link} href="/statistics">Statistics</Link>
-            <Link className={link} href="/blog">Blog</Link>
+            <Link className={link} href="/calculator">{t.footer.links.calculator}</Link>
+            <Link className={link} href="/referral-program">{t.footer.links.referrals}</Link>
+            <Link className={link} href="/statistics">{t.footer.links.statistics}</Link>
+            <Link className={link} href="/blog">{t.footer.links.blog}</Link>
           </div>
         </nav>
-        <nav aria-label="Resources">
-          <div className={col}>RESOURCES</div>
+        <nav aria-label={t.footer.resources}>
+          <div className={col}>{t.footer.resources}</div>
           <div className="mt-3 space-y-2">
-            <Link className={link} href="/faq">FAQ</Link>
-            <Link className={link} href="/security">Security</Link>
-            <Link className={link} href="/whitepaper">Whitepaper</Link>
-            <Link className={link} href="/login">Sign In</Link>
+            <Link className={link} href="/faq">{t.footer.links.faq}</Link>
+            <Link className={link} href="/security">{t.footer.links.security}</Link>
+            <Link className={link} href="/whitepaper">{t.footer.links.whitepaper}</Link>
+            <Link className={link} href="/login">{t.footer.links.signIn}</Link>
           </div>
         </nav>
-        <nav aria-label="Legal">
-          <div className={col}>LEGAL</div>
+        <nav aria-label={t.footer.legal}>
+          <div className={col}>{t.footer.legal}</div>
           <div className="mt-3 space-y-2">
-            <Link className={link} href="/terms">Terms</Link>
-            <Link className={link} href="/privacy">Privacy</Link>
-            <Link className={link} href="/register">Register</Link>
+            <Link className={link} href="/terms">{t.footer.links.terms}</Link>
+            <Link className={link} href="/privacy">{t.footer.links.privacy}</Link>
+            <Link className={link} href="/register">{t.footer.links.register}</Link>
           </div>
         </nav>
       </div>
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-2 px-5 py-5 text-[11px] text-fog sm:px-8 md:flex-row">
-          <span>© 2026 Axiora Protocol. All figures simulated unless connected to a backend.</span>
-          <span className="font-mono tracking-[0.15em]">TRADING INVOLVES RISK OF LOSS</span>
+          <span>{t.footer.notice}</span>
+          <span className="font-mono tracking-[0.15em]">{t.footer.risk}</span>
         </div>
       </div>
     </footer>

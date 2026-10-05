@@ -2,26 +2,28 @@ import Link from 'next/link';
 import { PageHeader, SectionCard, EmptyState } from '@/components/data';
 import { NetworkEditor } from '@/components/admin/forms';
 import { getAdminAssets } from '@/lib/admin';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = { title: 'Admin assets' };
 
 export default async function AdminAssets() {
+  const t = getDict();
   const assets = await getAdminAssets();
   return (
     <div>
-      <PageHeader title="Assets & networks" sub="Per-asset/network deposit configuration. A network cannot be ACTIVE without a deposit address — enforced in the database." />
+      <PageHeader title={t.ax.assetsTitle} sub={t.ax.assetsSub} />
       {assets.length === 0 && (
-        <div className="mt-6"><EmptyState title="No assets configured" body="Seed data or add assets directly in the database." /></div>
+        <div className="mt-6"><EmptyState title={t.ax.noAssets} body={t.ax.seedNote} /></div>
       )}
       <div className="space-y-4">
         {assets.map((a) => (
           <SectionCard
             key={a.id}
             title={`${a.symbol} · ${a.name}`}
-            action={<span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#78859A]">{a.isActive ? 'Active' : 'Hidden'}</span>}
+            action={<span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#78859A]">{a.isActive ? t.ax.activeH : t.ax.hiddenH}</span>}
           >
             {a.networks.length === 0 ? (
-              <p className="px-5 py-4 text-[13px] font-mono uppercase tracking-[0.12em] text-[#596579]">Not configured — no networks yet</p>
+              <p className="px-5 py-4 text-[13px] font-mono uppercase tracking-[0.12em] text-[#596579]">{t.ax.notCfgNet}</p>
             ) : (
               <div className="divide-y divide-[#202A3A]/70">
                 {a.networks.map((n) => (
@@ -33,10 +35,10 @@ export default async function AdminAssets() {
                       </span>
                       <span className="flex items-center gap-2">
                         {n.address
-                          ? <span className="font-mono text-[12px] text-[#35D98B]">address set</span>
-                          : <span className="font-mono text-[12px] text-[#F2BF4A]">NOT CONFIGURED</span>}
+                          ? <span className="font-mono text-[12px] text-[#35D98B]">{t.ax.addrSet}</span>
+                          : <span className="font-mono text-[12px] text-[#F2BF4A]">{t.ops.notCfg}</span>}
                         <span className={`font-mono text-[11px] uppercase ${n.depositEnabled ? 'text-[#2FD6FF]' : 'text-[#596579]'}`}>
-                          {n.depositEnabled ? 'active' : 'off'}
+                          {n.depositEnabled ? t.status.active : t.common.off}
                         </span>
                       </span>
                     </summary>
@@ -51,7 +53,7 @@ export default async function AdminAssets() {
         ))}
       </div>
       <p className="mt-4 text-[13px] text-[#78859A]">
-        Back to <Link href="/admin" className="font-semibold text-[#2FD6FF]">dashboard</Link>. Only public receiving data (addresses, contracts) is stored here — never private keys.
+        {t.ax.backTo} <Link href="/admin" className="font-semibold text-[#2FD6FF]">{t.admin.nav.dashboard}</Link>. {t.ax.keysNote}
       </p>
     </div>
   );

@@ -6,6 +6,7 @@
 // hydration mismatch; the client computes the true value on mount.
 import { useEffect, useState } from 'react';
 import { formatElapsed, launchTimestampMs } from '@/lib/launch';
+import { useT } from '@/components/LanguageProvider';
 
 export function useLiveCounter(): string {
   const [label, setLabel] = useState('00:00:00');
@@ -27,11 +28,12 @@ export function useLiveCounter(): string {
 }
 
 export function LiveCounter() {
+  const t = useT();
   const label = useLiveCounter();
   return (
     <>
-      <span className="text-[13px] font-semibold text-[#AAB5C7]">Live</span>
-      <span className="font-mono text-[13px] text-[#78859A]" suppressHydrationWarning>
+      <span className="text-[13px] font-semibold text-[#AAB5C7]">{t.appHeader.liveShort}</span>
+      <span className="font-mono text-[13px] text-[#78859A]" dir="ltr" suppressHydrationWarning>
         {label}
       </span>
     </>

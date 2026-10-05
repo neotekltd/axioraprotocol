@@ -1,15 +1,16 @@
+import { getDict } from '@/lib/i18n-server';
+
 export const metadata = { title: 'Whitepaper' };
 export default function WhitepaperPage() {
+  const t = getDict();
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-40 pb-20">
-      <h1 className="text-4xl font-bold tracking-tight">Axiora Protocol Whitepaper (demo outline)</h1>
+      <h1 className="text-4xl font-bold tracking-tight">{t.pub.wpTitle}</h1>
       <div className="mt-6 space-y-4 text-sm text-mist/80 leading-relaxed">
-        <p>1. Consensus architecture — Signal, Risk, Execution, Sentiment agents and the consensus gate.</p>
-        <p>2. Risk engine — exposure caps, correlation, volatility sizing, drawdown guards, stop-loss enforcement.</p>
-        <p>3. Execution — venue selection, idempotency, reconciliation, ledger settlement.</p>
-        <p>4. Fee and referral economics — admin-configurable, snapshotted per deployment/reward.</p>
-        <p>5. Security, accounting (double-entry ledger), and real-time channels.</p>
-        <p className="text-fog">Full paper ships with backend auditability. This outline is original and demo-only.</p>
+        {t.pub.wpItems.map((item) => (
+          <p key={item}>{item}</p>
+        ))}
+        <p className="text-fog">{t.pub.wpNote}</p>
       </div>
     </div>
   );

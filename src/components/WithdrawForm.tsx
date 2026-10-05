@@ -10,6 +10,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/data';
+import { useT } from '@/components/LanguageProvider';
 import { AxButton, AxInput, FieldError, FieldSuccess } from '@/components/ax/controls';
 import { formatUSD } from '@/lib/finance';
 import { addWallet, requestWithdrawal } from '@/lib/actions';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ax/wallet';
 
 export function WithdrawForm({ available, wallets }: { available: number; wallets: { id: string; asset: string; network: string; address: string }[] }) {
+  const t = useT();
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState(wallets[0]?.address ?? '');
   const [busy, setBusy] = useState(false);
@@ -70,12 +72,12 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
 
   return (
     <div>
-      <PageHeader title="Withdraw" sub="Withdrawals draw from available balance only." />
+      <PageHeader title={t.withdraw.title} sub={t.wd.fromAvail} />
       <div className="mt-6">
         <WalletTabs active="withdraw" />
       </div>
       <FlowCard className="mt-4">
-        <FlowLabel right={`Available ${formatUSD(available)}`}>You withdraw</FlowLabel>
+        <FlowLabel right={t.wd.availX.replace('{x}', formatUSD(available))}>{t.wd.youWithdraw}</FlowLabel>
         <div className="mt-2 flex items-center gap-1">
           <span aria-hidden="true" className="font-mono text-[32px] font-bold text-[#78859A]">$</span>
           <input
@@ -85,15 +87,16 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
             type="number"
             min={0}
             autoComplete="off"
-            aria-label="Withdrawal amount in USDT"
+            aria-label={t.wd.wdAmountAria}
             placeholder="0"
+            dir="ltr"
             className="w-full min-w-0 bg-transparent font-mono text-[40px] font-bold leading-none tracking-tight text-white outline-none placeholder:text-[#2A394D]"
           />
         </div>
       </FlowCard>
       <DividerArrow />
       <FlowCard>
-        <FlowLabel>You receive</FlowLabel>
+        <FlowLabel>{t.wd.youReceive}</FlowLabel>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="font-mono text-[28px] font-bold leading-none text-white">
             {amountOk ? num : 0} <span className="text-[16px] font-semibold text-[#AAB5C7]">USDT</span>
@@ -104,16 +107,17 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
         </div>
         <div className="mt-2 flex items-center gap-1.5 text-[13px] text-[#AAB5C7]">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
-          on TRON (TRC-20)
+          {t.wd.onTron}
         </div>
         <div className="mt-4">
           {wallets.length > 0 ? (
             <div>
-              <label htmlFor="wd-address" className="mb-2 block text-[13px] text-[#78859A]">Where it goes</label>
+              <label htmlFor="wd-address" className="mb-2 block text-[13px] text-[#78859A]">{t.wd.whereGoes}</label>
               <select
                 id="wd-address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                dir="ltr"
                 className="w-full rounded-[14px] border border-[#2A394D] bg-[#151B27] px-4 py-3.5 font-mono text-[14px] text-white outline-none focus:border-[#2FD6FF]"
               >
                 {wallets.map((w) => (
@@ -121,20 +125,20 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
                 ))}
               </select>
               {selected && (
-                <p className="mt-2 break-all font-mono text-[12px] text-[#78859A]">{selected.address}</p>
+                <p dir="ltr" className="mt-2 break-all font-mono text-[12px] text-[#78859A]">{selected.address}</p>
               )}
             </div>
           ) : (
             <TechnicalWarning
-              title="Where it goes"
-              body="No USDT address saved yet"
+              title={t.wd.whereGoes}
+              body={t.wd.noAddr}
               action={
                 <button
                   type="button"
                   onClick={() => setSheetOpen(true)}
                   className="shrink-0 rounded-[12px] border border-[rgba(242,191,74,0.4)] px-4 py-2.5 text-[14px] font-bold text-white transition hover:bg-[rgba(242,191,74,0.1)]"
                 >
-                  Add
+                  {t.wd.addBtn}
                 </button>
               }
             />
@@ -144,10 +148,10 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
       <FlowCard className="mt-4">
         <SummaryRows
           rows={[
-            { label: 'Rate', value: '1 USDT = $1.00', tone: 'white' },
-            { label: 'Fee', value: 'None', tone: 'white' },
-            { label: 'Limit', value: `Available ${formatUSD(available)}`, tone: 'white' },
-            { label: 'Sent', value: 'Recorded as pending', tone: 'white' },
+            { label: t.dep.rate, value: '1 USDT = $1.00', tone: 'white' },
+            { label: t.dep.fee, value: t.dep.none, tone: 'white' },
+            { label: t.wd.limit, value: t.wd.availX.replace('{x}', formatUSD(available)), tone: 'white' },
+            { label: t.wd.sent, value: t.wd.sentVal, tone: 'white' },
           ]}
         />
         {wallets.length === 0 ? (
@@ -156,12 +160,12 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
             onClick={() => setSheetOpen(true)}
             className="mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99]"
           >
-            Add a USDT address <span aria-hidden="true">→</span>
+            {t.wd.addAddr} <span aria-hidden="true">→</span>
           </button>
         ) : (
           <div className="mt-4">
             <AxButton onClick={submit} disabled={busy || available <= 0 || !amountOk}>
-              {busy ? 'Submitting…' : 'Confirm Withdrawal'}
+              {busy ? t.withdraw.submitting : t.wd.confirmWd}
             </AxButton>
           </div>
         )}
@@ -170,21 +174,21 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
           : <div className="mt-3"><FieldError message={message.text} /></div>)}
         {available <= 0 && (
           <p className="mt-3 text-[13px] text-[#78859A]">
-            Nothing available to withdraw. <Link href="/app/deposit" className="font-semibold text-[#2FD6FF]">Deposit funds</Link> first.
+            {t.wd.nothingAvail} <Link href="/app/deposit" className="font-semibold text-[#2FD6FF]">{t.wd.depositFirst}</Link>
           </p>
         )}
       </FlowCard>
       <p className="mt-4 text-center text-[13px] text-[#78859A]">
-        Where is my withdrawal? <Link href="/app/transactions" className="font-semibold text-[#2FD6FF] hover:brightness-110">See your withdrawals</Link>
+        {t.wd.whereIs} <Link href="/app/transactions" className="font-semibold text-[#2FD6FF] hover:brightness-110">{t.wd.seeWds}</Link>
       </p>
       <BottomSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        labelledBy="Save a USDT address"
-        title="USDT · TRC-20 address"
+        labelledBy={t.wd.sheetTitle}
+        title={t.wd.sheetH}
       >
-        <p className="text-[14px] text-[#AAB5C7]">Save where your coins are sent</p>
-        <label htmlFor="sheet-address" className="mb-2 mt-4 block text-[14px] font-semibold text-white">Address</label>
+        <p className="text-[14px] text-[#AAB5C7]">{t.wd.sheetSub}</p>
+        <label htmlFor="sheet-address" className="mb-2 mt-4 block text-[14px] font-semibold text-white">{t.wd.addrLbl}</label>
         <AxInput
           id="sheet-address"
           value={newAddress}
@@ -192,29 +196,30 @@ export function WithdrawForm({ available, wallets }: { available: number; wallet
           placeholder="T…"
           autoComplete="off"
           spellCheck={false}
+          dir="ltr"
           className="font-mono"
         />
         <label htmlFor="sheet-label" className="mb-2 mt-4 block text-[14px] font-semibold text-white">
-          Label <span className="font-mono text-[11px] font-normal uppercase tracking-[0.15em] text-[#596579]">optional</span>
+          {t.wd.labelLbl} <span className="font-mono text-[11px] font-normal uppercase tracking-[0.15em] text-[#596579]">{t.common.optional}</span>
         </label>
-        <AxInput id="sheet-label" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="e.g. Main wallet" autoComplete="off" maxLength={60} />
+        <AxInput id="sheet-label" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder={t.wd.labelPh} autoComplete="off" maxLength={60} />
         <div className="mt-4">
           <TechnicalWarning
-            title="This must be an address on the TRC-20 network."
-            body="Coins sent to the wrong network cannot be recovered."
+            title={t.wd.mustTrc}
+            body={t.wd.wrongNet2}
           />
         </div>
         <FieldError message={saveError} />
         <div className="mt-5 space-y-2.5">
           <AxButton onClick={saveAddress} disabled={saving || newAddress.trim().length < 8}>
-            {saving ? 'Saving…' : 'Save address'}
+            {saving ? t.wd.saving : t.wd.saveAddr}
           </AxButton>
           <button
             type="button"
             onClick={() => setSheetOpen(false)}
             className="flex min-h-[52px] w-full items-center justify-center rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.5)]"
           >
-            Cancel
+            {t.common.cancel}
           </button>
         </div>
       </BottomSheet>

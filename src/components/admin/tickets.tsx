@@ -7,6 +7,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxButton, FieldError, FieldSuccess } from '@/components/ax/controls';
 import { replyToTicket, setTicketStatus } from '@/lib/admin-actions';
+import { useT } from '@/components/LanguageProvider';
 
 function mountKey(): string {
   try {
@@ -17,6 +18,7 @@ function mountKey(): string {
 }
 
 export function TicketReplyForm({ ticketId, internal = false }: { ticketId: string; internal?: boolean }) {
+  const t = useT();
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
@@ -38,7 +40,7 @@ export function TicketReplyForm({ ticketId, internal = false }: { ticketId: stri
         router.refresh();
       }
     } catch {
-      setResult({ ok: false, text: 'Could not send. Your text is kept — try again.' });
+      setResult({ ok: false, text: t.acts.replySendFail });
     } finally {
       setBusy(false);
     }
@@ -47,7 +49,7 @@ export function TicketReplyForm({ ticketId, internal = false }: { ticketId: stri
   return (
     <div>
       <label htmlFor={internal ? 'ticket-note' : 'ticket-reply'} className="mb-2 block text-[13px] font-semibold text-white">
-        {internal ? 'Internal note — never shown to the user' : 'Reply to user'}
+        {internal ? t.at.noteNever : t.at.replyToUser}
       </label>
       <textarea
         id={internal ? 'ticket-note' : 'ticket-reply'}
@@ -56,7 +58,7 @@ export function TicketReplyForm({ ticketId, internal = false }: { ticketId: stri
         rows={4}
         maxLength={4000}
         disabled={busy}
-        placeholder={internal ? 'Note for admins only…' : 'Write a reply…'}
+        placeholder={internal ? t.at.notePh : t.support.replyPh}
         className={`w-full rounded-[12px] border bg-[#080B12] px-4 py-3.5 text-[14px] leading-relaxed text-white outline-none transition placeholder:text-[#596579] focus:border-[#2FD6FF] disabled:opacity-60 ${
           internal ? 'border-dashed border-[rgba(242,191,74,0.5)]' : 'border-[#2A394D]'
         }`}
@@ -68,26 +70,26 @@ export function TicketReplyForm({ ticketId, internal = false }: { ticketId: stri
       )}
       <div className="mt-3 max-w-xs">
         <AxButton disabled={busy || body.trim().length === 0} onClick={() => void send()}>
-          {busy ? 'Sending…' : internal ? 'Save internal note' : 'Send reply'}
+          {busy ? t.support.sending : internal ? t.at.saveNote : t.support.sendReply}
         </AxButton>
       </div>
     </div>
   );
 }
 
-const NEXT: Record<string, { to: 'open' | 'answered' | 'closed'; label: string }[]> = {
-  open: [
-    { to: 'answered', label: 'Mark answered' },
-    { to: 'closed', label: 'Close ticket' },
-  ],
-  answered: [
-    { to: 'open', label: 'Reopen' },
-    { to: 'closed', label: 'Close ticket' },
-  ],
-  closed: [{ to: 'open', label: 'Reopen ticket' }],
-};
-
 export function TicketStatusButtons({ ticketId, status }: { ticketId: string; status: string }) {
+  const t = useT();
+  const NEXT: Record<string, { to: 'open' | 'answered' | 'closed'; label: string }[]> = {
+    open: [
+      { to: 'answered', label: t.at.markAnswered },
+      { to: 'closed', label: t.at.closeTicket },
+    ],
+    answered: [
+      { to: 'open', label: t.at.reopen },
+      { to: 'closed', label: t.at.closeTicket },
+    ],
+    closed: [{ to: 'open', label: t.at.reopenTicket }],
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -101,7 +103,7 @@ export function TicketStatusButtons({ ticketId, status }: { ticketId: string; st
       if (!r.ok) setError(r.message);
       router.refresh();
     } catch {
-      setError('Could not change the ticket status.');
+      setError(t.adminActs.statusFail);
     } finally {
       setBusy(false);
     }

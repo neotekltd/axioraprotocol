@@ -5,6 +5,8 @@
 
 import Link from 'next/link';
 import { deploymentLabel, formatUSD, formatPct } from '@/lib/plans';
+import { useT } from '@/components/LanguageProvider';
+import { stWord } from '@/lib/i18n-dict';
 import { PayoutCountdown } from '@/components/ax/active-plan';
 import type { ActivePlan, Deployment } from '@/lib/queries';
 
@@ -27,6 +29,7 @@ export function ModuleBot() {
 }
 
 function InvestmentRow({ plan }: { plan: ActivePlan }) {
+  const t = useT();
   return (
     <li className="rounded-2xl border border-[#202A3A] bg-[#0E141E] p-5">
       <div className="flex items-start justify-between gap-3">
@@ -35,20 +38,20 @@ function InvestmentRow({ plan }: { plan: ActivePlan }) {
           <div className="truncate text-[17px] font-bold text-white">{plan.planName}</div>
         </div>
         <span className="shrink-0 rounded-full border border-[rgba(53,217,139,0.5)] bg-[rgba(53,217,139,0.1)] px-3 py-1 font-mono text-[11px] font-bold tracking-[0.12em] text-[#35D98B]">
-          {plan.status.toUpperCase()}
+          {stWord(t, plan.status).toUpperCase()}
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-3 gap-3 border-t border-[#1A2231] pt-3">
         <div>
-          <dt className="text-[12px] text-[#78859A]">Invested</dt>
+          <dt className="text-[12px] text-[#78859A]">{t.inv.investedC}</dt>
           <dd className="mt-0.5 font-mono text-[15px] font-bold text-white">{formatUSD(plan.amount)}</dd>
         </div>
         <div>
-          <dt className="text-[12px] text-[#78859A]">Paid back</dt>
+          <dt className="text-[12px] text-[#78859A]">{t.inv.paidBack}</dt>
           <dd className="mt-0.5 font-mono text-[15px] font-bold text-[#35D98B]">{formatUSD(plan.earnedTotal)}</dd>
         </div>
         <div>
-          <dt className="text-[12px] text-[#78859A]">Payouts</dt>
+          <dt className="text-[12px] text-[#78859A]">{t.inv.payoutsC}</dt>
           <dd className="mt-0.5 font-mono text-[15px] font-bold text-white">
             {plan.payoutsCompleted}{plan.payoutsTotal != null ? ` / ${plan.payoutsTotal}` : ''}
           </dd>
@@ -56,10 +59,10 @@ function InvestmentRow({ plan }: { plan: ActivePlan }) {
       </dl>
       <div className="mt-3 flex items-center justify-between gap-3 rounded-[12px] border border-[#202A3A] bg-[#080B12] px-4 py-3">
         <span className="text-[13px] text-[#78859A]">
-          {formatPct(plan.ratePerCredit * 100)} every {plan.cycleHours}h · next {formatUSD(plan.nextCredit)}
+          {formatPct(plan.ratePerCredit * 100)} {t.inv.everyH.replace('{h}', String(plan.cycleHours))} · {t.inv.nextLbl.replace('{x}', formatUSD(plan.nextCredit))}
         </span>
         <Link href="/app/deployments" className="shrink-0 text-[13px] font-bold text-[#2FD6FF] hover:brightness-110">
-          Details
+          {t.inv.details}
         </Link>
       </div>
       <div className="mt-3">
@@ -78,19 +81,20 @@ export function InvestmentsView({
   deployments: Deployment[];
   onStartPlan: () => void;
 }) {
+  const t = useT();
   if (activePlans.length === 0 && deployments.length === 0) {
     return (
-      <section aria-label="No investments" className="mt-4 overflow-hidden rounded-2xl border border-[#202A3A] bg-[#0B0F16] px-6 pb-0 pt-12 text-center">
-        <h2 className="text-[20px] font-bold tracking-tight text-white">No investments yet</h2>
+      <section aria-label={t.inv.noInvAria} className="mt-4 overflow-hidden rounded-2xl border border-[#202A3A] bg-[#0B0F16] px-6 pb-0 pt-12 text-center">
+        <h2 className="text-[20px] font-bold tracking-tight text-white">{t.inv.noInvT}</h2>
         <p className="mx-auto mt-2 max-w-sm text-[14px] leading-relaxed text-[#AAB5C7]">
-          Pick a plan, and your first payout arrives on its schedule.
+          {t.inv.noInvB}
         </p>
         <button
           type="button"
           onClick={onStartPlan}
           className="mt-6 inline-flex min-h-[52px] items-center rounded-[14px] bg-[#2FD6FF] px-8 text-[15px] font-bold text-[#06121A] shadow-[0_0_24px_rgba(47,214,255,0.25)] transition duration-200 hover:brightness-110 active:scale-[0.99]"
         >
-          Start a plan
+          {t.inv.startPlan}
         </button>
         <div className="mt-8">
           <ModuleBot />
@@ -108,9 +112,9 @@ export function InvestmentsView({
           ))}
         </ul>
       ) : (
-        <section aria-label="Past investments" className="rounded-2xl border border-[#202A3A] bg-[#0B0F16] p-5">
-          <h2 className="text-[16px] font-bold text-white">No live investments</h2>
-          <p className="mt-1 text-[14px] text-[#AAB5C7]">Nothing is currently deployed. Your past records are below.</p>
+        <section aria-label={t.inv.pastAria} className="rounded-2xl border border-[#202A3A] bg-[#0B0F16] p-5">
+          <h2 className="text-[16px] font-bold text-white">{t.inv.pastT}</h2>
+          <p className="mt-1 text-[14px] text-[#AAB5C7]">{t.inv.pastB}</p>
           <ul className="mt-4 divide-y divide-[#1A2231]">
             {deployments.slice(0, 10).map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 py-2.5 text-[14px]">
@@ -120,7 +124,7 @@ export function InvestmentsView({
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="font-mono font-bold text-white">{formatUSD(d.amount)}</div>
-                  <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#78859A]">{d.status}</div>
+                  <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#78859A]">{stWord(t, d.status)}</div>
                 </div>
               </li>
             ))}
@@ -130,7 +134,7 @@ export function InvestmentsView({
             onClick={onStartPlan}
             className="mt-4 flex min-h-[52px] w-full items-center justify-center rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] transition hover:brightness-110 active:scale-[0.99]"
           >
-            Start a plan
+            {t.inv.startPlan}
           </button>
         </section>
       )}

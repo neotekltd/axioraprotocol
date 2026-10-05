@@ -8,6 +8,12 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireAdminId } from '@/lib/admin';
+import { getDict } from '@/lib/i18n-server';
+
+// Localized admin-facing messages (read-only locale read; no logic change).
+function adminActs() {
+  return getDict().adminActs;
+}
 
 export interface AdminResult {
   ok: boolean;
@@ -37,7 +43,7 @@ async function audit(
 
 export async function confirmDeposit(id: string): Promise<AdminResult> {
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   try {
     const supabase = createClient();
     const { data: row } = await supabase
@@ -49,9 +55,9 @@ export async function confirmDeposit(id: string): Promise<AdminResult> {
       id: string; status: string; type: string; asset: string; amount: string; user_id: string;
       provider: string | null; meta: Record<string, unknown> | null;
     } | null;
-    if (!r || r.type !== 'deposit') return { ok: false, message: 'Deposit not found.' };
-    if (r.status === 'completed') return { ok: true, message: 'Already credited — no duplicate entry created.' };
-    if (r.status !== 'pending') return { ok: false, message: `Only pending deposits can be confirmed (now ${r.status}).` };
+    if (!r || r.type !== 'deposit') return { ok: false, message: adminActs().depositMissing };
+    if (r.status === 'completed') return { ok: true, message: adminActs().alreadyCredited };
+    if (r.status !== 'pending') return { ok: false, message: adminActs().pendingOnlyC.replace('{status}', r.status) };
     // Automatic provider deposits credit themselves via verified IPN — a
     // manual confirm would invent money movement the provider never
     // reported. Only flagged exceptions (needs review) may be confirmed.
@@ -63,7 +69,7 @@ export async function confirmDeposit(id: string): Promise<AdminResult> {
         : null;
       const exception = flagged || (pStatus !== null && ['partially_paid', 'failed', 'expired', 'refunded'].includes(pStatus));
       if (!exception) {
-        return { ok: false, message: 'Automatic provider deposit — it credits itself on provider confirmation. No manual action.' };
+        return { ok: false, message: adminActs().autoBlocked };
       }
     }
     const { error } = await supabase
@@ -74,9 +80,9 @@ export async function confirmDeposit(id: string): Promise<AdminResult> {
     if (error) throw error;
     await audit(supabase, adminId, 'DEPOSIT_CONFIRMED', 'deposit', id, { amount: r.amount, asset: r.asset, user_id: r.user_id });
     revalidatePath('/admin');
-    return { ok: true, message: 'Deposit confirmed and credited exactly once.' };
+    return { ok: true, message: adminActs().depositOk };
   } catch {
-    return { ok: false, message: 'Could not confirm the deposit.' };
+    return { ok: false, message: adminActs().depositFail };
   }
 }
 
@@ -84,9 +90,9 @@ const RejectSchema = z.object({ id: z.string().uuid(), reason: z.string().trim()
 
 export async function rejectDeposit(form: { id: string; reason?: string }): Promise<AdminResult> {
   const parsed = RejectSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid request.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badRequest };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   try {
     const supabase = createClient();
     const { data: row } = await supabase
@@ -95,8 +101,8 @@ export async function rejectDeposit(form: { id: string; reason?: string }): Prom
       .eq('id', parsed.data.id)
       .maybeSingle();
     const r = row as { id: string; status: string; type: string } | null;
-    if (!r || r.type !== 'deposit') return { ok: false, message: 'Deposit not found.' };
-    if (r.status !== 'pending') return { ok: false, message: `Only pending deposits can be rejected (now ${r.status}).` };
+    if (!r || r.type !== 'deposit') return { ok: false, message: adminActs().depositMissing };
+    if (r.status !== 'pending') return { ok: false, message: adminActs().pendingOnlyR.replace('{status}', r.status) };
     const { error } = await supabase
       .from('wallet_transactions')
       .update({ status: 'rejected' })
@@ -105,9 +111,9 @@ export async function rejectDeposit(form: { id: string; reason?: string }): Prom
     if (error) throw error;
     await audit(supabase, adminId, 'DEPOSIT_REJECTED', 'deposit', parsed.data.id, { reason: parsed.data.reason ?? null });
     revalidatePath('/admin');
-    return { ok: true, message: 'Deposit rejected. No credit was created.' };
+    return { ok: true, message: adminActs().rejectOk };
   } catch {
-    return { ok: false, message: 'Could not reject the deposit.' };
+    return { ok: false, message: adminActs().rejectFail };
   }
 }
 
@@ -119,9 +125,9 @@ const WithdrawalSchema = z.object({
 
 export async function setWithdrawalStatus(form: { id: string; to: 'processing' | 'completed' | 'cancelled'; txHash?: string }): Promise<AdminResult> {
   const parsed = WithdrawalSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid request.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badRequest };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   try {
     const supabase = createClient();
     const { data: row } = await supabase
@@ -130,14 +136,14 @@ export async function setWithdrawalStatus(form: { id: string; to: 'processing' |
       .eq('id', parsed.data.id)
       .maybeSingle();
     const r = row as { id: string; status: string; type: string } | null;
-    if (!r || r.type !== 'withdrawal') return { ok: false, message: 'Withdrawal not found.' };
+    if (!r || r.type !== 'withdrawal') return { ok: false, message: adminActs().withdrawalMissing };
     // Approval (pending->processing) is separate from broadcast/sent (->completed).
     const allowed: Record<string, string[]> = {
       pending: ['processing', 'cancelled'],
       processing: ['completed', 'cancelled'],
     };
     if (!(allowed[r.status] ?? []).includes(parsed.data.to)) {
-      return { ok: false, message: `Cannot move withdrawal from ${r.status} to ${parsed.data.to}.` };
+      return { ok: false, message: adminActs().wdMove.replace('{from}', r.status).replace('{to}', parsed.data.to) };
     }
     const patch: Record<string, unknown> = { status: parsed.data.to };
     if (parsed.data.to === 'completed') {
@@ -151,9 +157,10 @@ export async function setWithdrawalStatus(form: { id: string; to: 'processing' |
       txHash: parsed.data.txHash ?? null,
     });
     revalidatePath('/admin');
-    return { ok: true, message: `Withdrawal marked ${parsed.data.to}.` };
+    const toWord = parsed.data.to === 'processing' ? adminActs().wdProcessing : parsed.data.to === 'completed' ? adminActs().wdCompleted : adminActs().wdCancelled;
+    return { ok: true, message: adminActs().wdMarked.replace('{to}', toWord) };
   } catch {
-    return { ok: false, message: 'Could not update the withdrawal.' };
+    return { ok: false, message: adminActs().withdrawalFail };
   }
 }
 
@@ -171,12 +178,12 @@ const NetworkSchema = z.object({
 
 export async function updateNetwork(form: Record<string, unknown>): Promise<AdminResult> {
   const parsed = NetworkSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid network configuration.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badNetwork };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   const n = parsed.data;
   if (n.depositEnabled && !n.depositAddress) {
-    return { ok: false, message: 'A deposit address is required before enabling deposits.' };
+    return { ok: false, message: adminActs().addrRequired };
   }
   try {
     const supabase = createClient();
@@ -202,13 +209,13 @@ export async function updateNetwork(form: Record<string, unknown>): Promise<Admi
     });
     revalidatePath('/admin');
     revalidatePath('/app/deposit');
-    return { ok: true, message: 'Network configuration saved.' };
+    return { ok: true, message: adminActs().networkOk };
   } catch (e) {
     const msg = e instanceof Error ? e.message : '';
     if (msg.includes('networks_enabled_needs_address')) {
-      return { ok: false, message: 'Deposit address missing — network left disabled.' };
+      return { ok: false, message: adminActs().addrMissing };
     }
-    return { ok: false, message: 'Could not save the network.' };
+    return { ok: false, message: adminActs().networkFail };
   }
 }
 
@@ -225,9 +232,9 @@ const TicketReplySchema = z.object({
 // failure never rolls back a stored reply.
 export async function replyToTicket(form: { ticketId: string; body: string; key: string; internal?: boolean }): Promise<AdminResult> {
   const parsed = TicketReplySchema.safeParse({ ...form, internal: form.internal ?? false });
-  if (!parsed.success) return { ok: false, message: 'Reply must be 1–4000 characters.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badReply };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   const { ticketId, body, key, internal } = parsed.data;
   try {
     const supabase = createClient();
@@ -237,14 +244,14 @@ export async function replyToTicket(form: { ticketId: string; body: string; key:
       .eq('id', ticketId)
       .maybeSingle();
     const t = ticket as { id: string; status: string; user_id: string | null; subject: string } | null;
-    if (!t) return { ok: false, message: 'Ticket not found.' };
+    if (!t) return { ok: false, message: adminActs().ticketMissing };
     const { data: existing } = await supabase
       .from('ticket_messages')
       .select('id')
       .eq('ticket_id', ticketId)
       .eq('idempotency_key', key)
       .maybeSingle();
-    if (existing) return { ok: true, message: internal ? 'Note already saved.' : 'Reply already sent.' };
+    if (existing) return { ok: true, message: internal ? adminActs().noteDup : adminActs().replyDup };
     const { error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticketId,
       sender: 'admin',
@@ -265,7 +272,7 @@ export async function replyToTicket(form: { ticketId: string; body: string; key:
         await supabase.from('notifications').insert({
           user_id: t.user_id,
           type: 'support',
-          title: 'Support replied',
+          title: adminActs().ntReplied,
           body: t.subject,
         });
       } catch {
@@ -273,9 +280,9 @@ export async function replyToTicket(form: { ticketId: string; body: string; key:
       }
     }
     revalidatePath('/admin/support');
-    return { ok: true, message: internal ? 'Internal note saved.' : 'Reply sent.' };
+    return { ok: true, message: internal ? adminActs().noteOk : adminActs().replyOk };
   } catch {
-    return { ok: false, message: 'Could not save the reply.' };
+    return { ok: false, message: adminActs().replyFail };
   }
 }
 
@@ -286,9 +293,9 @@ const TicketStatusSchema = z.object({
 
 export async function setTicketStatus(form: { ticketId: string; to: 'open' | 'answered' | 'closed' }): Promise<AdminResult> {
   const parsed = TicketStatusSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid status.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badStatus };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   try {
     const supabase = createClient();
     const { error } = await supabase
@@ -298,9 +305,10 @@ export async function setTicketStatus(form: { ticketId: string; to: 'open' | 'an
     if (error) throw error;
     await audit(supabase, adminId, 'TICKET_STATUS', 'ticket', parsed.data.ticketId, { to: parsed.data.to });
     revalidatePath('/admin/support');
-    return { ok: true, message: `Ticket ${parsed.data.to}.` };
+    const stWord = parsed.data.to === 'open' ? adminActs().stOpen : parsed.data.to === 'answered' ? adminActs().stAnswered : adminActs().stClosed;
+    return { ok: true, message: adminActs().ticketTo.replace('{to}', stWord) };
   } catch {
-    return { ok: false, message: 'Could not change the ticket status.' };
+    return { ok: false, message: adminActs().statusFail };
   }
 }
 
@@ -308,9 +316,9 @@ const SettingSchema = z.object({ key: z.string().min(1).max(80), value: z.string
 
 export async function updateSetting(form: { key: string; value: string }): Promise<AdminResult> {
   const parsed = SettingSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid setting.' };
+  if (!parsed.success) return { ok: false, message: adminActs().badSetting };
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: adminActs().unauthorized };
   try {
     const supabase = createClient();
     const { error } = await supabase
@@ -320,8 +328,8 @@ export async function updateSetting(form: { key: string; value: string }): Promi
     if (error) throw error;
     await audit(supabase, adminId, 'SETTING_UPDATED', 'platform_setting', parsed.data.key, { value: parsed.data.value });
     revalidatePath('/admin');
-    return { ok: true, message: 'Setting saved.' };
+    return { ok: true, message: adminActs().settingOk };
   } catch {
-    return { ok: false, message: 'Could not save the setting.' };
+    return { ok: false, message: adminActs().settingFail };
   }
 }

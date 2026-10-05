@@ -7,6 +7,7 @@
 import { useState, type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/components/LanguageProvider';
 
 export function AxButton({
   children, variant = 'primary', className = '', ...rest
@@ -42,7 +43,7 @@ export function AxInput({ className = '', ...rest }: InputHTMLAttributes<HTMLInp
   );
 }
 
-export function AxPasswordInput({ label, ...rest }: { label?: string } & InputHTMLAttributes<HTMLInputElement>) {
+export function AxPasswordInput({ label, showLabel, hideLabel, ...rest }: { label?: string; showLabel?: string; hideLabel?: string } & InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   return (
     <div>
@@ -56,7 +57,7 @@ export function AxPasswordInput({ label, ...rest }: { label?: string } & InputHT
         <button
           type="button"
           onClick={() => setShow((v) => !v)}
-          aria-label={show ? 'Hide password' : 'Show password'}
+          aria-label={show ? (hideLabel ?? 'Hide password') : (showLabel ?? 'Show password')}
           aria-pressed={show}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[12px] border border-[rgba(47,214,255,0.5)] p-2.5 text-[#AAB5C7] hover:text-white"
         >
@@ -69,12 +70,13 @@ export function AxPasswordInput({ label, ...rest }: { label?: string } & InputHT
 
 // Real 4-segment strength meter: length + character classes. No theater.
 export function PasswordStrength({ password }: { password: string }) {
+  const t = useT();
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
   if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) score++;
-  const label = password.length === 0 ? '' : score <= 1 ? 'Weak' : score === 2 ? 'Fair' : score === 3 ? 'Good' : 'Strong';
+  const label = password.length === 0 ? '' : score <= 1 ? t.auth.pwWeak : score === 2 ? t.auth.pwFair : score === 3 ? t.auth.pwGood : t.auth.pwStrong;
   return (
     <div className="mt-2.5" aria-live="polite">
       <div className="flex gap-1.5" aria-hidden="true">

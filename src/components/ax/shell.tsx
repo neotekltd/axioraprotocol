@@ -11,16 +11,18 @@ import { Bell, Home, LifeBuoy, Send, TrendingUp, Users, Wallet } from 'lucide-re
 import { AxioraMark } from '@/components/AxioraLogo';
 import { AccountMenu } from '@/components/ax/account-menu';
 import { LiveCounter } from '@/components/LiveCounter';
+import { useT } from '@/components/LanguageProvider';
 import { AXIORA_TELEGRAM_URL } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
 export function AppHeader({ email, username, unread = 0 }: { email?: string | null; username?: string | null; unread?: number }) {
+  const t = useT();
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-[#202A3A]/70 bg-[#080B12]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-5 md:px-7">
         <Link
           href="/"
-          aria-label="Axiora Protocol home"
+          aria-label={t.appHeader.home}
           className="flex min-h-[44px] items-center gap-2.5 rounded-lg"
         >
           <AxioraMark size={36} />
@@ -28,14 +30,14 @@ export function AppHeader({ email, username, unread = 0 }: { email?: string | nu
             AXIORA<span className="text-[#2FD6FF]">.</span>
           </span>
         </Link>
-        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 min-[420px]:flex" role="status" aria-label="Axiora live">
+        <div className="hidden items-center gap-2 rounded-full border border-[#2A394D] bg-[#111722] px-3.5 py-1.5 min-[420px]:flex" role="status" aria-label={t.appHeader.live}>
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#35D98B]" aria-hidden="true" />
           <LiveCounter />
         </div>
         <div className="flex items-center gap-2.5">
           <Link
             href="/app/notifications"
-            aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+            aria-label={unread > 0 ? t.appHeader.notificationsUnread.replace('{count}', String(unread)) : t.appHeader.notifications}
             className="relative grid h-10 w-10 place-items-center rounded-full text-[#AAB5C7] hover:text-white"
           >
             <Bell size={20} />
@@ -53,19 +55,21 @@ export function AppHeader({ email, username, unread = 0 }: { email?: string | nu
 }
 
 const NAV = [
-  { href: '/app/dashboard', label: 'Home', Icon: Home },
-  { href: '/app/deploy', label: 'Invest', Icon: TrendingUp },
-  { href: '/app/wallet', label: 'Wallet', Icon: Wallet },
-  { href: '/app/referrals', label: 'Referrals', Icon: Users },
-  { href: '/app/support', label: 'Support', Icon: LifeBuoy },
-];
+  { href: '/app/dashboard', key: 'home', Icon: Home },
+  { href: '/app/deploy', key: 'invest', Icon: TrendingUp },
+  { href: '/app/wallet', key: 'wallet', Icon: Wallet },
+  { href: '/app/referrals', key: 'referrals', Icon: Users },
+  { href: '/app/support', key: 'support', Icon: LifeBuoy },
+] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const t = useT();
   return (
-    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-[#202A3A] bg-[#080B12]/95 backdrop-blur-xl lg:hidden">
+    <nav aria-label={t.appnav.primary} className="fixed inset-x-0 bottom-0 z-40 border-t border-[#202A3A] bg-[#080B12]/95 backdrop-blur-xl lg:hidden">
       <div className="ax-safe-bottom grid grid-cols-5 px-2 pb-2 pt-1.5">
-        {NAV.map(({ href, label, Icon }) => {
+        {NAV.map(({ href, key, Icon }) => {
+          const label = t.appnav[key];
           const active = pathname === href || (href !== '/app/dashboard' && pathname.startsWith(href + '/'));
           return (
             <Link
@@ -91,12 +95,13 @@ export function MobileBottomNav() {
 // Destination is the canonical Axiora Telegram channel — in-app support
 // tickets remain reachable via the Support navigation entry.
 export function FloatingSupportButton() {
+  const t = useT();
   return (
     <a
       href={AXIORA_TELEGRAM_URL}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Open Axiora on Telegram"
+      aria-label={t.fab.label}
       className="ax-fab fixed bottom-[calc(104px+env(safe-area-inset-bottom))] right-[14px] z-40 grid h-14 w-14 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2FD6FF] focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:bottom-[calc(24px+env(safe-area-inset-bottom))] lg:right-[24px]"
     >
       <span aria-hidden="true" className="ax-fab-ring" />

@@ -13,6 +13,7 @@ import {
 } from '@/lib/plans';
 import { useAnimatedNumber, useInViewOnce, usePrefersReducedMotion } from '@/components/landing/motion';
 import { usePlanSync } from '@/components/landing/plan-sync';
+import { useT } from '@/components/LanguageProvider';
 
 // Homepage investment simulator on the authoritative plan engine:
 // profit = P × r × n (simple, no compounding), total = P + profit,
@@ -35,6 +36,7 @@ function parseAmount(raw: string): number | null {
 }
 
 export function SimulatorHome() {
+  const t = useT();
   const { plan: planKey, setPlan } = usePlanSync();
   const [text, setText] = useState('601');
   const [wrapRef, inView] = useInViewOnce<HTMLDivElement>(0.2);
@@ -101,9 +103,9 @@ export function SimulatorHome() {
   const gridV = [P + 108, P + 216, P + 324, P + 432];
   const gridH = [P + 38, P + 76, P + 114];
 
-  const dailyLabel = (p: (typeof PLANS)[number]) => `${trimPct(p.ratePerCredit * p.creditsPerDay * 100)}% / day`;
-  const desc = `${trimPct(plan.ratePerCredit * 100)}% per payout · ${plan.payoutsPerTerm} payouts · every ${plan.cycleHours} hours`;
-  const termLine = `${plan.payoutsPerTerm} payouts · principal returns on day ${plan.termDays}`;
+  const dailyLabel = (p: (typeof PLANS)[number]) => t.land.perDayLbl.replace('{p}', trimPct(p.ratePerCredit * p.creditsPerDay * 100));
+  const desc = t.land.descLine.replace('{r}', trimPct(plan.ratePerCredit * 100)).replace('{n}', String(plan.payoutsPerTerm)).replace('{h}', String(plan.cycleHours));
+  const termLine = t.land.termLine.replace('{n}', String(plan.payoutsPerTerm)).replace('{d}', String(plan.termDays));
 
   return (
     <div ref={wrapRef} className="sim-root mx-auto mt-8 w-full max-w-[680px]">
@@ -121,7 +123,7 @@ export function SimulatorHome() {
           inputMode="decimal"
           autoComplete="off"
           spellCheck={false}
-          aria-label="Investment amount in USDT"
+          aria-label={t.land.simAmountAria}
           aria-invalid={invalid}
           aria-describedby="sim-range"
           placeholder="0"
@@ -129,17 +131,17 @@ export function SimulatorHome() {
         />
       </div>
       <p id="sim-range" className="mt-2.5 font-mono text-[12px] tracking-wide text-t3">
-        Accepts {formatUSD(plan.min, { decimals: 0 })} to {formatUSD(plan.max, { decimals: 0 })}
+        {t.land.accepts.replace('{min}', formatUSD(plan.min, { decimals: 0 })).replace('{max}', formatUSD(plan.max, { decimals: 0 }))}
       </p>
       {invalid && (
         <p role="alert" className="mt-1.5 font-mono text-[12px] text-down">
-          {plan.name} accepts {formatUSD(plan.min, { decimals: 0 })} – {formatUSD(plan.max, { decimals: 0 })}.
+          {t.land.rangeErr.replace('{name}', plan.name).replace('{min}', formatUSD(plan.min, { decimals: 0 })).replace('{max}', formatUSD(plan.max, { decimals: 0 }))}
         </p>
       )}
 
       {/* plan */}
-      <div className="mt-5 font-mono text-[11px] tracking-[0.3em] text-t3">PLAN</div>
-      <div className="mt-2.5 space-y-2" role="radiogroup" aria-label="Investment plan">
+      <div className="mt-5 font-mono text-[11px] tracking-[0.3em] text-t3">{t.land.planLbl}</div>
+      <div className="mt-2.5 space-y-2" role="radiogroup" aria-label={t.land.planGroup}>
         {PLANS.map((p) => {
           const active = p.key === plan.key;
           return (
@@ -191,7 +193,7 @@ export function SimulatorHome() {
 
       {/* output */}
       <div className="mt-4 border-t border-line pt-5" aria-live="polite">
-        <div className="font-mono text-[11px] tracking-[0.3em] text-t3">LANDS IN TOTAL</div>
+        <div className="font-mono text-[11px] tracking-[0.3em] text-t3">{t.land.landsTotal}</div>
         <div className="mt-1 font-mono text-[44px] font-bold leading-none tracking-tight text-brand sm:text-[56px]">
           {sim ? formatUSD(animTotal) : <span className="text-t4/60">—</span>}
         </div>
@@ -203,8 +205,8 @@ export function SimulatorHome() {
             role="img"
             aria-label={
               sim
-                ? `Projected growth: ${formatUSD(sim.principal)} growing to ${formatUSD(sim.totalReturn)} over ${sim.payoutCount} payouts`
-                : 'Projected growth chart'
+                ? t.land.projGrowing.replace('{p}', formatUSD(sim.principal)).replace('{t}', formatUSD(sim.totalReturn)).replace('{n}', String(sim.payoutCount))
+                : t.land.projChart
             }
           >
             <defs>
@@ -250,19 +252,19 @@ export function SimulatorHome() {
 
         <dl className="mt-3 space-y-2">
           <div className="flex items-center justify-between rounded-[10px] border border-line bg-pane/60 px-4 py-3">
-            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">EARNINGS</dt>
+            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">{t.land.earnings}</dt>
             <dd className={`font-mono text-[17px] font-bold ${sim ? 'text-up' : 'text-t4/60'}`}>
               {sim ? `+${formatUSD(animEarn)}` : '—'}
             </dd>
           </div>
           <div className="flex items-center justify-between rounded-[10px] border border-line bg-pane/60 px-4 py-3">
-            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">PRINCIPAL BACK</dt>
+            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">{t.land.principalBack2}</dt>
             <dd className={`font-mono text-[17px] font-bold ${sim ? 'text-white' : 'text-t4/60'}`}>
               {sim ? formatUSD(sim.principal) : '—'}
             </dd>
           </div>
           <div className="flex items-center justify-between rounded-[10px] border border-line bg-pane/60 px-4 py-3">
-            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">EACH PAYOUT</dt>
+            <dt className="font-mono text-[11px] tracking-[0.24em] text-t3">{t.land.eachPayout2}</dt>
             <dd className={`font-mono text-[17px] font-bold ${sim ? 'text-brand' : 'text-t4/60'}`}>
               {sim ? formatUSD(sim.payoutAmount) : '—'}
             </dd>
@@ -270,13 +272,13 @@ export function SimulatorHome() {
         </dl>
 
         <p className="mt-3 text-[11px] leading-relaxed text-t4">
-          Projection from the Axiora plan engine — estimates, never guarantees. Binding quotes are server-side at confirmation.
+          {t.land.projNote}
         </p>
         <Link
           href="/calculator"
           className="mt-3 block rounded-[10px] bg-brand py-3 text-center text-sm font-bold text-on-brand transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070B]"
         >
-          Open full simulator
+          {t.land.openSim}
         </Link>
       </div>
     </div>

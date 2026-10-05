@@ -4,17 +4,15 @@ import { useEffect, useState } from 'react';
 import { Reveal } from '@/components/Reveal';
 import { TechEyebrow } from '@/components/landing/background';
 import { useInViewOnce } from '@/components/landing/motion';
+import { useT } from '@/components/LanguageProvider';
 
-const STEPS = [
-  ['01', 'Create your account', 'Register with email and password, then enter the 6-digit verification code.'],
-  ['02', 'Fund it in crypto', 'Deposit from an external wallet. Assets convert to USDT on arrival.'],
-  ['03', 'Choose your module', 'Pick a 3, 7 or 14-day module. The server quotes binding figures before you confirm.'],
-  ['04', 'Collect on schedule', 'Earnings settle to your ledger at maturity. Withdraw available balance in the daily window.'],
-];
+const NUMS = ['01', '02', '03', '04'];
 
 // Boot sequence: nodes activate in staged order with a traveling signal
 // once the section scrolls into view. Plays once.
 export function BootSequence() {
+  const t = useT();
+  const STEPS = t.bootSteps.map((s, i) => [NUMS[i], s.t, s.s] as const);
   const [ref, inView] = useInViewOnce<HTMLDivElement>(0.3);
   const [stage, setStage] = useState(0);
 
@@ -30,12 +28,12 @@ export function BootSequence() {
   }, [inView]);
 
   return (
-    <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label="Boot sequence">
+    <section className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28" aria-label={t.land.bootAria}>
       <Reveal>
         <div className="text-center">
-          <div className="inline-block"><TechEyebrow index="03" label="BOOT SEQUENCE" /></div>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">Four steps to your first payout.</h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-fog">No queues, no manual approvals. Five minutes to an active deployment.</p>
+          <div className="inline-block"><TechEyebrow index="03" label={t.land.bootAria.toUpperCase()} /></div>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">{t.land.bootT}</h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-fog">{t.land.bootS}</p>
         </div>
       </Reveal>
       <div ref={ref} className="relative mt-12">
@@ -44,7 +42,7 @@ export function BootSequence() {
           {stage > 0 && stage < 4 && <span className="signal-x" style={{ animationDuration: '1.8s' }} />}
         </div>
         <ol className="grid gap-8 md:grid-cols-4 md:gap-4">
-          {STEPS.map(([n, t, b], i) => {
+          {STEPS.map(([n, title, body], i) => {
             const on = stage > i;
             return (
               <li key={n} className="relative flex gap-4 md:block md:text-center">
@@ -60,8 +58,8 @@ export function BootSequence() {
                   {n}
                 </div>
                 <div className="md:mt-5">
-                  <div className={`font-bold transition-colors duration-500 ${on ? 'text-white' : 'text-mist/60'}`}>{t}</div>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-fog">{b}</p>
+                  <div className={`font-bold transition-colors duration-500 ${on ? 'text-white' : 'text-mist/60'}`}>{title}</div>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-fog">{body}</p>
                 </div>
               </li>
             );

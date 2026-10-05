@@ -5,6 +5,8 @@
 // rows state that honestly instead of a fixed term/count/total.
 
 import { examplePlanAmount, formatUSD, PLANS, type PlanDef, type PlanKey } from '@/lib/plans';
+import { useT } from '@/components/LanguageProvider';
+import type { Dictionary } from '@/lib/i18n-dict';
 import { cn } from '@/lib/utils';
 
 // Trim float noise: 1, 1.5, 2 — never 1.4999999.
@@ -56,11 +58,12 @@ export function ModuleIcon({ index }: { index: number }) {
 // Segmented settlement strip: one segment per daily credit (data-driven,
 // never a fabricated payout total). The final segment carries the cyan edge.
 export function CreditStrip({ segments }: { segments: number }) {
+  const t = useT();
   return (
     <div
       className="mt-3 flex gap-[3px]"
       role="img"
-      aria-label={`Settles ${segments} times daily`}
+      aria-label={t.inv.settles.replace('{n}', String(segments))}
     >
       {Array.from({ length: segments }).map((_, i) => (
         <span
@@ -90,16 +93,16 @@ const TONE: Record<PlanRow['tone'], string> = {
   green: 'text-[#35D98B]',
 };
 
-export function planRows(p: PlanDef): PlanRow[] {
+export function planRows(p: PlanDef, t: Dictionary['inv']): PlanRow[] {
   const { example, credit } = exampleCredit(p);
   return [
-    { label: 'Invest', value: rangeLabel(p), tone: 'cyan' },
-    { label: 'Rate', value: `${perPayoutPct(p)}% per payout`, tone: 'cyan' },
-    { label: 'Cycle', value: `Every ${p.cycleHours} hours`, tone: 'amber' },
-    { label: 'Payouts', value: `${p.creditsPerDay} per day`, tone: 'amber' },
-    { label: 'Term', value: 'Open-ended', tone: 'amber' },
-    { label: `On ${formatUSD(example, { decimals: 0 })}`, value: `+${formatUSD(credit)} / payout`, tone: 'green' },
-    { label: 'Principal', value: 'Stays deployed', tone: 'green' },
+    { label: t.planInvest, value: rangeLabel(p), tone: 'cyan' },
+    { label: t.planRate, value: t.perPayout.replace('{p}', perPayoutPct(p)), tone: 'cyan' },
+    { label: t.planCycle, value: t.everyHX.replace('{h}', String(p.cycleHours)), tone: 'amber' },
+    { label: t.payoutsL, value: t.perDayX.replace('{n}', String(p.creditsPerDay)), tone: 'amber' },
+    { label: t.termL, value: t.openEnded, tone: 'amber' },
+    { label: t.onXL.replace('{x}', formatUSD(example, { decimals: 0 })), value: t.perPayoutV.replace('{c}', formatUSD(credit)), tone: 'green' },
+    { label: t.principalL, value: t.staysDeployed, tone: 'green' },
   ];
 }
 
@@ -116,9 +119,10 @@ export function PlanCard({
   onSelect: (key: PlanKey) => void;
   onInvest: (key: PlanKey) => void;
 }) {
+  const t = useT();
   return (
     <article
-      aria-label={`${plan.name} plan`}
+      aria-label={t.inv.planAria.replace('{name}', plan.name)}
       className={cn(
         'rounded-2xl border bg-[#0E141E] p-5 transition-colors duration-200',
         selected ? 'border-[rgba(47,214,255,0.55)] shadow-[0_0_24px_rgba(47,214,255,0.12)]' : 'border-[#202A3A]'
@@ -136,7 +140,7 @@ export function PlanCard({
           type="button"
           role="radio"
           aria-checked={selected}
-          aria-label={`Select ${plan.name}`}
+          aria-label={t.inv.selectPlan.replace('{name}', plan.name)}
           onClick={() => onSelect(plan.key)}
           className={cn(
             'grid h-11 w-11 shrink-0 place-items-center rounded-full border transition-colors duration-200',
@@ -159,14 +163,14 @@ export function PlanCard({
         <span className={cn('font-mono text-[40px] font-bold leading-none tracking-tight', index === 2 ? 'text-[#2FD6FF]' : 'text-white')}>
           {dailyPct(plan)}%
         </span>
-        <span className="text-[14px] text-[#78859A]">a day</span>
+        <span className="text-[14px] text-[#78859A]">{t.inv.aDay}</span>
       </div>
-      <p className="mt-1.5 text-[13px] text-[#78859A]">Paid every {plan.cycleHours} hours · {plan.creditsPerDay}× daily</p>
+      <p className="mt-1.5 text-[13px] text-[#78859A]">{t.inv.paidEvery.replace('{h}', String(plan.cycleHours)).replace('{n}', String(plan.creditsPerDay))}</p>
 
       <CreditStrip segments={plan.creditsPerDay} />
 
       <dl className="mt-3 divide-y divide-[#1A2231]">
-        {planRows(plan).map((r) => (
+        {planRows(plan, t.inv).map((r) => (
           <div key={r.label} className="flex items-baseline justify-between gap-3 py-2">
             <dt className="shrink-0 text-[14px] text-[#78859A]">{r.label}</dt>
             <dd className={cn('text-right font-mono text-[13px] font-bold', TONE[r.tone])}>{r.value}</dd>
@@ -179,7 +183,7 @@ export function PlanCard({
         onClick={() => onInvest(plan.key)}
         className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_24px_rgba(47,214,255,0.22)] transition duration-200 hover:brightness-110 active:scale-[0.99]"
       >
-        Invest <span aria-hidden="true">→</span>
+        {t.inv.investBtn} <span aria-hidden="true">→</span>
       </button>
     </article>
   );
@@ -196,15 +200,16 @@ export function ChoosePlanSection({
   onInvest: (key: PlanKey) => void;
   panel: React.ReactNode;
 }) {
+  const t = useT();
   return (
-    <section aria-label="Choose a plan" className="mt-4 rounded-2xl border border-[#202A3A] bg-[#0B0F16] p-4 shadow-[inset_0_0_0_1px_rgba(47,214,255,0.06)] sm:p-5">
+    <section aria-label={t.inv.choosePlan} className="mt-4 rounded-2xl border border-[#202A3A] bg-[#0B0F16] p-4 shadow-[inset_0_0_0_1px_rgba(47,214,255,0.06)] sm:p-5">
       <div className="flex items-center gap-2.5 px-1 pb-4">
         <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-[8px] border border-[rgba(47,214,255,0.5)] bg-[rgba(47,214,255,0.07)] font-mono text-[13px] font-bold text-[#2FD6FF]">
           1
         </span>
-        <h2 className="text-[18px] font-bold tracking-tight text-white">Choose a plan</h2>
+        <h2 className="text-[18px] font-bold tracking-tight text-white">{t.inv.choosePlan}</h2>
       </div>
-      <div className="space-y-3" role="radiogroup" aria-label="Investment plans">
+      <div className="space-y-3" role="radiogroup" aria-label={t.inv.plansGroup}>
         {PLANS.map((p, i) => (
           <PlanCard
             key={p.key}

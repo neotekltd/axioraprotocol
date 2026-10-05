@@ -4,6 +4,8 @@ import { WithdrawalActions } from '@/components/admin/forms';
 import { getAdminWithdrawals } from '@/lib/admin';
 import { providerEnabled } from '@/lib/nowpayments';
 import { formatUSD } from '@/lib/finance';
+import { getDict } from '@/lib/i18n-server';
+import { stWord } from '@/lib/i18n-dict';
 
 export const metadata = { title: 'Admin withdrawals' };
 
@@ -15,35 +17,36 @@ function short(h: string | null) {
 }
 
 export default async function AdminWithdrawals({ searchParams }: { searchParams?: { status?: string } }) {
+  const t = getDict();
   const status = searchParams?.status ?? 'pending';
   const rows = await getAdminWithdrawals(status);
   const provider = providerEnabled();
   return (
     <div>
-      <PageHeader title="Withdrawals" sub="Approval is separate from broadcast. Mark sent only after the on-chain transaction exists." />
-      <div className="mt-6 grid grid-cols-5 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="navigation" aria-label="Withdrawal status filter">
-        {TABS.map((t) => (
+      <PageHeader title={t.ax.wdTitle} sub={t.ax.wdSub} />
+      <div className="mt-6 grid grid-cols-5 gap-1 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="navigation" aria-label={t.ax.wdFilter}>
+        {TABS.map((s) => (
           <Link
-            key={t}
-            href={`/admin/withdrawals?status=${t}`}
-            aria-current={status === t ? 'page' : undefined}
-            className={`flex min-h-[44px] items-center justify-center rounded-[11px] text-[12px] capitalize transition ${status === t ? 'bg-[#1A2334] font-bold text-white' : 'text-[#78859A] hover:text-white'}`}
+            key={s}
+            href={`/admin/withdrawals?status=${s}`}
+            aria-current={status === s ? 'page' : undefined}
+            className={`flex min-h-[44px] items-center justify-center rounded-[11px] text-[12px] capitalize transition ${status === s ? 'bg-[#1A2334] font-bold text-white' : 'text-[#78859A] hover:text-white'}`}
           >
-            {t}
+            {s === 'all' ? t.common.all : stWord(t, s)}
           </Link>
         ))}
       </div>
       {rows.length === 0 ? (
-        <div className="mt-4"><EmptyState title="No withdrawals here" body="Nothing requires administrator action." /></div>
+        <div className="mt-4"><EmptyState title={t.ax.noWdHere} body={t.ax.noWdAction} /></div>
       ) : (
         <div className="mt-4 space-y-4">
           {rows.map((w) => (
             <SectionCard
               key={w.id}
               title={`${formatUSD(w.amount)} ${w.asset}`}
-              action={<StatusBadge status={w.status} />}
+              action={<StatusBadge status={w.status} label={stWord(t, w.status)} />}
             >
-              <div className="px-5 py-3 font-mono text-[12px] leading-relaxed text-[#78859A]">
+              <div dir="ltr" className="px-5 py-3 text-left font-mono text-[12px] leading-relaxed text-[#78859A]">
                 <div className="break-all">TO {w.address ?? '—'}</div>
                 <div>{w.userEmail ?? w.userId.slice(0, 8)} · {w.network ?? '—'} · {w.createdAt.slice(0, 16).replace('T', ' ')}</div>
                 {w.txHash && <div className="break-all">TX {short(w.txHash)}</div>}

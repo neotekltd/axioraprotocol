@@ -10,12 +10,14 @@ import { resendSignupVerification, resendUserMessage } from '@/lib/auth-email';
 import { OtpInput } from '@/components/auth/OtpInput';
 import { AxButton, FieldError } from '@/components/ax/controls';
 import { AxCard } from '@/components/ax/primitives';
+import { useT } from '@/components/LanguageProvider';
+import type { Dictionary } from '@/lib/i18n-dict';
 
 const COOLDOWN = 60;
 
-function maskEmail(email: string): string {
+function maskEmail(t: Dictionary['auth'], email: string): string {
   const at = email.indexOf('@');
-  if (at <= 0) return 'your email';
+  if (at <= 0) return t.maskedFallback;
   const local = email.slice(0, at);
   const domain = email.slice(at + 1);
   const shown = local.length <= 1 ? '*' : `${local[0]}***`;
@@ -23,6 +25,7 @@ function maskEmail(email: string): string {
 }
 
 export function VerifyEmailForm() {
+  const t = useT();
   const params = useSearchParams();
   const router = useRouter();
   const email = params.get('email')?.trim() ?? '';
@@ -44,8 +47,8 @@ export function VerifyEmailForm() {
       <div className="mx-auto w-full max-w-[480px] px-7 pb-16 pt-10">
         <AxCard className="p-7 text-center">
           <p className="text-[15px] text-[#AAB5C7]">
-            No signup email found. <Link href="/register" className="font-semibold text-white hover:text-[#2FD6FF]">Create an account</Link> first, or{' '}
-            <Link href="/login" className="font-semibold text-white hover:text-[#2FD6FF]">sign in</Link>.
+            {t.auth.noEmail} <Link href="/register" className="font-semibold text-white hover:text-[#2FD6FF]">{t.auth.createAccount}</Link> {t.auth.firstOr}{' '}
+            <Link href="/login" className="font-semibold text-white hover:text-[#2FD6FF]">{t.auth.signIn}</Link>.
           </p>
         </AxCard>
       </div>
@@ -94,20 +97,20 @@ export function VerifyEmailForm() {
         `${window.location.origin}/auth/callback`
       );
       if (!result.ok) {
-        setResendError(resendUserMessage(result.code));
+        setResendError(resendUserMessage(result.code, t.auth));
         return;
       }
       setCooldown(COOLDOWN);
     } catch (err) {
       logAuthError('verify:resend:exception', err);
-      setResendError('Could not resend the code. Check your connection and try again.');
+      setResendError(t.auth.resendFailed);
     }
   };
 
   return (
     <div className="mx-auto w-full max-w-[480px] px-7 pb-16 pt-10">
-      <Link href="/register" className="inline-flex items-center gap-1.5 text-[14px] text-[#AAB5C7] hover:text-white" aria-label="Back to registration">
-        <ArrowLeft size={16} /> Back
+      <Link href="/register" className="inline-flex items-center gap-1.5 text-[14px] text-[#AAB5C7] hover:text-white" aria-label={t.common.back}>
+        <ArrowLeft size={16} /> {t.common.back}
       </Link>
       <AxCard className="mt-6 p-7 sm:p-8">
         <div className="flex gap-1.5" aria-hidden="true">
@@ -115,17 +118,17 @@ export function VerifyEmailForm() {
           <span className="h-1.5 w-10 rounded-full bg-[#2FD6FF]" />
         </div>
         <h1 className="mt-5 text-[32px] font-bold leading-tight tracking-tight text-white">
-          Check your <span className="text-[#2FD6FF]">email.</span>
+          {t.auth.verifyTitle}
         </h1>
         {resentNotice && (
           <p role="status" className="mt-4 rounded-[14px] border border-[rgba(47,214,255,0.4)] bg-[rgba(47,214,255,0.08)] px-4 py-3 text-center text-[13px] text-[#2FD6FF]">
-            We sent a new verification code to your email.
+            {t.auth.codeSent}
           </p>
         )}
         <p className="mt-4 text-center text-[14px] text-[#AAB5C7]">
-          Enter the 6-digit code sent to
+          {t.auth.verifySub}
           <br />
-          <span className="font-mono text-white">{maskEmail(email)}</span>
+          <span className="font-mono text-white">{maskEmail(t.auth, email)}</span>
         </p>
         <div className="mt-6">
           <OtpInput
@@ -140,25 +143,25 @@ export function VerifyEmailForm() {
           />
         </div>
         {state === 'invalid' && (
-          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">That verification code is invalid.</p>
+          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">{t.auth.codeInvalid}</p>
         )}
         {state === 'expired' && (
-          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">That code has expired. Request a new one below.</p>
+          <p role="alert" className="mt-4 text-center text-[13px] text-[#F06B78]">{t.auth.codeExpired}</p>
         )}
         <div className="mt-6">
           <AxButton disabled={busy || code.length !== 6} onClick={() => void verify(code)}>
-            {busy ? 'Verifying…' : 'Verify Email'}
+            {busy ? t.auth.verifying : t.auth.verifyEmailBtn}
           </AxButton>
         </div>
         <div className="mt-5 text-center text-[13px] text-[#78859A]">
-          Didn&apos;t receive the code?{' '}
+          {t.auth.didntReceive}{' '}
           <button disabled={cooldown > 0} onClick={() => void resend()} className="font-semibold text-[#2FD6FF] disabled:text-[#596579]">
-            {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+            {cooldown > 0 ? `${t.auth.resendIn} ${cooldown}${t.auth.seconds}` : t.auth.resend}
           </button>
         </div>
         <FieldError message={resendError} />
         <div className="mt-2 text-center text-[13px]">
-          <Link href="/register" className="text-[#78859A] hover:text-white">Change email</Link>
+          <Link href="/register" className="text-[#78859A] hover:text-white">{t.auth.changeEmail}</Link>
         </div>
       </AxCard>
     </div>

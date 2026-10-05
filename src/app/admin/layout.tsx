@@ -3,26 +3,27 @@ import { notFound, redirect } from 'next/navigation';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { isAdmin } from '@/lib/admin';
 import { getSessionUser } from '@/lib/queries';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = {
   title: 'Admin',
   robots: { index: false, follow: false },
 };
 
-const NAV: [string, string][] = [
-  ['Dashboard', '/admin'],
-  ['Assets', '/admin/assets'],
-  ['Deposits', '/admin/deposits'],
-  ['Withdrawals', '/admin/withdrawals'],
-  ['Support', '/admin/support'],
-  ['Users', '/admin/users'],
-  ['Audit', '/admin/audit'],
-  ['Settings', '/admin/settings'],
-];
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Signed out -> /login. Authenticated non-admin -> authorization failure
   // (no admin surface revealed). Both re-verified on every request.
+  const t = getDict();
+  const NAV: [string, string][] = [
+    [t.admin.nav.dashboard, '/admin'],
+    [t.admin.nav.assets, '/admin/assets'],
+    [t.admin.nav.deposits, '/admin/deposits'],
+    [t.admin.nav.withdrawals, '/admin/withdrawals'],
+    [t.admin.nav.support, '/admin/support'],
+    [t.admin.nav.users, '/admin/users'],
+    [t.admin.nav.audit, '/admin/audit'],
+    [t.admin.nav.settings, '/admin/settings'],
+  ];
   const user = await getSessionUser();
   if (!user) redirect('/login');
   if (!(await isAdmin())) notFound();
@@ -36,11 +37,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               AXIORA<span className="text-[#2FD6FF]">.</span>
             </span>
             <span className="rounded-full border border-[rgba(242,191,74,0.45)] bg-[rgba(242,191,74,0.08)] px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.18em] text-[#F2BF4A]">
-              ADMIN
+              {t.admin.badge}
             </span>
           </Link>
           <Link href="/app/dashboard" className="text-[13px] font-semibold text-[#AAB5C7] hover:text-white">
-            ← User app
+            ← {t.admin.userApp}
           </Link>
         </div>
         <nav aria-label="Admin" className="mx-auto max-w-[1180px] px-5 md:px-7">

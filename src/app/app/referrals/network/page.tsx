@@ -1,9 +1,11 @@
 import { PageHeader, SectionCard, EmptyState } from '@/components/data';
 import { getReferrals } from '@/lib/queries';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = { title: 'Referral network' };
 
 export default async function ReferralNetworkPage() {
+  const t = getDict();
   const referrals = await getReferrals();
   const byLevel = new Map<number, typeof referrals>();
   referrals.forEach((r) => {
@@ -15,30 +17,33 @@ export default async function ReferralNetworkPage() {
 
   return (
     <div>
-      <PageHeader title="Referral Network" sub="Your downline by depth level. Depth capped at 5 levels." />
+      <PageHeader title={t.rn.netTitle} sub={t.rn.netSub} />
       {referrals.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            title="Your network is empty"
-            body="Referred accounts appear here grouped by level. Only counts are shown — no private information about other users is exposed."
-            actionLabel="Get your link"
+            title={t.rn.netEmpty}
+            body={t.rn.netEmptyB}
+            actionLabel={t.rn.getLink}
             actionHref="/app/referrals"
           />
         </div>
       ) : (
         <div className="mt-6 space-y-4">
-          {levels.map((lv) => (
-            <SectionCard key={lv} title={`Level ${lv} — ${(byLevel.get(lv) ?? []).length} referral${(byLevel.get(lv) ?? []).length === 1 ? '' : 's'}`}>
+          {levels.map((lv) => {
+            const n = (byLevel.get(lv) ?? []).length;
+            return (
+            <SectionCard key={lv} title={n === 1 ? t.rn.level1.replace('{l}', String(lv)).replace('{n}', '1') : t.rn.levelN.replace('{l}', String(lv)).replace('{n}', String(n))}>
               <ul className="grid gap-2 p-5 sm:grid-cols-2 lg:grid-cols-3">
                 {(byLevel.get(lv) ?? []).map((r) => (
                   <li key={r.id} className="rounded-xl border border-line bg-void px-4 py-3 text-sm">
-                    <div className="font-mono text-pulse">Referred account</div>
-                    <div className="mt-0.5 text-xs text-fog">Joined {r.createdAt.slice(0, 10)}</div>
+                    <div className="font-mono text-pulse">{t.rn.refAccount}</div>
+                    <div className="mt-0.5 text-xs text-fog">{t.ref.joined.replace('{d}', r.createdAt.slice(0, 10))}</div>
                   </li>
                 ))}
               </ul>
             </SectionCard>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

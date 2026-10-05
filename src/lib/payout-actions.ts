@@ -12,6 +12,14 @@ import { requireAdminId } from '@/lib/admin';
 import { createPayout, getPayoutStatus, providerEnabled, payoutCurrencyFor, NpError } from '@/lib/nowpayments';
 import { SITE_URL } from '@/lib/config';
 import type { AdminResult } from '@/lib/admin-actions';
+import { getDict } from '@/lib/i18n-server';
+
+function po() {
+  return getDict().po;
+}
+function poUnauth() {
+  return getDict().adminActs.unauthorized;
+}
 
 async function audit(
   svc: ReturnType<typeof createServiceClient>,
@@ -63,9 +71,9 @@ async function rawAvailable(svc: ReturnType<typeof createServiceClient>, userId:
 
 export async function approveWithdrawalPayout(id: string): Promise<AdminResult> {
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: poUnauth() };
   if (!providerEnabled()) {
-    return { ok: false, message: 'Provider disabled — NOWPayments API key is not configured.' };
+    return { ok: false, message: po().provOff };
   }
   const svc = createServiceClient();
   try {
@@ -79,9 +87,9 @@ export async function approveWithdrawalPayout(id: string): Promise<AdminResult> 
       network: string | null; address: string | null; amount: string; user_id: string;
       meta: Record<string, unknown> | null;
     } | null;
-    if (!r || r.type !== 'withdrawal') return { ok: false, message: 'Withdrawal not found.' };
-    if (r.status !== 'pending') return { ok: false, message: `Only pending withdrawals can be approved (now ${r.status}).` };
-    if (!r.address) return { ok: false, message: 'No destination address on this request.' };
+    if (!r || r.type !== 'withdrawal') return { ok: false, message: getDict().adminActs.withdrawalMissing };
+    if (r.status !== 'pending') return { ok: false, message: po().pendOnly.replace('{s}', r.status) };
+    if (!r.address) return { ok: false, message: po().noAddr };
 
     // Idempotency: a payout row already means approval happened.
     const { data: prior } = await svc
@@ -90,15 +98,15 @@ export async function approveWithdrawalPayout(id: string): Promise<AdminResult> 
       .eq('withdrawal_tx_id', id)
       .maybeSingle();
     if (prior) {
-      return { ok: true, message: `Payout already created (batch ${prior.batch_id ?? 'pending'}). No duplicate created.` };
+      return { ok: true, message: po().alreadyBatch.replace('{b}', String(prior.batch_id ?? 'pending')) };
     }
 
     // Safety re-check on live state, never on request-time values.
     const raw = await rawAvailable(svc, r.user_id);
-    if (raw < 0) return { ok: false, message: 'Ledger inconsistent — approval refused. Investigate before retrying.' };
+    if (raw < 0) return { ok: false, message: po().ledgerBad };
 
     const currency = payoutCurrencyFor(r.asset, r.network ?? '');
-    if (!currency) return { ok: false, message: `Unsupported payout route ${r.asset}/${r.network ?? '?'}.` };
+    if (!currency) return { ok: false, message: po().badRoute.replace('{r}', `${r.asset}/${r.network ?? '?'}`) };
 
     let batch;
     try {
@@ -109,8 +117,8 @@ export async function approveWithdrawalPayout(id: string): Promise<AdminResult> 
         ipnCallbackUrl: `${SITE_URL.replace(/\/$/, '')}/api/payments/nowpayments/ipn`,
       });
     } catch (e) {
-      const detail = e instanceof NpError ? ` Provider said HTTP ${e.status}.` : '';
-      return { ok: false, message: `Provider payout creation failed.${detail} Request left pending — safe to retry.` };
+      const detail = e instanceof NpError ? po().httpSaid.replace('{c}', String(e.status)) : '';
+      return { ok: false, message: po().createFail.replace('{d}', detail) };
     }
 
     const { error: payoutError } = await svc.from('provider_payouts').insert({
@@ -133,8 +141,8 @@ export async function approveWithdrawalPayout(id: string): Promise<AdminResult> 
         .select('batch_id')
         .eq('withdrawal_tx_id', id)
         .maybeSingle();
-      if (raced) return { ok: true, message: 'Payout already created by a concurrent approval. No duplicate created.' };
-      return { ok: false, message: 'Could not record the payout. Provider batch may exist — check before retrying.' };
+      if (raced) return { ok: true, message: po().raceWon };
+      return { ok: false, message: po().recordFail };
     }
 
     const { error: txError } = await svc
@@ -157,18 +165,18 @@ export async function approveWithdrawalPayout(id: string): Promise<AdminResult> 
     revalidatePath('/admin');
     return {
       ok: true,
-      message: `Provider payout ${String(batch.id)} created. Verify it in the NOWPayments dashboard (2FA), then Sync status.`,
+      message: po().created.replace('{b}', String(batch.id)),
     };
   } catch {
-    return { ok: false, message: 'Could not approve the withdrawal.' };
+    return { ok: false, message: po().approveFail };
   }
 }
 
 export async function syncPayoutStatus(id: string): Promise<AdminResult> {
   const adminId = await requireAdminId();
-  if (!adminId) return { ok: false, message: 'Unauthorized.' };
+  if (!adminId) return { ok: false, message: poUnauth() };
   if (!providerEnabled()) {
-    return { ok: false, message: 'Provider disabled — NOWPayments API key is not configured.' };
+    return { ok: false, message: po().provOff };
   }
   const svc = createServiceClient();
   try {
@@ -181,16 +189,16 @@ export async function syncPayoutStatus(id: string): Promise<AdminResult> {
       id: string; withdrawal_tx_id: string; batch_id: string | null;
       status: string; user_id: string; amount: string;
     } | null;
-    if (!p || !p.batch_id) return { ok: false, message: 'No provider payout for this withdrawal yet.' };
+    if (!p || !p.batch_id) return { ok: false, message: po().noPayout };
     if (['finished', 'failed', 'cancelled'].includes(p.status)) {
-      return { ok: true, message: `Payout already terminal (${p.status}).` };
+      return { ok: true, message: po().terminal.replace('{s}', p.status) };
     }
 
     let remote;
     try {
       remote = await getPayoutStatus(p.batch_id);
     } catch {
-      return { ok: false, message: 'Provider unreachable — try again shortly.' };
+      return { ok: false, message: po().unreach };
     }
 
     const wd = (remote.withdrawals ?? [])[0];
@@ -224,7 +232,7 @@ export async function syncPayoutStatus(id: string): Promise<AdminResult> {
         txHash: hash,
       });
       revalidatePath('/admin');
-      return { ok: true, message: hash ? `Completed on-chain. TXID ${hash.slice(0, 18)}… recorded.` : 'Marked completed (hash pending).' };
+      return { ok: true, message: hash ? po().doneHash.replace('{h}', hash.slice(0, 18)) : po().doneNoHash };
     }
 
     if (providerStatus === 'failed' || providerStatus === 'rejected') {
@@ -239,7 +247,7 @@ export async function syncPayoutStatus(id: string): Promise<AdminResult> {
         .eq('id', p.id);
       await audit(svc, adminId, 'WITHDRAWAL_FAILED', p.withdrawal_tx_id, { batchId: p.batch_id });
       revalidatePath('/admin');
-      return { ok: false, message: 'Provider reports failure. Funds released from reservation — review before retrying.' };
+      return { ok: false, message: po().provFail2 };
     }
 
     await svc
@@ -248,8 +256,8 @@ export async function syncPayoutStatus(id: string): Promise<AdminResult> {
       .eq('id', p.id);
     await audit(svc, adminId, 'WITHDRAWAL_PAYOUT_SYNC', p.withdrawal_tx_id, { batchId: p.batch_id, providerStatus });
     revalidatePath('/admin');
-    return { ok: true, message: `Provider status: ${providerStatus || 'unknown'}. Still in flight — sync again later.` };
+    return { ok: true, message: po().inflight.replace('{s}', providerStatus || 'unknown') };
   } catch {
-    return { ok: false, message: 'Could not sync payout status.' };
+    return { ok: false, message: po().syncFail };
   }
 }

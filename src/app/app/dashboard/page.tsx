@@ -8,10 +8,12 @@ import {
 } from '@/lib/queries';
 import { ArrowRight, Layers } from 'lucide-react';
 import Link from 'next/link';
+import { getDict } from '@/lib/i18n-server';
 
 export const metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
+  const t = getDict();
   const [user, profile, summary, referrals, earnings, activePlans] = await Promise.all([
     getSessionUser(), getProfile(), getPortfolioSummary(), getReferrals(), getReferralEarnings(),
     getActivePlans(),
@@ -25,9 +27,9 @@ export default async function DashboardPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-[22px] font-bold tracking-tight text-white sm:text-[24px]">
-          Welcome, {firstName}
+          {t.dashboard.welcome.replace('{name}', firstName)}
         </h1>
-        <p className="mt-1 text-[14px] text-[#AAB5C7]">Your account is ready. Here is how to start.</p>
+        <p className="mt-1 text-[14px] text-[#AAB5C7]">{t.dashboard.readySub}</p>
       </div>
 
       <BalanceHeroCard
@@ -41,8 +43,8 @@ export default async function DashboardPage() {
       <OnboardingStepsCard doneDeposited={summary.deposited > 0} doneDeployed={summary.deployedActive > 0} />
 
       {activePlans.length > 0 && (
-        <section aria-label="Active plans">
-          <SectionHeader title={`Active plans · ${activePlans.length}`} />
+        <section aria-label={t.dashboard.activePlans}>
+          <SectionHeader title={`${t.dashboard.activePlans} · ${activePlans.length}`} />
           <div className="mt-4 space-y-4">
             {activePlans.map((p) => (
               <ActivePlanCard key={p.id} plan={p} />
@@ -57,24 +59,24 @@ export default async function DashboardPage() {
             <span className="grid h-10 w-10 place-items-center rounded-[12px] border border-[#2A394D] bg-[#151B27] text-[#AAB5C7]">
               <Layers size={20} />
             </span>
-            <h2 className="text-[24px] font-bold tracking-tight text-white">Plans</h2>
+            <h2 className="text-[24px] font-bold tracking-tight text-white">{t.dashboard.plans}</h2>
           </div>
-          <Link href="/app/deploy" className="flex items-center gap-1 text-[14px] text-[#AAB5C7] hover:text-white">Compare <ArrowRight size={15} /></Link>
+          <Link href="/app/deploy" className="flex items-center gap-1 text-[14px] text-[#AAB5C7] hover:text-white">{t.dashboard.compare} <ArrowRight size={15} /></Link>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {(['essential', 'premium', 'exclusive'] as const).map((key) => (
             <PlanCard key={key} planKey={key} />
           ))}
         </div>
-        <p className="mt-3 font-mono text-[10px] tracking-[0.15em] text-[#596579]">MOD-01…03 · RATES ARE MODEL ESTIMATES</p>
+        <p className="mt-3 font-mono text-[10px] tracking-[0.15em] text-[#596579]">{t.dashboard.ratesNote}</p>
       </AxCard>
 
       <ReferralSummaryCard link={link} count={referrals.length} earned={referralTotal} />
 
       <AxCard className="flex items-center justify-between p-5">
-        <div className="text-[14px] text-[#AAB5C7]">Full history, trades and protocol stats live here too.</div>
+        <div className="text-[14px] text-[#AAB5C7]">{t.dashboard.historyTeaser}</div>
         <Link href="/app/transactions" className="flex shrink-0 items-center gap-1 text-[14px] font-semibold text-white hover:text-[#2FD6FF]">
-          Transactions <ArrowRight size={15} />
+          {t.dashboard.transactions} <ArrowRight size={15} />
         </Link>
       </AxCard>
     </div>

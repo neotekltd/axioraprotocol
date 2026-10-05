@@ -6,9 +6,17 @@ import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PublicFloatingSupport } from '@/components/ax/shell';
+import { LanguageProvider } from '@/components/LanguageProvider';
 import { SITE_URL } from '@/lib/config';
+import { dirOf } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
 
 const display = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-display' });
+
+// Pre-paint locale script: localStorage wins (survives login/logout),
+// cookie second, default en. Sets lang (dir stays ltr) before first
+// paint — no FOUC, no redirect, no separate routes.
+const LOCALE_BOOT = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)axiora-lang=(en|es)/);var l=window.localStorage.getItem('axiora-lang')||(m&&m[1])||'en';if(l!=='en'&&l!=='es')l='en';document.documentElement.lang=l;document.documentElement.dir='ltr';}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: {
@@ -34,13 +42,19 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = getLocale();
   return (
-    <html lang="en">
+    <html lang={locale} dir={dirOf(locale)}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: LOCALE_BOOT }} />
+      </head>
       <body className={`min-h-screen bg-void font-body ${display.variable}`}>
-        <Header />
-        <main className="min-h-[70vh]">{children}</main>
-        <Footer />
-        <PublicFloatingSupport />
+        <LanguageProvider initial={locale}>
+          <Header />
+          <main className="min-h-[70vh]">{children}</main>
+          <Footer />
+          <PublicFloatingSupport />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -10,6 +10,7 @@ import { useState } from 'react';import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Check, ChevronDown, QrCode, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/data';
+import { useT } from '@/components/LanguageProvider';
 import { formatUSD } from '@/lib/plans';
 import { submitDepositTx } from '@/lib/actions';
 import { ProviderDeposit } from '@/components/ProviderDeposit';
@@ -32,12 +33,13 @@ const PRESET_AMOUNTS = [50, 100, 500];
 const MIN_DEPOSIT = 10;
 
 function MethodIcon({ m, size = 40 }: { m: DepositMethod; size?: number }) {
+  const t = useT();
   const [failed, setFailed] = useState(false);
   if (m.icon && !failed) {
     return (
       <Image
         src={m.icon}
-        alt={`${m.asset === 'USDT' ? 'Tether' : m.assetName} logo`}
+        alt={t.dep.logoAlt.replace('{name}', m.asset === 'USDT' ? 'Tether' : m.assetName)}
         width={size}
         height={size}
         onError={() => setFailed(true)}
@@ -58,13 +60,14 @@ function MethodIcon({ m, size = 40 }: { m: DepositMethod; size?: number }) {
 }
 
 function Tracker({ hasCompleted }: { hasCompleted: boolean }) {
+  const t = useT();
   const stages: [string, 'done' | 'current' | 'todo'][] = [
-    ['Address ready', 'done'],
-    ['Waiting for your transfer', hasCompleted ? 'done' : 'current'],
-    ['In your wallet', hasCompleted ? 'done' : 'todo'],
+    [t.dep.tr1, 'done'],
+    [t.dep.tr2, hasCompleted ? 'done' : 'current'],
+    [t.dep.tr3, hasCompleted ? 'done' : 'todo'],
   ];
   return (
-    <ol className="flex items-start" aria-label="Deposit progress">
+    <ol className="flex items-start" aria-label={t.dep.trackerAria}>
       {stages.map(([label, state], i) => (
         <li key={label} className="relative flex flex-1 flex-col items-center text-center">
           {i > 0 && (
@@ -112,23 +115,23 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
   const providerSupported = !!m && (providerAssets ?? []).includes(m.id);
   const showAuto = providerSupported && !preferManual;
 
+  const t = useT();
   if (!m) {
     return (
       <div className="ax-enter">
-        <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
+        <PageHeader title={t.dep.title} sub={t.dep.sub} />
         <div className="mt-6">
           <WalletTabs active="deposit" />
         </div>
         <FlowCard className="mt-4">
           <div className="p-2">
-            <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">STATUS</div>
-            <div className="mt-2 text-[17px] font-bold text-white">Deposit addresses are not configured</div>
+            <div className="font-mono text-[11px] tracking-[0.18em] text-[#78859A]">{t.dep.statusLbl}</div>
+            <div className="mt-2 text-[17px] font-bold text-white">{t.dep.notConfigured}</div>
             <p className="mt-2 text-[14px] text-[#AAB5C7]">
-              On-chain deposit addresses are issued from secure backend configuration, which has not
-              been connected for this workspace yet. No address is shown rather than a placeholder one.
+              {t.dep.notConfiguredBody}
             </p>
             <Link href="/app/support" className="mt-4 inline-block rounded-[14px] border border-[#2A394D] px-5 py-2.5 text-[14px] font-semibold text-white hover:border-[rgba(47,214,255,0.5)]">
-              Ask support about deposits
+              {t.dep.askSupport}
             </Link>
           </div>
         </FlowCard>
@@ -146,12 +149,12 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
   const hasCompleted = recent.some((t) => t.status === 'completed');
   // Preset labels follow the SELECTED asset (never a hardcoded symbol).
   // Max fills the largest one-tap amount; it never bypasses validation.
-  const chipOptions = [...PRESET_AMOUNTS.map((v) => `${v} ${m.asset}`), 'Max'];
+  const chipOptions = [...PRESET_AMOUNTS.map((v) => `${v} ${m.asset}`), t.dep.maxChip];
   const activeChip = chip ?? (PRESET_AMOUNTS.some((v) => String(v) === amount.trim()) ? `${amount.trim()} ${m.asset}` : null);
   const pickChip = (c: string) => {
-    if (c === 'Max') {
+    if (c === t.dep.maxChip) {
       setAmount(String(PRESET_AMOUNTS[PRESET_AMOUNTS.length - 1]));
-      setChip('Max');
+      setChip(t.dep.maxChip);
       return;
     }
     setChip(c);
@@ -181,21 +184,21 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
           onClick={() => setConfirmed(false)}
           className="inline-flex min-h-[44px] items-center gap-1.5 text-[14px] text-[#AAB5C7] transition hover:text-white"
         >
-          <ArrowLeft size={16} aria-hidden="true" /> Change coin or amount
+          <ArrowLeft size={16} aria-hidden="true" /> {t.dep.changeAmount}
         </button>
         {providerSupported && (
-          <div className="mt-4 grid grid-cols-2 gap-1 rounded-[14px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="tablist" aria-label="Deposit method">
+          <div className="mt-4 grid grid-cols-2 gap-1 rounded-[14px] border border-[#202A3A] bg-[#0A0E16] p-1.5" role="tablist" aria-label={t.dep.tablist}>
             <button
               type="button" role="tab" aria-selected={showAuto} onClick={() => setPreferManual(false)}
               className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
             >
-              Automatic Deposit
+              {t.dep.tabAuto}
             </button>
             <button
               type="button" role="tab" aria-selected={!showAuto} onClick={() => setPreferManual(true)}
               className={`flex min-h-[44px] items-center justify-center rounded-[10px] text-[13px] font-bold transition ${!showAuto ? 'bg-[#1A2334] text-white' : 'text-[#78859A] hover:text-white'}`}
             >
-              Manual Deposit
+              {t.dep.tabManual}
             </button>
           </div>
         )}
@@ -204,11 +207,11 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
             <div className="flex items-center gap-3">
               <MethodIcon m={m} size={44} />
               <div>
-                <div className="text-[19px] font-bold text-white">Send {num} {m.asset}</div>
-                <div className="mt-0.5 text-[13px] text-[#78859A]">on {m.network} ({m.standard})</div>
+                <div className="text-[19px] font-bold text-white">{t.dep.sendX.replace('{n}', String(num)).replace('{asset}', m.asset)}</div>
+                <div className="mt-0.5 text-[13px] text-[#78859A]">{t.dep.onNet.replace('{net}', m.network).replace('{std}', m.standard)}</div>
               </div>
             </div>
-            <StatusPill tone={hasCompleted ? 'green' : 'amber'}>{hasCompleted ? 'Credited' : 'Waiting'}</StatusPill>
+            <StatusPill tone={hasCompleted ? 'green' : 'amber'}>{hasCompleted ? t.dep.creditedSt : t.dep.waitingSt}</StatusPill>
           </div>
           {showAuto ? (
             <div className="mt-5">
@@ -217,7 +220,7 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
                 <Tracker hasCompleted={hasCompleted} />
               </div>
               <p className="mt-4 text-center text-[13px] text-[#78859A]">
-                After you send, the payment provider confirms it, then it is credited by itself.
+                {t.dep.autoNote}
               </p>
             </div>
           ) : (
@@ -228,59 +231,59 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
             aria-expanded={qrOpen}
             className="mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.5)]"
           >
-            <QrCode size={17} aria-hidden="true" /> {qrOpen ? 'Hide QR code' : 'Show QR code'}
+            <QrCode size={17} aria-hidden="true" /> {qrOpen ? t.dep.hideQR : t.dep.showQR}
           </button>
           {qrOpen && (
             <div className="mt-3 flex flex-col items-center rounded-[14px] border border-[#2A394D] bg-white p-5">
               {qr[m.id] ? (
-                <span dangerouslySetInnerHTML={{ __html: qr[m.id] }} role="img" aria-label={`QR code for ${m.depositAddress}`} />
+                <span dangerouslySetInnerHTML={{ __html: qr[m.id] }} role="img" aria-label={m.depositAddress} />
               ) : (
-                <p className="text-[13px] text-[#78859A]">QR unavailable.</p>
+                <p className="text-[13px] text-[#78859A]">{t.dep.qrUnavailable}</p>
               )}
-              <p className="mt-2 font-mono text-[11px] text-black/60">Encodes the exact address below — nothing else.</p>
+              <p className="mt-2 font-mono text-[11px] text-black/60">{t.dep.qrNote}</p>
             </div>
           )}
-          <div className="mt-5 text-[14px] text-[#AAB5C7]">To this address</div>
-          <div className="mt-2 break-all rounded-[14px] border border-[#2A394D] bg-[#080B12] p-4 font-mono text-[15px] leading-relaxed text-white" style={{ overflowWrap: 'anywhere' }}>
+          <div className="mt-5 text-[14px] text-[#AAB5C7]">{t.dep.toAddress}</div>
+          <div dir="ltr" className="mt-2 break-all rounded-[14px] border border-[#2A394D] bg-[#080B12] p-4 font-mono text-[15px] leading-relaxed text-white" style={{ overflowWrap: 'anywhere' }}>
             {m.depositAddress}
           </div>
           <div className="mt-3 space-y-2.5">
-            <CopyButton text={m.depositAddress} label="Copy address" primary />
-            <CopyButton text={String(num)} label={`Copy ${num}`} />
+            <CopyButton text={m.depositAddress} label={t.dep.copyAddress} primary />
+            <CopyButton text={String(num)} label={t.dep.copyN.replace('{n}', String(num))} />
           </div>
           <p className="mt-3 text-[13px] leading-relaxed text-[#AAB5C7]">
-            Any amount from {formatUSD(minDep)} is credited after on-chain confirmation.
+            {t.dep.minCredit.replace('{min}', formatUSD(minDep))}
           </p>
           <div className="mt-3">
             <TechnicalWarning
-              title={`Only ${m.asset} on ${m.network} (${m.standard}).`}
-              body="Another coin, or funds sent on another network, cannot be recovered."
+              title={t.dep.onlyNetT.replace('{asset}', m.asset).replace('{net}', m.network).replace('{std}', m.standard)}
+              body={t.dep.onlyNetB}
             />
           </div>
           <div className="mt-6">
             <Tracker hasCompleted={hasCompleted} />
           </div>
           <p className="mt-4 text-center text-[13px] text-[#78859A]">
-            After you send, the network confirms it, then it is credited by itself.
+            {t.dep.manualNote}
           </p>
           <div className="mt-5 rounded-[16px] border border-[#202A3A] bg-[#0A0E16] p-4 sm:p-5">
-            <div className="text-[15px] font-bold text-white">Have you sent the funds?</div>
+            <div className="text-[15px] font-bold text-white">{t.dep.sentQ}</div>
             <label htmlFor="deposit-txid" className="mb-2 mt-3 block text-[13px] text-[#AAB5C7]">
-              Transaction hash / TXID
+              {t.wallet.txidLabel}
             </label>
             <input
               id="deposit-txid"
               value={txHash}
               onChange={(e) => setTxHash(e.target.value)}
-              placeholder={m.asset === 'USDT' && m.network !== 'TRON' ? '0x…' : 'Enter transaction hash'}
+              placeholder={m.asset === 'USDT' && m.network !== 'TRON' ? '0x…' : t.wallet.txidPh}
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}
+              dir="ltr"
               className="w-full rounded-[12px] border border-[#2A394D] bg-[#080B12] px-4 py-3.5 font-mono text-[13px] text-white outline-none transition placeholder:text-[#596579] focus:border-[#2FD6FF]"
             />
             <p className="mt-2 text-[12px] leading-relaxed text-[#78859A]">
-              You can find your transaction hash in the wallet or exchange you used to send the funds.
-              Submitting it notifies review — it does not credit your account by itself.
+              {t.dep.txidHint2}
             </p>
             {txMsg && (
               <p role={txMsg.ok ? 'status' : 'alert'} className={`mt-2 text-[13px] font-semibold ${txMsg.ok ? 'text-[#35D98B]' : 'text-[#F2BF4A]'}`}>
@@ -293,23 +296,23 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
               disabled={txBusy || txHash.trim().length < 16}
               className="mt-3 flex min-h-[52px] w-full items-center justify-center rounded-[14px] border border-[#2A394D] bg-[#111722] text-[14px] font-bold text-white transition hover:border-[rgba(47,214,255,0.55)] active:scale-[0.99] disabled:opacity-50"
             >
-              {txBusy ? 'Submitting…' : 'Submit transaction'}
+              {txBusy ? t.wallet.submitting : t.dep.submitTx}
             </button>
           </div>
           <SummaryRows
             rows={[
-              { label: 'You get', value: `${formatUSD(num)} into Deposit wallet`, tone: 'green' },
-              { label: 'Destination', value: `${m.asset} · ${m.network} · ${m.standard}`, tone: 'muted' },
+              { label: t.dep.youGet, value: `${formatUSD(num)} ${t.dep.intoWallet}`, tone: 'green' },
+              { label: t.dep.dest, value: `${m.asset} · ${m.network} · ${m.standard}`, tone: 'muted' },
             ]}
           />
           <p className="mt-4 border-t border-[#202A3A] pt-4 text-center text-[13px] text-[#78859A]">
-            No time limit · This page updates by itself.
+            {t.dep.noLimit}
           </p>
           </>
           )}
         </FlowCard>
         <p className="mt-4 text-center text-[13px] text-[#78859A]">
-          Not credited? <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">Open a ticket</Link> with your transaction hash.
+          {t.dep.notCredited} <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">{t.support.openTicket}</Link> {t.dep.withHash}
         </p>
       </div>
     );
@@ -317,20 +320,21 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
 
   return (
     <div className="ax-enter">
-      <PageHeader title="Deposit" sub="Fund your account from an external wallet." />
+      <PageHeader title={t.dep.title} sub={t.dep.sub} />
       <div className="mt-6">
         <WalletTabs active="deposit" />
       </div>
       <FlowCard className="mt-4">
-        <FlowLabel right={`Min ${formatUSD(minDep)}`}>You send</FlowLabel>
+        <FlowLabel right={t.dep.minLbl.replace('{min}', formatUSD(minDep))}>{t.dep.youSend}</FlowLabel>
         <div className="mt-2 flex items-center justify-between gap-3">
           <input
             value={amount}
             onChange={(e) => { setAmount(e.target.value); setChip(null); }}
             inputMode="decimal"
             autoComplete="off"
-            aria-label="Deposit amount in USDT"
+            aria-label={t.dep.amountAria}
             placeholder="0"
+            dir="ltr"
             className="w-full min-w-0 bg-transparent font-mono text-[40px] font-bold leading-none tracking-tight text-white outline-none placeholder:text-[#2A394D]"
           />
           <button
@@ -346,31 +350,31 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
         </div>
         <div className="mt-2 flex items-center gap-1.5 text-[13px] text-[#AAB5C7]">
           <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#2FD6FF]" />
-          on {m.network} ({m.standard})
+          {t.dep.onNet.replace('{net}', m.network).replace('{std}', m.standard)}
         </div>
         <QuickChips options={chipOptions} active={activeChip} onPick={pickChip} />
         {!valid && amount.trim() !== '' && (
-          <p role="alert" className="mt-2 text-[13px] text-[#F2BF4A]">Minimum deposit is {formatUSD(minDep)}.</p>
+          <p role="alert" className="mt-2 text-[13px] text-[#F2BF4A]">{t.dep.minAlert.replace('{min}', formatUSD(minDep))}</p>
         )}
       </FlowCard>
       <DividerArrow />
       <FlowCard>
-        <FlowLabel>You get</FlowLabel>
+        <FlowLabel>{t.dep.youGet}</FlowLabel>
         <div className="mt-2 flex items-center justify-between gap-3">
           <span className="font-mono text-[32px] font-bold leading-none tracking-tight text-[#35D98B]">
             {valid ? formatUSD(num) : '$0.00'}
           </span>
           <span className="flex shrink-0 items-center gap-1.5 text-[13px] text-[#AAB5C7]">
-            <Wallet size={15} aria-hidden="true" /> Deposit wallet
+            <Wallet size={15} aria-hidden="true" /> {t.dep.depositWalletLbl}
           </span>
         </div>
       </FlowCard>
       <FlowCard className="mt-4">
         <SummaryRows
           rows={[
-            { label: 'Rate', value: `1 ${m.asset} = $1.00`, tone: 'white' },
-            { label: 'Fee', value: 'None', tone: 'white' },
-            { label: 'Arrives', value: 'After on-chain confirmation', tone: 'white' },
+            { label: t.dep.rate, value: `1 ${m.asset} = $1.00`, tone: 'white' },
+            { label: t.dep.fee, value: t.dep.none, tone: 'white' },
+            { label: t.dep.arrives, value: t.dep.arrivesV, tone: 'white' },
           ]}
         />
         <button
@@ -379,18 +383,18 @@ export function DepositView({ methods, deposits, qr, providerAssets }: {
           disabled={!valid}
           className="mt-4 flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#2FD6FF] text-[15px] font-bold text-[#06121A] shadow-[0_0_28px_rgba(47,214,255,0.25)] transition hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
         >
-          Get deposit address <span aria-hidden="true">→</span>
+          {t.dep.getAddr} <span aria-hidden="true">→</span>
         </button>
         {m.feeNote && <p className="mt-3 text-[12px] text-[#78859A]">{m.feeNote}</p>}
       </FlowCard>
       <p className="mt-4 text-center text-[13px] text-[#78859A]">
-        Sent but not credited? <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">Open a ticket</Link> with your transaction hash.
+        {t.dep.sentNotCredited} <Link href="/app/support" className="font-semibold text-[#2FD6FF] hover:brightness-110">{t.support.openTicket}</Link> {t.dep.withHash}
       </p>
       <BottomSheet
         open={coinOpen}
         onClose={() => setCoinOpen(false)}
-        labelledBy="Select deposit asset"
-        title="Select asset"
+        labelledBy={t.dep.selectAsset}
+        title={t.dep.selectAssetT}
         icon={<MethodIcon m={m} size={36} />}
       >
         <ul className="space-y-2">

@@ -2,11 +2,14 @@ import { PageHeader, StatCard, SectionCard, TableWrap, EmptyState } from '@/comp
 import { PortfolioChart } from '@/components/PortfolioChart';
 import { formatUSD } from '@/lib/finance';
 import { getDeployments, getPortfolioSummary, getTrades, deploymentLabel } from '@/lib/queries';
+import { getDict } from '@/lib/i18n-server';
+import { stWord } from '@/lib/i18n-dict';
 import Link from 'next/link';
 
 export const metadata = { title: 'Portfolio' };
 
 export default async function PortfolioPage() {
+  const t = getDict();
   const [summary, deployments, trades] = await Promise.all([getPortfolioSummary(), getDeployments(), getTrades()]);
   // Real cumulative deployed-principal curve from deployment rows (oldest → newest).
   const ordered = [...deployments].reverse();
@@ -20,64 +23,64 @@ export default async function PortfolioPage() {
 
   return (
     <div>
-      <PageHeader title="Portfolio" sub="Your capital, deployments and performance — from your ledger." />
+      <PageHeader title={t.pf2.title} sub={t.pf2.sub} />
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="TOTAL VALUE" value={formatUSD(summary.totalValue)} />
-        <StatCard label="AVAILABLE" value={formatUSD(summary.available)} />
-        <StatCard label="DEPLOYED" value={formatUSD(summary.deployedActive)} />
+        <StatCard label={t.pf2.totalValue} value={formatUSD(summary.totalValue)} />
+        <StatCard label={t.dashboard.available.toUpperCase()} value={formatUSD(summary.available)} />
+        <StatCard label={t.pf2.deployed} value={formatUSD(summary.deployedActive)} />
         <StatCard
-          label="TOTAL PROFIT"
+          label={t.pf2.totalProfit}
           value={formatUSD(summary.totalProfit, { sign: true })}
           accent={summary.totalProfit > 0 ? 'up' : summary.totalProfit < 0 ? 'down' : 'neutral'}
         />
       </div>
 
-      <SectionCard title="Deployed Capital Over Time">
+      <SectionCard title={t.pf2.depCapital}>
         {!hasAnything ? (
           <div className="p-6">
             <EmptyState
-              title="No portfolio history yet"
-              body="Your performance chart builds itself from real deployment activity. Deposit funds and activate a deployment to begin."
-              actionLabel="Deposit funds"
+              title={t.pf2.noHist}
+              body={t.pf2.noHistB}
+              actionLabel={t.wd.depositFirst}
               actionHref="/app/deposit"
             />
           </div>
         ) : (
           <div className="p-5">
             <PortfolioChart series={series} />
-            <p className="mt-2 text-xs text-fog">Cumulative deployed principal from {deployments.length} recorded deployment{deployments.length === 1 ? '' : 's'}.</p>
+            <p className="mt-2 text-xs text-fog">{deployments.length === 1 ? t.pf2.cumul1.replace('{n}', '1') : t.pf2.cumul.replace('{n}', String(deployments.length))}</p>
           </div>
         )}
       </SectionCard>
 
       <SectionCard
-        title="Performance"
-        action={<Link href="/app/trades" className="text-xs text-pulse hover:brightness-110">All trades</Link>}
+        title={t.pf2.perf}
+        action={<Link href="/app/trades" className="text-xs text-pulse hover:brightness-110">{t.pf2.allTrades}</Link>}
       >
         <div className="grid gap-4 p-5 sm:grid-cols-3">
-          <div><div className="text-[11px] tracking-widest text-fog">CLOSED TRADE P&L</div><div className={`mt-1 font-mono text-xl font-bold ${closedPnl >= 0 ? 'text-pulse' : 'text-danger'}`}>{formatUSD(closedPnl, { sign: true })}</div></div>
-          <div><div className="text-[11px] tracking-widest text-fog">TOTAL DEPOSITED</div><div className="mt-1 font-mono text-xl font-bold">{formatUSD(summary.deposited)}</div></div>
-          <div><div className="text-[11px] tracking-widest text-fog">TOTAL WITHDRAWN</div><div className="mt-1 font-mono text-xl font-bold">{formatUSD(summary.withdrawn)}</div></div>
+          <div><div className="text-[11px] tracking-widest text-fog">{t.pf2.closedPnl}</div><div className={`mt-1 font-mono text-xl font-bold ${closedPnl >= 0 ? 'text-pulse' : 'text-danger'}`}>{formatUSD(closedPnl, { sign: true })}</div></div>
+          <div><div className="text-[11px] tracking-widest text-fog">{t.pf2.totalDep}</div><div className="mt-1 font-mono text-xl font-bold">{formatUSD(summary.deposited)}</div></div>
+          <div><div className="text-[11px] tracking-widest text-fog">{t.pf2.totalWd}</div><div className="mt-1 font-mono text-xl font-bold">{formatUSD(summary.withdrawn)}</div></div>
         </div>
       </SectionCard>
 
       <SectionCard
-        title="Deployments"
-        action={<Link href="/app/deployments" className="text-xs text-pulse hover:brightness-110">View all</Link>}
+        title={t.pf2.depSec}
+        action={<Link href="/app/deployments" className="text-xs text-pulse hover:brightness-110">{t.common.viewAll}</Link>}
       >
         {deployments.length === 0 ? (
-          <p className="p-6 text-sm text-fog">No deployments recorded.</p>
+          <p className="p-6 text-sm text-fog">{t.pf2.noDepRec}</p>
         ) : (
           <TableWrap>
             <table className="w-full min-w-[520px] text-sm">
-              <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">REF</th><th className="p-4 text-right">AMOUNT</th><th className="p-4 text-right">TERM</th><th className="p-4 text-right">STATUS</th></tr></thead>
+              <thead><tr className="text-left text-[11px] text-fog"><th className="p-4">{t.dpl.cRef}</th><th className="p-4 text-right">{t.tx.cAmount}</th><th className="p-4 text-right">{t.dpl.cTerm}</th><th className="p-4 text-right">{t.tx.cStatus}</th></tr></thead>
               <tbody>
                 {deployments.slice(0, 8).map((d) => (
                   <tr key={d.id} className="border-t border-line">
                     <td className="p-4 font-mono"><Link href={`/app/deployments/${d.ref}`} className="text-pulse">{d.ref}</Link></td>
                     <td className="p-4 text-right font-mono">{formatUSD(d.amount)}</td>
                     <td className="p-4 text-right">{deploymentLabel(d)}</td>
-                    <td className="p-4 text-right text-fog">{d.status}</td>
+                    <td className="p-4 text-right text-fog">{stWord(t, d.status)}</td>
                   </tr>
                 ))}
               </tbody>

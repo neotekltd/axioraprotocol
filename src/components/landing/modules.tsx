@@ -9,16 +9,17 @@ import { SimulatorHome } from '@/components/landing/SimulatorHome';
 import { BootSequence } from '@/components/landing/BootSequence';
 import { SpecsInteractive } from '@/components/landing/SpecsInteractive';
 import { PROTOCOL_CONFIG } from '@/lib/config';
+import { getDict } from '@/lib/i18n-server';
 
 export function ModulesSection() {
+  const t = getDict();
   return (
-    <section id="modules" className="relative mx-auto max-w-[1200px] scroll-mt-24 px-5 py-20 md:px-8 md:py-28" aria-label="Investment modules">
+    <section id="modules" className="relative mx-auto max-w-[1200px] scroll-mt-24 px-5 py-20 md:px-8 md:py-28" aria-label={t.land.modulesAria}>
       <Reveal>
-        <TechEyebrow index="01" label="MODULES" />
-        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Pick the module that fits your capital.</h2>
+        <TechEyebrow index="01" label={t.inv.tabPlans.toUpperCase()} />
+        <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">{t.land.modT}</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">
-          Three fixed modules, one per capital band. Every rate below is Axiora&apos;s own
-          per-credit rate — estimates, never guarantees.
+          {t.land.modS}
         </p>
       </Reveal>
       <ModuleCards />
@@ -28,13 +29,14 @@ export function ModulesSection() {
 }
 
 export function SimulatorSection() {
+  const t = getDict();
   return (
-    <section id="simulator" className="scroll-mt-24 border-y border-white/5 bg-void/60" aria-label="Simulator">
+    <section id="simulator" className="scroll-mt-24 border-y border-white/5 bg-void/60" aria-label={t.land.simAria}>
       <div className="mx-auto max-w-[1200px] px-5 py-20 md:px-8 md:py-28">
         <Reveal>
-          <TechEyebrow index="02" label="SIMULATOR" />
-          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">Run the numbers before you run the plan.</h2>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">Live Axiora arithmetic — the same functions the public calculator uses. Nothing hardcoded.</p>
+          <TechEyebrow index="02" label={t.land.simAria.toUpperCase()} />
+          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">{t.land.simT}</h2>
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-mist/75">{t.land.simS}</p>
         </Reveal>
         <Reveal delay={120}>
           <SimulatorHome />

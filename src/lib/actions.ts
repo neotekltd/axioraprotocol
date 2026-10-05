@@ -13,7 +13,13 @@ import { CreateDeploymentSchema, WithdrawalQuoteSchema } from '@/lib/validation'
 import { getPlan, quotePlan } from '@/lib/plans';
 import { ASSET_IDS, DEPOSIT_CONFIG, getDepositAddress, isValidTxHash } from '@/lib/deposits';
 import { getPortfolioSummary } from '@/lib/queries';
+import { getDict } from '@/lib/i18n-server';
 import { z } from 'zod';
+
+// Localized user-facing messages (read-only locale read; no logic change).
+function acts() {
+  return getDict().acts;
+}
 
 export interface ActionResult {
   ok: boolean;
@@ -75,19 +81,19 @@ const DeploymentFormSchema = z.object({
 
 export async function createDeployment(form: { amount: number; plan: string }): Promise<ActionResult> {
   const parsed = DeploymentFormSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Invalid deployment amount or module.' };
+  if (!parsed.success) return { ok: false, message: acts().badDeploy };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   // Server-authoritative quote + plan-range + balance check (never trust the client).
   let quote;
   try {
     quote = quotePlan(parsed.data.plan, parsed.data.amount);
   } catch {
-    return { ok: false, message: 'Amount is outside the selected module range.' };
+    return { ok: false, message: acts().outOfRange };
   }
   const summary = await getPortfolioSummary();
   if (quote.amount > summary.available) {
-    return { ok: false, message: `Insufficient available balance (${summary.available.toFixed(2)} USDT). Deposit funds first.` };
+    return { ok: false, message: acts().insufficient.replace('{amount}', summary.available.toFixed(2)) };
   }
   try {
     const supabase = createClient();
@@ -136,11 +142,11 @@ export async function createDeployment(form: { amount: number; plan: string }): 
       status: 'completed',
       meta: { deployment_ref: (data as { ref: string }).ref, plan: validated.plan },
     });
-    await notify(supabase, uid, 'deployment', 'Deployment activated', `${(data as { ref: string }).ref} · ${validated.amount.toFixed(2)} USDT · ${getPlan(validated.plan)?.name ?? validated.plan}`);
+    await notify(supabase, uid, 'deployment', acts().ntDeploy, `${(data as { ref: string }).ref} · ${validated.amount.toFixed(2)} USDT · ${getPlan(validated.plan)?.name ?? validated.plan}`);
     revalidatePath('/app');
-    return { ok: true, message: 'Deployment activated.', ref: (data as { ref: string }).ref };
+    return { ok: true, message: acts().deployOk, ref: (data as { ref: string }).ref };
   } catch {
-    return { ok: false, message: 'Could not activate the deployment. Please try again.' };
+    return { ok: false, message: acts().deployFail };
   }
 }
 
@@ -154,13 +160,13 @@ export async function requestWithdrawal(form: { amount: number; address: string 
   const addrParsed = WithdrawFormSchema.safeParse(form);
   const fullParsed = WithdrawalQuoteSchema.safeParse(withAsset);
   if (!addrParsed.success || !fullParsed.success) {
-    return { ok: false, message: 'Enter a valid amount and destination address.' };
+    return { ok: false, message: acts().badWithdraw };
   }
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   const summary = await getPortfolioSummary();
   if (fullParsed.data.amount > summary.available) {
-    return { ok: false, message: `Amount exceeds available balance (${summary.available.toFixed(2)} USDT).` };
+    return { ok: false, message: acts().amountExceeds.replace('{amount}', summary.available.toFixed(2)) };
   }
   try {
     const supabase = createClient();
@@ -173,11 +179,11 @@ export async function requestWithdrawal(form: { amount: number; address: string 
       network: fullParsed.data.network,
       address: fullParsed.data.address,
     });
-    await notify(supabase, uid, 'withdrawal', 'Withdrawal requested', `${fullParsed.data.amount.toFixed(2)} USDT to ${fullParsed.data.address.slice(0, 10)}…`);
+    await notify(supabase, uid, 'withdrawal', acts().ntWithdraw, `${fullParsed.data.amount.toFixed(2)} USDT to ${fullParsed.data.address.slice(0, 10)}…`);
     revalidatePath('/app');
-    return { ok: true, message: 'Withdrawal recorded as a pending request. On-chain broadcast activates with the execution layer; your balance hold is visible in the wallet.' };
+    return { ok: true, message: acts().withdrawOk };
   } catch {
-    return { ok: false, message: 'Could not record the withdrawal. Please try again.' };
+    return { ok: false, message: acts().withdrawFail };
   }
 }
 
@@ -190,9 +196,9 @@ const WalletFormSchema = z.object({
 
 export async function addWallet(form: { asset: string; network: string; address: string; label?: string }): Promise<ActionResult> {
   const parsed = WalletFormSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Enter a valid asset, network and address.' };
+  if (!parsed.success) return { ok: false, message: acts().badWallet };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { error } = await supabase.from('wallets').insert({
@@ -205,24 +211,24 @@ export async function addWallet(form: { asset: string; network: string; address:
     if (error) throw error;
     revalidatePath('/app/wallets');
     revalidatePath('/app/wallet');
-    return { ok: true, message: 'Wallet saved. New addresses require verification before withdrawals can target them.' };
+    return { ok: true, message: acts().walletOk };
   } catch {
-    return { ok: false, message: 'Could not save the wallet. Please try again.' };
+    return { ok: false, message: acts().walletFail };
   }
 }
 
 export async function removeWallet(id: string): Promise<ActionResult> {
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { error } = await supabase.from('wallets').delete().eq('id', id);
     if (error) throw error;
     revalidatePath('/app/wallets');
     revalidatePath('/app/wallet');
-    return { ok: true, message: 'Wallet removed.' };
+    return { ok: true, message: acts().walletGone };
   } catch {
-    return { ok: false, message: 'Could not remove the wallet.' };
+    return { ok: false, message: acts().walletGoneFail };
   }
 }
 
@@ -252,17 +258,17 @@ const DisplayNameSchema = z.object({ displayName: z.string().trim().min(1).max(6
 
 export async function updateDisplayName(form: { displayName: string }): Promise<ActionResult> {
   const parsed = DisplayNameSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Display name must be 1–60 characters.' };
+  if (!parsed.success) return { ok: false, message: acts().badName };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { error } = await supabase.from('profiles').update({ display_name: parsed.data.displayName }).eq('id', uid);
     if (error) throw error;
     revalidatePath('/app/profile');
-    return { ok: true, message: 'Profile updated.' };
+    return { ok: true, message: acts().profileOk };
   } catch {
-    return { ok: false, message: 'Could not update the profile.' };
+    return { ok: false, message: acts().profileFail };
   }
 }
 
@@ -274,9 +280,9 @@ const TicketSchema = z.object({
 
 export async function createSupportTicket(form: { subject: string; message: string; category?: string }): Promise<ActionResult> {
   const parsed = TicketSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Give a subject (4+ characters) and a message (10+ characters).' };
+  if (!parsed.success) return { ok: false, message: acts().badTicket };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { error } = await supabase.from('support_tickets').insert({
@@ -286,10 +292,10 @@ export async function createSupportTicket(form: { subject: string; message: stri
       category: parsed.data.category,
     });
     if (error) throw error;
-    await notify(supabase, uid, 'system', 'Support ticket opened', parsed.data.subject);
-    return { ok: true, message: 'Ticket opened. We will follow up by email.' };
+    await notify(supabase, uid, 'system', acts().ntTicket, parsed.data.subject);
+    return { ok: true, message: acts().ticketOk };
   } catch {
-    return { ok: false, message: 'Could not open the ticket. Please try again.' };
+    return { ok: false, message: acts().ticketFail };
   }
 }
 
@@ -303,9 +309,9 @@ const UserReplySchema = z.object({
 // (open) so it returns to the admin queue. Idempotent per client key.
 export async function replyToSupportTicket(form: { ticketId: string; body: string; key: string }): Promise<ActionResult> {
   const parsed = UserReplySchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Reply must be 1–4000 characters.' };
+  if (!parsed.success) return { ok: false, message: acts().badReply };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { data: ticket } = await supabase
@@ -314,14 +320,14 @@ export async function replyToSupportTicket(form: { ticketId: string; body: strin
       .eq('id', parsed.data.ticketId)
       .maybeSingle();
     const t = ticket as { id: string; user_id: string | null } | null;
-    if (!t || t.user_id !== uid) return { ok: false, message: 'Ticket not found.' };
+    if (!t || t.user_id !== uid) return { ok: false, message: acts().ticketMissing };
     const { data: existing } = await supabase
       .from('ticket_messages')
       .select('id')
       .eq('ticket_id', parsed.data.ticketId)
       .eq('idempotency_key', parsed.data.key)
       .maybeSingle();
-    if (existing) return { ok: true, message: 'Reply already sent.' };
+    if (existing) return { ok: true, message: acts().replyDup };
     const { error } = await supabase.from('ticket_messages').insert({
       ticket_id: parsed.data.ticketId,
       sender: 'user',
@@ -335,11 +341,11 @@ export async function replyToSupportTicket(form: { ticketId: string; body: strin
       .from('support_tickets')
       .update({ status: 'open', updated_at: new Date().toISOString() })
       .eq('id', parsed.data.ticketId);
-    await notify(supabase, uid, 'support', 'Reply sent', 'Support will follow up shortly.');
+    await notify(supabase, uid, 'support', acts().ntReply, acts().ntReplyBody);
     revalidatePath('/app/support');
-    return { ok: true, message: 'Reply sent.' };
+    return { ok: true, message: acts().replyOk };
   } catch {
-    return { ok: false, message: 'Could not send the reply.' };
+    return { ok: false, message: acts().replyFail };
   }
 }
 
@@ -393,21 +399,21 @@ const TxSubmitSchema = z.object({
 // credit; duplicates are rejected by the (network, tx_hash) unique index.
 export async function submitDepositTx(form: { assetId: string; amount: number; txHash: string }): Promise<ActionResult> {
   const parsed = TxSubmitSchema.safeParse(form);
-  if (!parsed.success) return { ok: false, message: 'Enter a valid amount and transaction hash.' };
+  if (!parsed.success) return { ok: false, message: acts().badTx };
   const { assetId, amount, txHash } = parsed.data;
   if (!((ASSET_IDS as readonly string[]).includes(assetId))) {
-    return { ok: false, message: 'Unknown deposit asset.' };
+    return { ok: false, message: acts().unknownAsset };
   }
   const cleanHash = txHash.trim().toLowerCase();
   if (!isValidTxHash(assetId, cleanHash)) {
-    return { ok: false, message: 'That transaction hash does not match the expected format for this network.' };
+    return { ok: false, message: acts().badHash };
   }
   const cfg = DEPOSIT_CONFIG[assetId as (typeof ASSET_IDS)[number]];
   const address = getDepositAddress(assetId);
-  if (!address) return { ok: false, message: 'This deposit method is not configured right now.' };
-  if (amount < 10) return { ok: false, message: 'Minimum deposit is $10.00.' };
+  if (!address) return { ok: false, message: acts().methodOff };
+  if (amount < 10) return { ok: false, message: acts().minDeposit };
   const uid = await userId();
-  if (!uid) return { ok: false, message: 'Session expired. Please sign in again.' };
+  if (!uid) return { ok: false, message: acts().sessionExpired };
   try {
     const supabase = createClient();
     const { error } = await supabase.from('wallet_transactions').insert({
@@ -423,14 +429,14 @@ export async function submitDepositTx(form: { assetId: string; amount: number; t
     });
     if (error) {
       if ((error as { code?: string }).code === '23505') {
-        return { ok: false, message: 'This transaction was already submitted and is being processed.' };
+        return { ok: false, message: acts().txDup };
       }
       throw error;
     }
-    await notify(supabase, uid, 'deposit', 'Transaction submitted', `${amount.toFixed(2)} ${cfg.symbol} · ${cfg.network} · awaiting review`);
+    await notify(supabase, uid, 'deposit', acts().ntTx, `${amount.toFixed(2)} ${cfg.symbol} · ${cfg.network} · awaiting review`);
     revalidatePath('/app');
-    return { ok: true, message: 'Transaction submitted. It will be credited after on-chain verification and review.' };
+    return { ok: true, message: acts().txOk };
   } catch {
-    return { ok: false, message: 'Could not submit the transaction. Please try again.' };
+    return { ok: false, message: acts().txFail };
   }
 }
