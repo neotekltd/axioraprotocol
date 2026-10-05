@@ -1,16 +1,19 @@
+'use client';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { AxioraMark } from '@/components/AxioraLogo';
 import { TechGridBackground } from '@/components/ax/primitives';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { getDict } from '@/lib/i18n-server';
+import { useT } from '@/components/LanguageProvider';
 
 // AIMEX-composition auth shell: compact logo header + real language
 // selector + back-to-site, upper-middle ~500px card slot, decorative
 // network line, minimal legal footer. Branding and routes are Axiora's own.
+// Client component: it renders inside client auth forms.
 export function AuthShell({ children }: { children: ReactNode }) {
-  const t = getDict();
+  const t = useT();
   return (
     <div className="relative min-h-screen bg-[#080B12]">
       <TechGridBackground />

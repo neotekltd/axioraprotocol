@@ -148,7 +148,7 @@ export function LiveActivity({ initial }: { initial: HomepageFeed }) {
       dead = true;
       clearInterval(id);
     };
-  }, [staticFeed]);
+  }, [staticFeed, t]);
   return (
     <section className="mx-auto max-w-[1200px] px-5 pb-20 md:px-8 md:pb-28" aria-label={t.land.actAria}>
       <Reveal>
